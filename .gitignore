@@ -1,0 +1,66 @@
+#ant stuff
+/bin/
+#Remove OS generated garbage
+*/.DS_Store
+.DS_Store
+.DS_Store?
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+#gradle stuff
+/.gradle
+/build/
+/run/
+#IDEA files from Gradle
+.idea/
+/*.iml
+/*.ipr
+/*.iws
+#Vim backups
+*~
+#eclipse stuffs
+/.classpath
+/.project
+/.settings/
+/debug/
+*.lock
+/.metadata/
+/config/
+/logs/
+options.txt
+/saves/
+#sbt-eclipse junk
+/target/
+#Modeling stuff
+*.blend1
+*.blend2
+#libs
+/libs/
+/assets/
+/out/
+/crash-reports/
+/asm/
+/mods/
+*.log
+#Server stuff
+banned-ips.txt
+banned-players.txt
+ops.txt
+server.properties
+servers.dat
+white-list.txt
+/world/
+banned-ips.json
+banned-ips.txt.converted
+banned-players.json
+banned-players.txt.converted
+eula.txt
+ops.txt.converted
+ops.json
+usercache.json
+white-list.txt.converted
+whitelist.json
+world-20140811-075700.zip
+.cache

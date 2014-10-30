@@ -1,0 +1,222 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+import groovy.xml.MarkupBuilder
+
+import java.text.SimpleDateFormat
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            name = "forge"
+            url = "http://files.minecraftforge.net/maven"
+        }
+        maven {
+            name = "sonatype"
+            url = "https://oss.sonatype.org/content/repositories/snapshots/"
+        }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
+    }
+}
+
+repositories {
+    maven {
+        name "chickenbones"
+        url "http://chickenbones.net/maven/"
+    }
+}
+
+apply plugin: 'scala'
+apply plugin: 'forge'
+
+group = "mrtjp"
+archivesBaseName = "MrTJPCore"
+
+ext.configFile = file "build.properties"
+configFile.withReader {
+    def prop = new Properties()
+    prop.load(it)
+    //Referred to as 'config' or 'project.config'
+    project.ext.config = new ConfigSlurper().parse prop
+}
+
+configurations {
+    deployerJars
+}
+
+dependencies {
+    deployerJars "org.apache.maven.wagon:wagon-ftp:2.2"
+    compile "codechicken:CodeChickenLib:${config.mc.version}-${config.ccl.version}:dev"
+}
+
+def build_number = (System.getenv("BUILD_NUMBER") ?: "1")
+version = "${project.config.mod.version}."+build_number
+println config.mc.version+"-"+config.forge.version
+
+minecraft {
+    version = config.mc.version+"-"+config.forge.version
+    if (file('../run').exists()) {
+        runDir = "../run"
+    } else {
+        runDir = "run"
+    }
+}
+
+sourceSets {
+    main {
+        def root = project.projectDir
+        scala {
+            srcDir new File(root, "src")
+        }
+        resources {
+            srcDir new File(root, "resources")
+        }
+    }
+}
+
+task updateVersion(type: Copy) {
+    // Replace tokens
+    from(sourceSets.main.scala.srcDirs)
+    into 'build/sources/scala'
+    filter(ReplaceTokens, tokens: [
+            'VERSION'      : config.mod.version,
+            'BUILD_NUMBER' : build_number,
+            'MC_VERSION'   : config.mc.version,
+            'FORGE_VERSION': config.forge.version,
+            'CCL_VERSION'  : config.ccl.version
+    ])
+}
+
+processResources {
+    //redo task if any of these properties change
+    inputs.property "version", project.version
+    inputs.property "mc.version", config.mc.version
+    inputs.property "ccl.version", config.ccl.version
+
+    // Replace properties in all files
+    from(sourceSets.main.resources.srcDirs) {
+        include '**.info'
+        filter(ReplaceTokens, tokens: [
+                'VERSION'      : config.mod.version,
+                'BUILD_NUMBER' : build_number,
+                'MC_VERSION'   : config.mc.version,
+                'FORGE_VERSION': config.forge.version,
+                'CCL_VERSION'  : config.ccl.version
+        ])
+    }
+    // Copy everything else
+    from(sourceSets.main.resources.srcDirs) {
+        include 'assets/**/*.*'
+    }
+}
+
+compileScala.dependsOn updateVersion
+tasks.build.dependsOn('sourceJar', 'deobfJar')
+ext.jarVer = "${project.minecraft.version}-${project.version}"
+ext.jarFile = reobf.outputs.files.each {}.collect { zipTree(it) }
+
+task deobfJar(type: Jar) {
+    from sourceSets.main.output
+    classifier = 'dev'
+}
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'src'
+}
+
+jar {
+    manifest {
+        attributes 'FMLCorePlugin': 'mrtjp.core.handler.CorePlugin'
+        attributes 'FMLCorePluginContainsFMLMod': 'true'
+    }
+    classifier = 'universal'
+}
+
+def deployMeta()
+{
+    def writer = new StringWriter()
+    def xml = new MarkupBuilder(writer)
+
+    def today = new SimpleDateFormat('dd-MM-yyyy').format(new Date())
+
+    xml.deployMeta() {
+
+        date(today)
+
+        deps {
+            Minecraft(project.minecraft.version)
+            Forge(config.forge.version)
+            CCL(config.ccl.version)
+        }
+
+        isPublic(true)
+
+        isRecommended(false)
+    }
+    def file = new File(project.projectDir, "build/libs/deploymeta-${project.minecraft.version}-${project.version}.xml")
+    def stream = new FileOutputStream(file)
+    stream.write(writer.toString().bytes)
+    stream.close()
+
+    return file
+}
+
+artifacts {
+    archives deobfJar
+    archives sourceJar
+    archives deployMeta()
+}
+
+uploadArchives {
+    dependsOn 'reobf'
+    repositories {
+        mavenDeployer {
+            configuration = configurations.deployerJars
+
+            repository(url: project.mavenurl) {
+                authentication(userName: project.mavenusername, password: project.mavenpassword)
+            }
+
+            pom {
+                groupId = project.group
+                version = "${project.minecraft.version}-${project.version}"
+                artifactId = project.archivesBaseName
+                project {
+                    name project.archivesBaseName
+                    packaging 'jar'
+                    description project.archivesBaseName
+                    url 'https://github.com/MrTJP/'+project.archivesBaseName
+
+                    scm {
+                        url 'https://github.com/MrTJP/'+project.archivesBaseName
+                        connection 'scm:git:git://github.com/MrTJP/'+project.archivesBaseName+'.git'
+                        developerConnection 'scm:git:git@github.com:MrTJP/'+project.archivesBaseName+'.git'
+                    }
+
+                    issueManagement {
+                        system 'github'
+                        url 'https://github.com/MrTJP/'+project.archivesBaseName+'/issues'
+                    }
+
+                    licenses {
+                        license {
+                            name 'GNU Lesser Public License (GPL), Version 2.1'
+                            url 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt'
+                            distribution 'repo'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id 'mrtjp'
+                            name 'mrtjp'
+                            roles { role 'developer' }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
