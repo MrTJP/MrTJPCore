@@ -6,12 +6,13 @@
 package mrtjp.core.world
 
 import codechicken.lib.vec.BlockCoord
-import net.minecraft.block.{Block, BlockLeavesBase}
+import net.minecraft.block.{IGrowable, Block, BlockLeavesBase}
 import net.minecraft.entity.item.EntityItem
 import net.minecraft.item.ItemStack
 import net.minecraft.tileentity.TileEntity
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage
 import net.minecraft.world.{ChunkPosition, IBlockAccess, World}
+import net.minecraftforge.common.IPlantable
 
 object WorldLib
 {
@@ -110,6 +111,10 @@ object WorldLib
     def isLeafType(world:World, x:Int, y:Int, z:Int, b:Block) =
         b.isLeaves(world, x, y, z) || b.isInstanceOf[BlockLeavesBase]
 
-    def isPlantType(world:World, x:Int, y:Int, z:Int, b:Block) = b.isInstanceOf
-
+    def isPlantType(world:World, x:Int, y:Int, z:Int, b:Block) = b match
+    {
+        case b:IGrowable => true
+        case b:IPlantable => true
+        case _ => false
+    }
 }
