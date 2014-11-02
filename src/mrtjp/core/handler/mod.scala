@@ -11,6 +11,9 @@ import cpw.mods.fml.common.event.{FMLInitializationEvent, FMLPostInitializationE
 @Mod(modid = "MrTJPCoreMod", useMetadata = true, modLanguage = "scala")
 object MrTJPCoreMod
 {
+    final val version = "@VERSION@"
+    final val build = "@BUILD_NUMBER@"
+
     @Mod.EventHandler
     def preInit(event:FMLPreInitializationEvent)
     {
