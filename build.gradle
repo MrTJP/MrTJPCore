@@ -176,10 +176,11 @@ def deployMeta()
     stream.close()
 
     println("File written.")
-    if (file.exists()) println("Written file now confirmed to exist @"+file.getAbsolutePath())
+    def file2 = new File(new File(project.projectDir, "build/libs/"), "deploymeta-${project.minecraft.version}-${project.version}.xml")
+    if (file2.exists()) println("Written file now confirmed to exist @"+file2.getAbsolutePath())
     else {
         println("File still does not exist even after writing!!!!!!")
-        throw new FileNotFoundException(file.getAbsolutePath())
+        throw new FileNotFoundException(file2.getAbsolutePath())
     }
 
     return file
