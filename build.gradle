@@ -134,7 +134,13 @@ jar {
     classifier = 'universal'
 }
 
-def deployMeta()
+def deployMetaFile()
+{
+    new File(new File(project.projectDir, "build/libs/"),
+            "deploymeta-${project.minecraft.version}-${project.version}.xml")
+}
+
+def createDeployMeta()
 {
     def writer = new StringWriter()
     def xml = new MarkupBuilder(writer)
@@ -157,43 +163,23 @@ def deployMeta()
         isRecommended(false)
     }
 
-    def dir = new File(project.projectDir, "build/libs/")
-    dir.mkdirs()
-
-    def file = new File(dir, "deploymeta-${project.minecraft.version}-${project.version}.xml")
-    if (!file.exists()) file.createNewFile()
-
-    println("File '"+file.getAbsolutePath()+"' created. writing file...")
-    if (file.exists()) println("File now exists @"+file.getAbsolutePath())
-    else {
-        println("File still does not exist!!!!")
-        throw new FileNotFoundException(file.getAbsolutePath())
-    }
+    def file = deployMetaFile()
 
     def stream = new FileOutputStream(file)
-    stream.write(writer.toString().bytes)
+    stream.write(writer.toString().getBytes())
     stream.flush()
     stream.close()
-
-    println("File written.")
-    def file2 = new File(new File(project.projectDir, "build/libs/"), "deploymeta-${project.minecraft.version}-${project.version}.xml")
-    if (file2.exists()) println("Written file now confirmed to exist @"+file2.getAbsolutePath())
-    else {
-        println("File still does not exist even after writing!!!!!!")
-        throw new FileNotFoundException(file2.getAbsolutePath())
-    }
-
-    return file
 }
 
 artifacts {
     archives deobfJar
     archives sourceJar
-    archives deployMeta()
+    archives deployMetaFile()
 }
 
 uploadArchives {
     dependsOn 'reobf'
+    doFirst {createDeployMeta()}
     repositories {
         if (project.hasProperty("mavenurl"))
         {
