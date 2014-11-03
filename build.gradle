@@ -163,9 +163,24 @@ def deployMeta()
     def file = new File(dir, "deploymeta-${project.minecraft.version}-${project.version}.xml")
     if (!file.exists()) file.createNewFile()
 
+    println("File '"+file.getAbsolutePath()+"' created. writing file...")
+    if (file.exists()) println("File now exists @"+file.getAbsolutePath())
+    else {
+        println("File still does not exist!!!!")
+        throw new FileNotFoundException(file.getAbsolutePath())
+    }
+
     def stream = new FileOutputStream(file)
     stream.write(writer.toString().bytes)
+    stream.flush()
     stream.close()
+
+    println("File written.")
+    if (file.exists()) println("Written file now confirmed to exist @"+file.getAbsolutePath())
+    else {
+        println("File still does not exist even after writing!!!!!!")
+        throw new FileNotFoundException(file.getAbsolutePath())
+    }
 
     return file
 }
