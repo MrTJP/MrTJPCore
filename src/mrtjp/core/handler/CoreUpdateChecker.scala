@@ -10,7 +10,7 @@ import mrtjp.core.data.UpdateChecker
 class CoreUpdateChecker extends UpdateChecker
 {
     override def mavenRootURL = "http://projectredwiki.com/maven"
-    override def changelogURL = "http://raw.githubusercontent.com/MrTJP/MrTJPCore/master/resources/Changelog"
+    override def changelogURL = "https://raw.githubusercontent.com/MrTJP/MrTJPCore/master/resources/Changelog"
 
     override def group = "mrtjp"
     override def project = "MrTJPCore"

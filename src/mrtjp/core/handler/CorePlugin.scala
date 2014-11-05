@@ -14,7 +14,7 @@ class CorePlugin extends IFMLLoadingPlugin with IFMLCallHook
 {
     override def getASMTransformerClass = Array()
 
-    override def getSetupClass = ""
+    override def getSetupClass = "mrtjp.core.handler.CorePlugin"
 
     override def getModContainerClass = null
 
