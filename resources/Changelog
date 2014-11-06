@@ -1,6 +1,9 @@
+v1.0.2
+- FIX: Item copy crash
+
 v1.0.1
-- Fix update checker
-- Added Inventory trait
+- FIX: Update checker
+- ADDED: Inventory trait
 
 v1.0.0
 - Initial release
