@@ -48,7 +48,7 @@ class ItemKey(val item:Item, val itemDamage:Int, val tag:NBTTagCompound) extends
     def makeStack(size:Int) =
     {
         val stack = new ItemStack(item, size, itemDamage)
-        stack.setTagCompound(tag)
+        stack.setTagCompound(tag.copy().asInstanceOf[NBTTagCompound])
         stack
     }
 

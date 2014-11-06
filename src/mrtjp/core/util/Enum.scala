@@ -33,7 +33,6 @@ trait Enum
 
     protected trait Value extends Ordered[EnumVal]
     {
-        //self:EnumVal =>
         def getThis = this.asInstanceOf[EnumVal]
 
         final val ordinal = addEnumVal(getThis)
@@ -43,15 +42,11 @@ trait Enum
 
         private[Enum] val outerEnum = thisenum
 
-        override def compare(that:EnumVal) =
-            if (this.ordinal < that.ordinal) -1
-            else if (this.ordinal == that.ordinal) 0
-            else 1
+        override def compare(that:EnumVal) = this.ordinal-that.ordinal
 
         override def equals(other:Any) = other match
         {
-            case that:Value => (outerEnum == that.outerEnum) &&
-                (ordinal == that.ordinal)
+            case that:Value => (outerEnum == that.outerEnum) && (ordinal == that.ordinal)
             case _ => false
         }
 
@@ -70,7 +65,7 @@ trait Enum
         }
     }
 
-    private[Enum] object ValOrdering extends Ordering[EnumVal]
+    object ValOrdering extends Ordering[EnumVal]
     {
         override def compare(x:EnumVal, y:EnumVal) = x compare y
     }
@@ -102,7 +97,7 @@ trait Enum
 
         def newBuilder = new MBuilder[EnumVal, ValSet]
         {
-            private[this] val b = new MBitSet
+            private val b = new MBitSet
             def +=(x:EnumVal) = {b += x.ordinal; this}
             def clear() = b.clear()
             def result() = new ValSet(b.toImmutable)

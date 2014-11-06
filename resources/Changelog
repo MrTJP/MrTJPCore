@@ -1,2 +1,6 @@
+v1.0.1
+- Fix update checker
+- Added Inventory trait
+
 v1.0.0
 - Initial release

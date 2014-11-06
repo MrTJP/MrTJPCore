@@ -14,6 +14,7 @@ import net.minecraft.tileentity.TileEntityChest
 import net.minecraft.world.World
 import net.minecraftforge.oredict.OreDictionary
 
+//TODO refine for external registration
 object InvWrapper
 {
     var wrappers = Seq[InvWrapper]()
@@ -422,12 +423,6 @@ trait TDefWrapHandler extends InvWrapper
         toExtract - left
     }
 
-    /**
-     * Return an ordered map of all available [ItemKey, Amount] in the
-     * inventory. The actual inventory is not manipulated.
-     *
-     * @return
-     */
     override def getAllItemStacks =
     {
         var items = Map[ItemKey, Int]()
