@@ -13,7 +13,6 @@ import scala.collection.immutable.HashMap
 
 object ItemKey
 {
-    def apply(stack:ItemStack) = get(stack)
     def get(stack:ItemStack) =
     {
         if (stack == null) null
@@ -62,10 +61,8 @@ class ItemKey(val item:Item, val itemDamage:Int, val tag:NBTTagCompound) extends
 
 object ItemKeyStack
 {
-    def apply(key:ItemKey, size:Int) = get(key, size)
     def get(key:ItemKey, size:Int) = new ItemKeyStack(key, size)
 
-    def apply(stack:ItemStack) = get(stack)
     def get(stack:ItemStack) =
     {
         if (stack == null) null
@@ -114,4 +111,19 @@ class ItemQueue extends Growable[(ItemKey, Int)]
     def ++=(that:ItemQueue) = {that.result.foreach(this += _); this}
 
     def result = collection
+}
+
+object ItemKeyConversions
+{
+    implicit def itemToIK(item:Item) = ItemKey.get(new ItemStack(item))
+    implicit def IKToItem(i:ItemKey) = i.getItem
+
+    implicit def stackToIK(stack:ItemStack) = ItemKey.get(stack)
+    implicit def IKToStack(key:ItemKey) = key.makeStack(0)
+
+    implicit def stackToIKS(stack:ItemStack) = ItemKeyStack.get(stack)
+    implicit def IKSToStack(key:ItemKeyStack) = key.makeStack
+
+    implicit def KToKS(key:ItemKey) = ItemKeyStack.get(key, 0)
+    implicit def KSToK(key:ItemKeyStack) = key.key
 }

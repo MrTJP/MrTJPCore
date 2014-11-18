@@ -32,9 +32,12 @@ object GuiHandler
         val packet = new PacketCustom(MrTJPCoreSPH.channel, MrTJPCoreSPH.guiPacket)
         dataWrite(packet.writeByte(player.currentWindowId).writeShort(guiID))
         packet.sendToPlayer(player)
-        player.openContainer = cont
-        player.openContainer.windowId = player.currentWindowId
-        player.openContainer.addCraftingToCrafters(player)
+        if (cont != null)
+        {
+            player.openContainer = cont
+            player.openContainer.windowId = player.currentWindowId
+            player.openContainer.addCraftingToCrafters(player)
+        }
     }
 
     /**
@@ -82,7 +85,7 @@ trait TGuiBuilder
     @SideOnly(Side.CLIENT)
     def buildGui(player:EntityPlayer, data:MCDataInput):GuiScreen
 
-    def open(player:EntityPlayer, cont:Container){open(player, cont, {d => })}
+    def open(player:EntityPlayer, cont:Container){open(player, cont, {packet => })}
     def open(player:EntityPlayer, cont:Container, dataWrite:MCDataOutput => Unit)
     {
         GuiHandler.openSMPContainer(player, cont, getID, dataWrite)

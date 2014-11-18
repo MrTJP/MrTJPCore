@@ -123,7 +123,7 @@ task deobfJar(type: Jar) {
 
 task sourceJar(type: Jar) {
     from sourceSets.main.allSource
-    classifier = 'src'
+    classifier = 'sources'
 }
 
 jar {
