@@ -1,3 +1,7 @@
+v1.0.3
+- ADDED: Containerless GUI compatibility
+- ADDED: Implicit ItemKey-ItemStack conversions
+
 v1.0.2
 - FIX: Item copy crash
 
