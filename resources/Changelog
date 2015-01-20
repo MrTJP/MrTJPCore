@@ -1,3 +1,13 @@
+v1.0.4
+- ADDED: Weighted Random resolver
+- ADDED: Crude cubemap rendering
+- ADDED: New world helper functions
+- ADDED: Model parsing helpder functions
+- ADDED: World generation and retrogen handler
+- ADDED: World generators
+- ADDED: Plant helper classes
+- ADDED: Perlin Noise Generator
+
 v1.0.3
 - ADDED: Containerless GUI compatibility
 - ADDED: Implicit ItemKey-ItemStack conversions

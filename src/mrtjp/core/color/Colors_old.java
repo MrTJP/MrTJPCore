@@ -13,7 +13,8 @@ import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import org.lwjgl.opengl.GL11;
 
-public enum Colors
+@Deprecated
+public enum Colors_old
 {
     WHITE(0xFFFFFF),
     ORANGE(0xC06300),
@@ -32,10 +33,10 @@ public enum Colors
     RED(0xA20F06),
     BLACK(0x1F1F1F);
 
-    public static final Colors[] VALID_COLORS = values();
+    public static final Colors_old[] VALID_COLORS = values();
     private static final String[] dyeDictionary = { "dyeBlack", "dyeRed", "dyeGreen", "dyeBrown", "dyeBlue", "dyePurple", "dyeCyan", "dyeLightGray", "dyeGray", "dyePink", "dyeLime", "dyeYellow", "dyeLightBlue", "dyeMagenta", "dyeOrange", "dyeWhite" };
 
-    private Colors(int rgb)
+    private Colors_old(int rgb)
     {
         name = name().substring(0, 1) + name().substring(1).toLowerCase();
         this.rgb = rgb;
@@ -65,7 +66,7 @@ public enum Colors
     public final int rgba;
     public final int argb;
 
-    public static Colors get(int i)
+    public static Colors_old get(int i)
     {
         if (i > 15)
             return BLACK;

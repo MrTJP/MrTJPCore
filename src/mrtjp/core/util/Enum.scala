@@ -31,7 +31,8 @@ trait Enum
         if (vals.isDefinedAt(ordinal)) vals(ordinal)
         else null.asInstanceOf[EnumVal]
 
-    protected trait Value extends Ordered[EnumVal]
+    protected trait Value extends ValueSubtype
+    protected trait ValueSubtype extends Ordered[EnumVal]
     {
         def getThis = this.asInstanceOf[EnumVal]
 

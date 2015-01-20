@@ -9,7 +9,7 @@ import java.util.{Random, ArrayList => JArrayList, List => JList}
 
 import codechicken.lib.data.{MCDataInput, MCDataOutput}
 import codechicken.lib.packet.{ICustomPacketTile, PacketCustom}
-import codechicken.lib.vec.{BlockCoord, Rotation, Vector3}
+import codechicken.lib.vec.{Cuboid6, BlockCoord, Rotation, Vector3}
 import cpw.mods.fml.client.registry.ISimpleBlockRenderingHandler
 import cpw.mods.fml.common.registry.GameRegistry
 import cpw.mods.fml.relauncher.{Side, SideOnly}
@@ -190,7 +190,7 @@ class InstancedBlock(name:String, mat:Material) extends BlockContainer(mat)
                 val il = getDrops(world, x, y, z, md, EnchantmentHelper.getFortuneModifier(player))
                 for (it <- il) WorldLib.dropItem(world, x, y, z, it)
             }
-            world.setBlock(x, y, z, Blocks.air)
+            world.setBlockToAir(x, y, z)
             true
         }
     }
@@ -206,10 +206,10 @@ class InstancedBlock(name:String, mat:Material) extends BlockContainer(mat)
         new JArrayList[ItemStack](list)
     }
 
-    override def getPickBlock(target:MovingObjectPosition, w:World, x:Int, y:Int, z:Int) =  w.getTileEntity(x, y, z) match
+    override def getPickBlock(target:MovingObjectPosition, w:World, x:Int, y:Int, z:Int, p:EntityPlayer) =  w.getTileEntity(x, y, z) match
     {
         case t:InstancedBlockTile => t.getPickBlock
-        case _ => super.getPickBlock(target, w, x, y, z)
+        case _ => super.getPickBlock(target, w, x, y, z, p)
     }
 
     override def onNeighborBlockChange(w:World, x:Int, y:Int, z:Int, b:Block)
@@ -278,12 +278,21 @@ class InstancedBlock(name:String, mat:Material) extends BlockContainer(mat)
 
         w.getTileEntity(x, y, z) match
         {
-            case t:InstancedBlockTile => t.getCollisionBoundingBox match
+            case t:InstancedBlockTile => t.getBlockBounds match
             {
                 case null => getSuper
-                case bb => bb
+                case bb => bb.toAABB
             }
             case _ => getSuper
+        }
+    }
+
+    override def setBlockBoundsBasedOnState(w:IBlockAccess, x:Int, y:Int, z:Int)
+    {
+        w.getTileEntity(x, y, z) match
+        {
+            case t:InstancedBlockTile => t.getBlockBounds.setBlockBounds(this)
+            case _ => super.setBlockBoundsBasedOnState(w, x, y, z)
         }
     }
 
@@ -305,6 +314,12 @@ class InstancedBlock(name:String, mat:Material) extends BlockContainer(mat)
         case _ => super.isSideSolid(w, x, y, z, side)
     }
 
+    override def updateTick(w:World, x:Int, y:Int, z:Int, rand:Random) = w.getTileEntity(x, y, z) match
+    {
+        case t:InstancedBlockTile => t.randomTick(rand)
+        case _ => super.updateTick(w, x, y, z, rand)
+    }
+
     @SideOnly(Side.CLIENT)
     override def getSubBlocks(thisItem:Item, tab:CreativeTabs, list:JList[_])
     {
@@ -324,7 +339,7 @@ trait TTileOrient extends InstancedBlockTile
     def setSide(s:Int)
     {
         val oldOrient = orientation
-        orientation = (orientation&0x3|s<<2).asInstanceOf[Byte]
+        orientation = (orientation&0x3|s<<2).toByte
         if (oldOrient != orientation) onOrientChanged(oldOrient)
     }
 
@@ -333,7 +348,7 @@ trait TTileOrient extends InstancedBlockTile
     def setRotation(r:Int)
     {
         val oldOrient = orientation
-        orientation = (orientation&0xFC|r).asInstanceOf[Byte]
+        orientation = (orientation&0xFC|r).toByte
         if (oldOrient != orientation) onOrientChanged(oldOrient)
     }
 
@@ -404,15 +419,17 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
 
     def onBlockActivated(player:EntityPlayer, side:Int) = false
 
-    def onEntityCollidedWithBlock(ent:Entity) {}
+    def onEntityCollidedWithBlock(ent:Entity){}
 
-    def getCollisionBoundingBox:AxisAlignedBB = null
+    def getBlockBounds = Cuboid6.full
 
     def onScheduledTick(){}
 
     def updateClient(){}
 
     def update(){}
+
+    def randomTick(rand:Random){}
 
     def getBlock:Block
 
@@ -426,6 +443,9 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
     }
 
     def world = worldObj
+    def x = xCoord
+    def y = yCoord
+    def z = zCoord
 
     def scheduleTick(time:Int)
     {
@@ -441,28 +461,28 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
     {
         val il = new ListBuffer[ItemStack]
         addHarvestContents(il)
-        for (stack <- il) WorldLib.dropItem(worldObj, xCoord, yCoord, zCoord, stack)
-        worldObj.setBlock(xCoord, yCoord, zCoord, Blocks.air)
+        for (stack <- il) WorldLib.dropItem(world, x, y, z, stack)
+        world.setBlockToAir(x, y, z)
     }
 
     override def markDirty()
     {
-        worldObj.markTileEntityChunkModified(xCoord, yCoord, zCoord, this)
+        world.markTileEntityChunkModified(x, y, z, this)
     }
 
     final def markRender()
     {
-        worldObj.func_147479_m(xCoord, yCoord, zCoord)
+        world.func_147479_m(x, y, z)
     }
 
     final def markLight()
     {
-        worldObj.updateLightByType(EnumSkyBlock.Block, xCoord, yCoord, zCoord)
+        world.updateLightByType(EnumSkyBlock.Block, x, y, z)
     }
 
     final def markDescUpdate()
     {
-        worldObj.markBlockForUpdate(xCoord, yCoord, zCoord)
+        world.markBlockForUpdate(x, y, z)
     }
 
     final override def updateEntity()
@@ -524,7 +544,7 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
     final def writeStream(key:Int):PacketCustom =
     {
         val stream = new PacketCustom(MrTJPCoreSPH.channel, MrTJPCoreSPH.tilePacket)
-        stream.writeCoord(xCoord, yCoord, zCoord).writeByte(key)
+        stream.writeCoord(x, y, z).writeByte(key)
         stream
     }
 
@@ -535,7 +555,7 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
     {
         def sendToChunk()
         {
-            out.sendToChunk(world, xCoord>>4, zCoord>>4)
+            out.sendToChunk(world, x>>4, y>>4)
         }
     }
 }

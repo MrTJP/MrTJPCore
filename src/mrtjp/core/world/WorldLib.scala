@@ -6,13 +6,16 @@
 package mrtjp.core.world
 
 import codechicken.lib.vec.BlockCoord
-import net.minecraft.block.{IGrowable, Block, BlockLeavesBase}
+import mrtjp.core.math.{PerlinNoiseGenerator, MathLib}
+import net.minecraft.block.{Block, IGrowable}
 import net.minecraft.entity.item.EntityItem
 import net.minecraft.item.ItemStack
 import net.minecraft.tileentity.TileEntity
+import net.minecraft.world
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage
-import net.minecraft.world.{ChunkPosition, IBlockAccess, World}
+import net.minecraft.world._
 import net.minecraftforge.common.IPlantable
+import net.minecraftforge.oredict.OreDictionary
 
 object WorldLib
 {
@@ -65,6 +68,29 @@ object WorldLib
         }
     }
 
+    def centerEject(w:World, bc:BlockCoord, stack:ItemStack, dir:Int, vel:Double)
+    {
+        centerEject(w, bc.x, bc.y, bc.z, stack, dir, vel)
+    }
+    def centerEject(w:World, x:Int, y:Int, z:Int, stack:ItemStack, dir:Int, vel:Double)
+    {
+        val bc = new BlockCoord(x, y, z).offset(dir)
+        val item = new EntityItem(w, bc.x+0.5D, bc.y+0.5D, bc.z+0.5D, stack)
+
+        item.motionX = 0; item.motionY = 0; item.motionZ = 0
+        item.delayBeforeCanPickup = 10
+        dir match
+        {
+            case 0 => item.motionY = -vel
+            case 1 => item.motionY =  vel
+            case 2 => item.motionZ = -vel
+            case 3 => item.motionZ =  vel
+            case 4 => item.motionX = -vel
+            case 5 => item.motionX =  vel
+        }
+        w.spawnEntityInWorld(item)
+    }
+
     def packCoords(x:Int, y:Int, z:Int):Long =
         (x+30000000).toLong|(z+30000000).toLong<<26|y.toLong<<52
 
@@ -109,12 +135,73 @@ object WorldLib
             world.getTileEntity(x, y, z))
 
     def isLeafType(world:World, x:Int, y:Int, z:Int, b:Block) =
-        b.isLeaves(world, x, y, z) || b.isInstanceOf[BlockLeavesBase]
+        b.isLeaves(world, x, y, z) || OreDictionary.getOreIDs(new ItemStack(b)).contains(OreDictionary.getOreID("treeLeaves"))
 
     def isPlantType(world:World, x:Int, y:Int, z:Int, b:Block) = b match
     {
         case b:IGrowable => true
         case b:IPlantable => true
-        case _ => false
+        case _ => b.isFoliage(world, x, y, z)
+    }
+
+    def isBlockSoft(world:World, x:Int, y:Int, z:Int, b:Block) =
+        b.isAir(world, x, y, z) || b.isReplaceable(world, x, y, z) ||
+                isLeafType(world, x, y, z, b) || isPlantType(world, x, y, z, b) ||
+                b.canBeReplacedByLeaves(world, x, y, z)
+
+    def isAssociatedTreeBlock(world:World, x:Int, y:Int, z:Int, b:Block) =
+    {
+        import net.minecraft.init.Blocks._
+        Seq(log, log2, leaves, leaves2, vine, cocoa).contains(b) || isLeafType(world, x, y, z, b) ||
+                OreDictionary.getOreIDs(new ItemStack(b)).contains(OreDictionary.getOreID("logWood"))
+    }
+
+    def findSurfaceHeight(world:World, x:Int, z:Int) =
+    {
+        var y = world.getHeightValue(x, z)+1
+        do y -= 1 while (y >= 0 && {val b = world.getBlock(x, y, z); isBlockSoft(world, x, y, z, b) || isAssociatedTreeBlock(world, x, y, z, b)})
+        y
+    }
+
+    def isBlockTouchingAir(world:World, b:BlockCoord):Boolean =
+    {
+        for (s <- 0 until 6)
+        {
+            val bc = b.copy.offset(s)
+            if (world.isAirBlock(bc.x, bc.y, bc.z)) return true
+        }
+        false
+    }
+
+    def isBlockUnderTree(world:World, x:Int, y:Int, z:Int):Boolean =
+    {
+        if (world.canBlockSeeTheSky(x, y, z)) return false
+        for (h <- y until world.getHeight)
+        {
+            val b = world.getBlock(x, h, z)
+            if (isLeafType(world, x, h, z, b) || isAssociatedTreeBlock(world, x, h, z, b)) return true
+        }
+        false
+    }
+
+    def getSkyLightValue(w:World, x:Int, y:Int, z:Int) =
+        w.getSavedLightValue(EnumSkyBlock.Sky, x, y, z)-w.skylightSubtracted
+
+    def getBlockLightValue(w:World, x:Int, y:Int, z:Int) = w.getSavedLightValue(EnumSkyBlock.Block, x, y, z)
+
+    private val noise = new PerlinNoiseGenerator(2576710L)
+    def getWindSpeed(w:World, x:Int, y:Int, z:Int):Double =
+    {
+        if (w.provider.isHellWorld) return 0.5D
+        var nv = noise.noise(w.getWorldTime*0.00000085D, 0, 0, 5, 7.5D, 5.0D, true)
+
+        nv = math.max(0.0D, 1.6D*(nv-0.006D)+0.06D)*math.sqrt(y)/16.0D
+
+        val bgb = w.getBiomeGenForCoords(x, z)
+        if (bgb.canSpawnLightningBolt)
+            if (w.isThundering) return 2.5D*nv
+            else if (w.isRaining) return 0.5D+0.5D*nv
+
+        nv
     }
 }

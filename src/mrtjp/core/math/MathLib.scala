@@ -5,10 +5,12 @@
  */
 package mrtjp.core.math
 
+import java.lang
 import java.util.Random
 
 import codechicken.lib.vec.{BlockCoord, Vector3}
 import net.minecraft.entity.Entity
+import net.minecraft.world.gen.NoiseGeneratorPerlin
 import org.lwjgl.util.vector.{Matrix4f, Vector3f}
 
 object MathLib
@@ -95,7 +97,7 @@ object MathLib
     }
 
     private val random = new Random
-    def randomFromIntRange(az:Range) = az(random.nextInt(az.size))
+    def randomFromIntRange(az:Range, rand:Random = random) = az(rand.nextInt(az.size))
 
     def leastSignificant(mask:Int) =
     {
@@ -103,5 +105,12 @@ object MathLib
         var m = mask
         while ((m&1) == 0 && m != 0){ bit += 1; m <<= 1 }
         bit
+    }
+
+    def weightedRandom[T](xs:Traversable[(T, Int)], rand:Random = random):T =
+    {
+        if (xs.size == 1) return xs.head._1
+        var weight = rand.nextInt(xs.map(_._2).sum)
+        xs.find(x => {weight -= x._2; weight < 0}).get._1
     }
 }

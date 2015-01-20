@@ -27,7 +27,7 @@ class ItemKey(val item:Item, val itemDamage:Int, val tag:NBTTagCompound) extends
 
     override def hashCode = hash
 
-    override def equals(other:Any) = other match
+    override def equals(other:Any) = other match //TODO add cases for strings(oredict), blocks, items, etc
     {
         case that:ItemKey =>
             item == that.item && itemDamage == that.itemDamage &&
@@ -115,15 +115,15 @@ class ItemQueue extends Growable[(ItemKey, Int)]
 
 object ItemKeyConversions
 {
-    implicit def itemToIK(item:Item) = ItemKey.get(new ItemStack(item))
-    implicit def IKToItem(i:ItemKey) = i.getItem
+    implicit def itemToIK(item:Item):ItemKey = ItemKey.get(new ItemStack(item))
+    implicit def IKToItem(i:ItemKey):Item = i.getItem
 
-    implicit def stackToIK(stack:ItemStack) = ItemKey.get(stack)
-    implicit def IKToStack(key:ItemKey) = key.makeStack(0)
+    implicit def stackToIK(stack:ItemStack):ItemKey = ItemKey.get(stack)
+    implicit def IKToStack(key:ItemKey):ItemStack = key.makeStack(0)
 
-    implicit def stackToIKS(stack:ItemStack) = ItemKeyStack.get(stack)
-    implicit def IKSToStack(key:ItemKeyStack) = key.makeStack
+    implicit def stackToIKS(stack:ItemStack):ItemKeyStack = ItemKeyStack.get(stack)
+    implicit def IKSToStack(key:ItemKeyStack):ItemStack = key.makeStack
 
-    implicit def KToKS(key:ItemKey) = ItemKeyStack.get(key, 0)
-    implicit def KSToK(key:ItemKeyStack) = key.key
+    implicit def KToKS(key:ItemKey):ItemKeyStack = ItemKeyStack.get(key, 0)
+    implicit def KSToK(key:ItemKeyStack):ItemKey = key.key
 }

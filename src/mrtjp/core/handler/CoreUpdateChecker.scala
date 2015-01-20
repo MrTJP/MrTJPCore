@@ -17,7 +17,7 @@ class CoreUpdateChecker extends UpdateChecker
 
     override def currentVersion = MrTJPCoreMod.version+"."+MrTJPCoreMod.build
 
-    override def checkUnstable = true //TODO
+    override def checkUnstable = MrTJPConfig.check_unstable
 
     override def shouldRun = !MrTJPCoreMod.version.contains("@")
 }

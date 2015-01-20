@@ -9,7 +9,7 @@ import java.util.{List => JList}
 
 import codechicken.lib.gui.GuiDraw
 import codechicken.lib.render.FontUtils
-import mrtjp.core.color.Colors
+import mrtjp.core.color.Colors_old
 import mrtjp.core.item.ItemKeyStack
 import mrtjp.core.vec.{Point, Rect}
 import net.minecraft.client.gui.Gui
@@ -116,7 +116,7 @@ class WidgetItemList(x:Int, y:Int, w:Int, h:Int) extends TWidget
             hover.makeStack.getTooltip(mcInst.thePlayer,
                 mcInst.gameSettings.advancedItemTooltips).asInstanceOf[JList[String]])
         FontUtils.drawCenteredString(
-            "Page: "+(currentPage+1)+"/"+(pagesNeeded+1), x+(bWidth/2), y+bHeight+6, Colors.BLACK.rgb)
+            "Page: "+(currentPage+1)+"/"+(pagesNeeded+1), x+(bWidth/2), y+bHeight+6, Colors_old.BLACK.rgb)
     }
 
     override def mouseClicked_Impl(p:Point, button:Int, consumed:Boolean) =

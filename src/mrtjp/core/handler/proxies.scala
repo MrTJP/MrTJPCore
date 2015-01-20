@@ -11,7 +11,7 @@ import cpw.mods.fml.common.FMLCommonHandler
 import cpw.mods.fml.relauncher.{Side, SideOnly}
 import mrtjp.core.block.TileRenderRegistry
 import mrtjp.core.render.RenderTicker
-import mrtjp.core.world.Messenger
+import mrtjp.core.world.{Messenger, SimpleGenHandler}
 import net.minecraftforge.common.MinecraftForge
 
 class MrTJPCoreProxy_server
@@ -21,6 +21,7 @@ class MrTJPCoreProxy_server
     def init()
     {
         PacketCustom.assignHandler(MrTJPCoreSPH.channel, MrTJPCoreSPH)
+        SimpleGenHandler.init()
     }
 
     def postInit(){}

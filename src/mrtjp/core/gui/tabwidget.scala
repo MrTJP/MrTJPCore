@@ -6,7 +6,7 @@
 package mrtjp.core.gui
 
 import codechicken.lib.gui.GuiDraw
-import mrtjp.core.color.Colors
+import mrtjp.core.color.Colors_old
 import mrtjp.core.vec.{Point, Rect}
 import net.minecraft.client.renderer.RenderHelper
 import net.minecraft.client.renderer.entity.RenderItem
@@ -19,7 +19,7 @@ import scala.collection.mutable.ListBuffer
 
 class WidgetTab(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TWidget
 {
-    def this(wMin:Int, hMin:Int, wMax:Int, hMax:Int) = this(wMin, hMin, wMax, hMax, Colors.LIGHT_GREY.rgb)
+    def this(wMin:Int, hMin:Int, wMax:Int, hMax:Int) = this(wMin, hMin, wMax, hMax, Colors_old.LIGHT_GREY.rgb)
 
     var currentW = wMin.asInstanceOf[Double]
     var currentH = wMin.asInstanceOf[Double]

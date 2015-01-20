@@ -6,7 +6,10 @@
 package mrtjp.core.vec
 
 import codechicken.lib.raytracer.IndexedCuboid6
+import codechicken.lib.render.CCModel
 import codechicken.lib.vec._
+import net.minecraft.util.ResourceLocation
+import scala.collection.JavaConversions._
 
 object VecLib
 {
@@ -35,5 +38,26 @@ object VecLib
         var t = Rotation.sideOrientation(orient%24>>2, orient&3)
         if (orient >= 24) t = new Scale(-1, 1, 1).`with`(t)
         t.at(Vector3.center)
+    }
+
+    def parseCorrectedModel(loc:String) =
+    {
+        val models = mapAsScalaMap(CCModel.parseObjModels(new ResourceLocation(loc)))
+        models.map(m => m._1 -> m._2.backfacedCopy())
+    }
+
+    def finishModel(m:CCModel) =
+    {
+        m.computeNormals()
+        m.shrinkUVs(0.0005)
+    }
+
+    def loadModel(loc:String) = finishModel(CCModel.combine(parseCorrectedModel(loc).values))
+
+    def loadModels(loc:String) =
+    {
+        val models = parseCorrectedModel(loc)
+        models.values.foreach(finishModel)
+        models
     }
 }
