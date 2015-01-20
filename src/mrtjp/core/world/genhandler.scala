@@ -7,14 +7,13 @@ package mrtjp.core.world
 
 import java.util.Random
 
-import cpw.mods.fml.common.{FMLCommonHandler, IWorldGenerator}
 import cpw.mods.fml.common.eventhandler.SubscribeEvent
 import cpw.mods.fml.common.gameevent.TickEvent.{Phase, WorldTickEvent}
 import cpw.mods.fml.common.registry.GameRegistry
+import cpw.mods.fml.common.{FMLCommonHandler, IWorldGenerator}
 import cpw.mods.fml.relauncher.Side
 import mrtjp.core.handler.MrTJPConfig
 import mrtjp.core.handler.MrTJPCoreMod.log
-import mrtjp.projectred.core.Configurator
 import net.minecraft.nbt.{NBTTagCompound, NBTTagList, NBTTagString}
 import net.minecraft.world.World
 import net.minecraft.world.chunk.IChunkProvider
