@@ -272,21 +272,6 @@ class InstancedBlock(name:String, mat:Material) extends BlockContainer(mat)
         case _ =>
     }
 
-    override def getCollisionBoundingBoxFromPool(w:World, x:Int, y:Int, z:Int) =
-    {
-        def getSuper = super.getCollisionBoundingBoxFromPool(w, x, y, z)
-
-        w.getTileEntity(x, y, z) match
-        {
-            case t:InstancedBlockTile => t.getBlockBounds match
-            {
-                case null => getSuper
-                case bb => bb.toAABB
-            }
-            case _ => getSuper
-        }
-    }
-
     override def setBlockBoundsBasedOnState(w:IBlockAccess, x:Int, y:Int, z:Int)
     {
         w.getTileEntity(x, y, z) match
@@ -555,7 +540,7 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
     {
         def sendToChunk()
         {
-            out.sendToChunk(world, x>>4, y>>4)
+            out.sendToChunk(world, x>>4, z>>4)
         }
     }
 }

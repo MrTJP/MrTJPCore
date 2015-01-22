@@ -50,7 +50,7 @@ dependencies {
     compile "codechicken:CodeChickenLib:${config.mc.version}-${config.ccl.version}:dev"
 }
 
-def build_number = (System.getenv("BUILD_NUMBER") ?: "1")
+def build_number = project.hasProperty("manualbuildnum") ? project.manualbuildnum : (System.getenv("BUILD_NUMBER") ?: "1")
 version = "${project.config.mod.version}."+build_number
 println config.mc.version+"-"+config.forge.version
 
