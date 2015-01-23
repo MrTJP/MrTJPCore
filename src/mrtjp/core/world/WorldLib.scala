@@ -7,7 +7,7 @@ package mrtjp.core.world
 
 import codechicken.lib.vec.BlockCoord
 import mrtjp.core.math.{PerlinNoiseGenerator, MathLib}
-import net.minecraft.block.{Block, IGrowable}
+import net.minecraft.block.{BlockGrass, BlockGlass, Block, IGrowable}
 import net.minecraft.entity.item.EntityItem
 import net.minecraft.item.ItemStack
 import net.minecraft.tileentity.TileEntity
@@ -139,7 +139,7 @@ object WorldLib
 
     def isPlantType(world:World, x:Int, y:Int, z:Int, b:Block) = b match
     {
-        case b:IGrowable => true
+        case b:IGrowable => !b.isInstanceOf[BlockGrass]
         case b:IPlantable => true
         case _ => b.isFoliage(world, x, y, z)
     }

@@ -20,7 +20,8 @@ trait UpdateChecker extends Thread
 {
     setName(project+" version checker")
     setDaemon(true)
-    try { FMLCommonHandler.instance().bus().register(this) } catch { case t:Throwable => }
+
+    try { if (shouldRun) FMLCommonHandler.instance.bus.register(this) } catch { case t:Throwable => }
 
     def mavenRootURL:String
     def group:String

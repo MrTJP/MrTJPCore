@@ -45,6 +45,7 @@ object MrTJPConfig
     var retro_gen = false
     var retro_gen_id = "mrtjp_gen"
 
+    var check_versions = true
     var check_unstable = false
 
     def loadConfig()
@@ -52,6 +53,7 @@ object MrTJPConfig
         val config = new Configuration(new File(Loader.instance.getConfigDir, "MrTJPCore.cfg"))
         config.load()
 
+        check_versions = config.get("General", "check_versions", true, "Flag to enable or disable the update checker.").getBoolean
         check_unstable = config.get("General", "check_unstable", false, "Flag to set if the update checker should consider unstable builds as a new version.").getBoolean
 
         retro_gen = config.get("World Gen", "retro_gen", false, "Toggle to enable retrogeneration, a feature that would allow ores to be generated after the world has been created.").getBoolean

@@ -62,10 +62,7 @@ trait TPlantBlock extends InstancedBlock with IPlantable with IGrowable
 
     //2 useless callbacks for IGrowable, easily handled with just the above method.
     override def func_149852_a(w:World, rand:Random, x:Int, y:Int, z:Int) = false
-
-    //do apply
-    override def func_149853_b(w:World, rand:Random, x:Int, y:Int, z:Int)
-    {} //do grow
+    override def func_149853_b(w:World, rand:Random, x:Int, y:Int, z:Int){}
 }
 
 trait TPlantTile extends InstancedBlockTile
