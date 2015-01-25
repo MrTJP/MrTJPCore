@@ -130,6 +130,9 @@ object WorldLib
         ch.chunkTileEntityMap.get(new ChunkPosition(x&0xF, y, z&0xF)).asInstanceOf[TileEntity]
     }
 
+    def getBlockMetaPair(world:World, x:Int, y:Int, z:Int) =
+        (world.getBlock(x, y, z), world.getBlockMetadata(x, y, z))
+
     def getBlockInfo(world:World, x:Int, y:Int, z:Int) =
         (world.getBlock(x, y, z), world.getBlockMetadata(x, y, z),
             world.getTileEntity(x, y, z))
