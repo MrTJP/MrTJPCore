@@ -21,7 +21,7 @@ trait TPlantBlock extends InstancedBlock with IPlantable with IGrowable
 
     override def canPlaceBlockAt(w:World, x:Int, y:Int, z:Int) =
     {
-        super.canPlaceBlockAt(w, x, y, z) && canBlockStay(w, x, y, z)
+        super.canPlaceBlockAt(w, x, y, z) && canStay(w, x, y, z)
     }
 
     override def onNeighborBlockChange(w:World, x:Int, y:Int, z:Int, b:Block)
@@ -32,14 +32,14 @@ trait TPlantBlock extends InstancedBlock with IPlantable with IGrowable
 
     def dropIfCantStay(w:World, x:Int, y:Int, z:Int)
     {
-        if (!canBlockStay(w, x, y, z))
+        if (!canStay(w, x, y, z))
         {
             dropBlockAsItem(w, x, y, z, w.getBlockMetadata(x, y, z), 2)
             w.setBlockToAir(x, y, z)
         }
     }
 
-    override def canBlockStay(w:World, x:Int, y:Int, z:Int) = w.getTileEntity(x, y, z) match
+    def canStay(w:World, x:Int, y:Int, z:Int) = w.getTileEntity(x, y, z) match
     {
         case p:TPlantTile => p.canBlockStay
         case _ => initialCanStay(w, x, y, z)

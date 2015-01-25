@@ -58,7 +58,7 @@ abstract class ModConfig(modID:String)
 
             prop.comment = comment
             if (force) cat.put(key, prop)
-            else cat.putIfAbsent(key, prop)
+            else if (!cat.containsKey(key)) cat.put(key, prop)
             prop = cat.get(key)
 
             val reslult = value match
