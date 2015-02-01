@@ -5,37 +5,37 @@
  */
 package mrtjp.core.math
 
-import java.lang
 import java.util.Random
 
 import codechicken.lib.vec.{BlockCoord, Vector3}
-import net.minecraft.entity.Entity
-import net.minecraft.world.gen.NoiseGeneratorPerlin
-import org.lwjgl.util.vector.{Matrix4f, Vector3f}
 
 object MathLib
 {
     def clamp(min:Float, max:Float, v:Float) = Math.min(max, Math.max(min, v))
 
-    def normal(bc:BlockCoord, dir:Int) = dir match
+    def normal(bc:BlockCoord, dir:Int):(Int, Int) = normal(bc.x, bc.y, bc.z, dir)
+    def normal(x:Int, y:Int, z:Int, dir:Int):(Int, Int) = dir match
     {
-        case 0 => (bc.x, bc.z)
-        case 1 => (bc.x, bc.z)
-        case 2 => (bc.x, bc.y)
-        case 3 => (bc.x, bc.y)
-        case 4 => (bc.y, bc.z)
-        case 5 => (bc.y, bc.z)
+        case 0 => (x, z)
+        case 1 => (x, z)
+        case 2 => (x, y)
+        case 3 => (x, y)
+        case 4 => (y, z)
+        case 5 => (y, z)
     }
 
-    def basis(bc:BlockCoord, dir:Int) = dir match
+    def basis(bc:BlockCoord, dir:Int):Int = basis(bc.x, bc.y, bc.z, dir)
+    def basis(x:Int, y:Int, z:Int, dir:Int):Int = dir match
     {
-        case 0 => bc.y
-        case 1 => bc.y
-        case 2 => bc.z
-        case 3 => bc.z
-        case 4 => bc.x
-        case 5 => bc.x
+        case 0 => y
+        case 1 => y
+        case 2 => z
+        case 3 => z
+        case 4 => x
+        case 5 => x
     }
+
+    def shift(dir:Int) = if ((dir&1) == 1) 1 else -1
 
     def splitLine(xs:Seq[Int], shift:Int) =
     {
@@ -66,16 +66,6 @@ object MathLib
         case 3 => new BlockCoord(normal._1, normal._2, basis)
         case 4 => new BlockCoord(basis, normal._1, normal._2)
         case 5 => new BlockCoord(basis, normal._1, normal._2)
-    }
-
-    def createEntityRotateMatrix(entity:Entity):Matrix4f =
-    {
-        val yaw = Math.toRadians(entity.rotationYaw - 180)
-        val pitch = Math.toRadians(entity.rotationPitch)
-        val initial = new Matrix4f
-        initial.rotate(pitch.asInstanceOf[Float], new Vector3f(1, 0, 0))
-        initial.rotate(yaw.asInstanceOf[Float], new Vector3f(0, 1, 0))
-        initial
     }
 
     def bezier(s:Vector3, c1:Vector3, c2:Vector3, e:Vector3, t:Float):Vector3 =

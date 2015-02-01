@@ -1,0 +1,18 @@
+language: scala
+
+scala: 2.11.1
+
+notifications:
+  email: false
+
+jdk:
+  - oraclejdk7
+  - openjdk7
+  - openjdk6
+
+install: ./gradlew setupCIWorkspace -S
+script: ./gradlew build -S
+
+env:
+  global:
+    TERM=dumb
