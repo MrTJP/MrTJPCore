@@ -91,14 +91,13 @@ object WorldLib
         w.spawnEntityInWorld(item)
     }
 
-    def packCoords(x:Int, y:Int, z:Int):Long =
-        (x+30000000).toLong|(z+30000000).toLong<<26|y.toLong<<52
+    def packCoords(bc:BlockCoord):Long = packCoords(bc.x, bc.y, bc.z)
+    def packCoords(x:Int, y:Int, z:Int):Long = (x+30000000).toLong|(z+30000000).toLong<<26|y.toLong<<52
 
     def unpackX(c:Long):Int = (c&((1<<26)-1)).toInt-30000000
-
     def unpackZ(c:Long):Int = ((c>>26)&((1<<26)-1)).toInt-30000000
-
     def unpackY(c:Long):Int = ((c>>52)&((1<<12)-1)).toInt
+    def unpackCoords(c:Long) = new BlockCoord(unpackX(c), unpackY(c), unpackZ(c))
 
     def uncheckedSetBlock(world:World, x:Int, y:Int, z:Int, block:Block, meta:Int)
     {
@@ -121,7 +120,7 @@ object WorldLib
     {
         val ch = world.getChunkFromBlockCoords(x, z)
         ch.chunkTileEntityMap.asInstanceOf[java.util.Map[ChunkPosition, TileEntity]].
-            put(new ChunkPosition(x&0xF, y, z&0xF), te)
+                put(new ChunkPosition(x&0xF, y, z&0xF), te)
     }
 
     def uncheckedGetTileEntity(world:World, x:Int, y:Int, z:Int) =
@@ -135,7 +134,7 @@ object WorldLib
 
     def getBlockInfo(world:World, x:Int, y:Int, z:Int) =
         (world.getBlock(x, y, z), world.getBlockMetadata(x, y, z),
-            world.getTileEntity(x, y, z))
+                world.getTileEntity(x, y, z))
 
     def isLeafType(world:World, x:Int, y:Int, z:Int, b:Block) =
         b.isLeaves(world, x, y, z) || OreDictionary.getOreIDs(new ItemStack(b)).contains(OreDictionary.getOreID("treeLeaves"))

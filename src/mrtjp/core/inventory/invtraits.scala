@@ -33,23 +33,37 @@ trait TInventory extends IInventory
     override def getStackInSlot(slot:Int) = storage(slot)
     override def getStackInSlotOnClosing(slot:Int):ItemStack =
     {
-        if (storage(slot) == null) return null
-        val stackToTake = storage(slot)
+        val stack = storage(slot)
+        if (stack == null) return null
         storage(slot) = null
-
         markDirty()
-        stackToTake
+        stack
     }
 
-    override def setInventorySlotContents(slot:Int, item:ItemStack){ storage(slot) = item }
+    override def setInventorySlotContents(slot:Int, item:ItemStack)
+    {
+        storage(slot) = item
+        markDirty()
+    }
+
     override def decrStackSize(slot:Int, count:Int):ItemStack =
     {
-        if (storage(slot) == null) return null
-        if (storage(slot).stackSize > count) return storage(slot).splitStack(count)
+        val stack = storage(slot)
+        if (stack == null) return null
 
-        val ret = storage(slot)
-        storage(slot) = null
-        ret
+        if (stack.stackSize > count)
+        {
+            val out = stack.splitStack(count)
+            markDirty()
+            out
+        }
+        else
+        {
+            val out = stack
+            storage(slot) = null
+            markDirty()
+            out
+        }
     }
 
     def loadInv(tag:NBTTagCompound){ loadInv(tag, name) }
