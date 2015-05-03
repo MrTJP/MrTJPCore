@@ -13,7 +13,7 @@ import scala.collection.immutable.HashMap
 
 object ItemKey
 {
-    def get(stack:ItemStack) =
+    def get(stack:ItemStack) = //TODO remove sanity check, should be done externally
     {
         if (stack == null) null
         else new ItemKey(stack.getItem, stack.getItemDamage, stack.getTagCompound)
@@ -27,7 +27,7 @@ class ItemKey(val item:Item, val itemDamage:Int, val tag:NBTTagCompound) extends
 
     override def hashCode = hash
 
-    override def equals(other:Any) = other match //TODO add cases for strings(oredict), blocks, items, etc
+    override def equals(other:Any) = other match
     {
         case that:ItemKey =>
             item == that.item && itemDamage == that.itemDamage &&
@@ -63,7 +63,7 @@ object ItemKeyStack
 {
     def get(key:ItemKey, size:Int) = new ItemKeyStack(key, size)
 
-    def get(stack:ItemStack) =
+    def get(stack:ItemStack) = //TODO remove sanity check, should be done externally
     {
         if (stack == null) null
         else new ItemKeyStack(ItemKey.get(stack), stack.stackSize)
