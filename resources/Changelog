@@ -1,3 +1,7 @@
+v1.0.6
+- FIX: Sky block updating for tiles
+- FIX: Volcano generator skipping chunks
+
 v1.0.5
 - ADDED: Utility class for configs
 - ADDED: Block library

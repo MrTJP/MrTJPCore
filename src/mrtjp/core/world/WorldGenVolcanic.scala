@@ -64,6 +64,7 @@ class WorldGenVolcanic extends TWorldGenerator
             }
 
             val (i, j, k) = stack.dequeue()
+            w.getBlock(i, 64, k) //force chunk generation
             if (w.getChunkProvider.chunkExists(i>>4, k>>4))
             {
                 var pow = test((i, k))
@@ -82,16 +83,18 @@ class WorldGenVolcanic extends TWorldGenerator
         })
 
         setBlock(w, x, n, z, liq, material)
-        while (n > swh && liq._1 == w.getBlock(x, n, z))
+        while (n >= swh && liq._1 == w.getBlock(x, n, z))
         {
             w.markBlockForUpdate(x, n, z)
             w.notifyBlocksOfNeighborChange(x, n, z, liq._1)
+            w.notifyBlockOfNeighborChange(x, n, z, liq._1)
             w.scheduledUpdatesAreImmediate = true
             liq._1.updateTick(w, x, n, z, w.rand)
             w.scheduledUpdatesAreImmediate = false
             n -= 1
         }
 
+        println(s"VOLC DONE @[$x 100 $z]")
         true
     }
 
