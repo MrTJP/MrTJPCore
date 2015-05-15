@@ -6,11 +6,12 @@
 package mrtjp.core.render
 
 import codechicken.lib.lighting.LightModel
-import codechicken.lib.render.uv.UVTransformation
-import codechicken.lib.render.{CCModel, CCRenderState, TextureUtils}
+import codechicken.lib.render.uv.{IconTransformation, UVTransformation}
+import codechicken.lib.render.{BlockRenderer, CCModel, CCRenderState, TextureUtils}
 import codechicken.lib.vec.{Cuboid6, Rotation, Translation, Vector3}
 import mrtjp.core.block.TInstancedBlockRender
 import net.minecraft.client.renderer.RenderBlocks
+import net.minecraft.util.IIcon
 import net.minecraft.world.IBlockAccess
 
 object TCubeMapRender
@@ -38,13 +39,20 @@ trait TCubeMapRender extends TInstancedBlockRender
 
     override def renderWorldBlock(r:RenderBlocks, w:IBlockAccess, x:Int, y:Int, z:Int, meta:Int)
     {
-        if (w.getBlock(x, y, z) == null) return
-
-        val (s, r, icon) = getData(w, x, y, z)
+        val (s, rot, icon) = getData(w, x, y, z)
         TextureUtils.bindAtlas(0)
         CCRenderState.reset()
         CCRenderState.lightMatrix.locate(w, x, y, z)
-        models(s)(r).render(new Translation(x, y, z), icon)
+        models(s)(rot).render(new Translation(x, y, z), icon)
+    }
+
+    override def renderBreaking(w:IBlockAccess, x:Int, y:Int, z:Int, icon:IIcon)
+    {
+        val b = w.getBlock(x, y, z)
+        CCRenderState.reset()
+        CCRenderState.setPipeline(new Translation(x, y, z), new IconTransformation(icon))
+        BlockRenderer.renderCuboid(new Cuboid6(b.getBlockBoundsMinX, b.getBlockBoundsMinY, b.getBlockBoundsMinZ,
+            b.getBlockBoundsMaxX, b.getBlockBoundsMaxY, b.getBlockBoundsMaxZ), 0)
     }
 
     override def renderInvBlock(r:RenderBlocks, meta:Int)

@@ -5,11 +5,11 @@
  */
 package mrtjp.core.block
 
-import java.util.{Random, ArrayList => JArrayList, List => JList}
+import java.util.{ArrayList => JArrayList, List => JList, Random}
 
 import codechicken.lib.data.{MCDataInput, MCDataOutput}
 import codechicken.lib.packet.{ICustomPacketTile, PacketCustom}
-import codechicken.lib.vec.{Cuboid6, BlockCoord, Rotation, Vector3}
+import codechicken.lib.vec.{BlockCoord, Cuboid6, Rotation, Vector3}
 import cpw.mods.fml.client.registry.ISimpleBlockRenderingHandler
 import cpw.mods.fml.common.registry.GameRegistry
 import cpw.mods.fml.relauncher.{Side, SideOnly}
@@ -23,7 +23,6 @@ import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.Entity
 import net.minecraft.entity.player.EntityPlayer
-import net.minecraft.init.Blocks
 import net.minecraft.item.{Item, ItemBlock, ItemStack}
 import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.tileentity.TileEntity
@@ -87,7 +86,6 @@ object TileRenderRegistry extends ISimpleBlockRenderingHandler
 
     override def renderWorldBlock(w:IBlockAccess, x:Int, y:Int, z:Int, b:Block, rID:Int, r:RenderBlocks):Boolean =
     {
-        if (r.overrideBlockTexture != null) return true
         if (rID != renderID) return false
 
         val meta = w.getBlockMetadata(x, y, z)
@@ -99,7 +97,8 @@ object TileRenderRegistry extends ISimpleBlockRenderingHandler
             return true
         }
 
-        render.renderWorldBlock(r, w, x, y, z, meta)
+        if (r.hasOverrideBlockTexture) render.renderBreaking(w, x, y, z, r.overrideBlockTexture)
+        else render.renderWorldBlock(r, w, x, y, z, meta)
         true
     }
 }
@@ -109,6 +108,8 @@ trait TInstancedBlockRender
     def renderWorldBlock(r:RenderBlocks, w:IBlockAccess, x:Int, y:Int, z:Int, meta:Int)
 
     def renderInvBlock(r:RenderBlocks, meta:Int)
+
+    def renderBreaking(w:IBlockAccess, x:Int, y:Int, z:Int, icon:IIcon){}
 
     def randomDisplayTick(w:World, x:Int, y:Int, z:Int, r:Random){}
 
@@ -268,7 +269,7 @@ class InstancedBlock(name:String, mat:Material) extends BlockContainer(mat)
 
     override def onEntityCollidedWithBlock(w:World, x:Int, y:Int, z:Int, ent:Entity) = w.getTileEntity(x, y, z) match
     {
-        case t:InstancedBlockTile => t.onEntityCollidedWithBlock(ent)
+        case t:InstancedBlockTile => t.onEntityCollision(ent)
         case _ =>
     }
 
@@ -279,6 +280,15 @@ class InstancedBlock(name:String, mat:Material) extends BlockContainer(mat)
             case t:InstancedBlockTile => t.getBlockBounds.setBlockBounds(this)
             case _ => super.setBlockBoundsBasedOnState(w, x, y, z)
         }
+    }
+
+    override def getCollisionBoundingBoxFromPool(w:World, x:Int, y:Int, z:Int) = w.getTileEntity(x, y, z) match
+    {
+        case t:InstancedBlockTile =>
+            val box = t.getCollisionBounds
+            if (box != null) box.copy.add(new Vector3(x, y, z)).toAABB
+            else null
+        case _ => super.getCollisionBoundingBoxFromPool(w, x, y, z)
     }
 
     override def getLightValue(w:IBlockAccess, x:Int, y:Int, z:Int) = w.getTileEntity(x, y, z) match
@@ -404,9 +414,11 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
 
     def onBlockActivated(player:EntityPlayer, side:Int) = false
 
-    def onEntityCollidedWithBlock(ent:Entity){}
+    def onEntityCollision(ent:Entity){}
 
     def getBlockBounds = Cuboid6.full
+
+    def getCollisionBounds = Cuboid6.full
 
     def onScheduledTick(){}
 

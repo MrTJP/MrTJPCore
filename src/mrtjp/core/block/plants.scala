@@ -7,6 +7,7 @@ package mrtjp.core.block
 
 import java.util.Random
 
+import codechicken.lib.vec.Cuboid6
 import net.minecraft.block.{Block, IGrowable}
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.{ItemStack, Item}
@@ -67,6 +68,8 @@ trait TPlantBlock extends InstancedBlock with IPlantable with IGrowable
 
 trait TPlantTile extends InstancedBlockTile
 {
+    override def getCollisionBounds = null
+
     def canBlockStay = world.getBlock(x, y, z) match
     {
         case p:TPlantBlock => p.initialCanStay(world, x, y, z)
