@@ -13,19 +13,19 @@ trait TPortableInventory extends IInventory
 {
     val inv = createInv
 
-    def getSizeInventory = inv.getSizeInventory
-    def getStackInSlot(i:Int) = inv.getStackInSlot(i)
-    def decrStackSize(i:Int, j:Int) = inv.decrStackSize(i, j)
-    def getStackInSlotOnClosing(i:Int) = inv.getStackInSlotOnClosing(i)
-    def setInventorySlotContents(i:Int, itemstack:ItemStack) = inv.setInventorySlotContents(i, itemstack)
-    def getInventoryName:String = inv.getInventoryName
-    def hasCustomInventoryName = inv.hasCustomInventoryName
-    def getInventoryStackLimit = inv.getInventoryStackLimit
-    def markDirty() = inv.markDirty()
-    def isUseableByPlayer(entityplayer:EntityPlayer) = inv.isUseableByPlayer(entityplayer)
-    def openInventory() = inv.openInventory()
-    def closeInventory() = inv.closeInventory()
-    def isItemValidForSlot(i:Int, itemstack:ItemStack) = inv.isItemValidForSlot(i, itemstack)
+    override def getSizeInventory = inv.getSizeInventory
+    override def getStackInSlot(i:Int) = inv.getStackInSlot(i)
+    override def decrStackSize(i:Int, j:Int) = inv.decrStackSize(i, j)
+    override def getStackInSlotOnClosing(i:Int) = inv.getStackInSlotOnClosing(i)
+    override def setInventorySlotContents(i:Int, itemstack:ItemStack) = inv.setInventorySlotContents(i, itemstack)
+    override def getInventoryName:String = inv.getInventoryName
+    override def hasCustomInventoryName = inv.hasCustomInventoryName
+    override def getInventoryStackLimit = inv.getInventoryStackLimit
+    abstract override def markDirty(){super.markDirty(); inv.markDirty()}
+    override def isUseableByPlayer(entityplayer:EntityPlayer) = inv.isUseableByPlayer(entityplayer)
+    override def openInventory() = inv.openInventory()
+    override def closeInventory() = inv.closeInventory()
+    override def isItemValidForSlot(i:Int, itemstack:ItemStack) = inv.isItemValidForSlot(i, itemstack)
 
     def createInv:SimpleInventory
 }
