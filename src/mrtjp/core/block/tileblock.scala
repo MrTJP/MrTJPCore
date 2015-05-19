@@ -26,7 +26,7 @@ import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.{Item, ItemBlock, ItemStack}
 import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.tileentity.TileEntity
-import net.minecraft.util.{AxisAlignedBB, IIcon, MovingObjectPosition}
+import net.minecraft.util.{IIcon, MovingObjectPosition}
 import net.minecraft.world.{EnumSkyBlock, IBlockAccess, World}
 import net.minecraftforge.common.util.ForgeDirection
 
