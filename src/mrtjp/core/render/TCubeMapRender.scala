@@ -5,9 +5,8 @@
  */
 package mrtjp.core.render
 
-import codechicken.lib.lighting.LightModel
+import codechicken.lib.render._
 import codechicken.lib.render.uv.{IconTransformation, UVTransformation}
-import codechicken.lib.render.{BlockRenderer, CCModel, CCRenderState, TextureUtils}
 import codechicken.lib.vec.{Cuboid6, Rotation, Translation, Vector3}
 import mrtjp.core.block.TInstancedBlockRender
 import net.minecraft.client.renderer.RenderBlocks
@@ -24,13 +23,12 @@ object TCubeMapRender
         {
             val m = box.copy.apply(Rotation.sideOrientation(s, r).at(Vector3.center))
             m.computeNormals()
-            m.computeLighting(LightModel.standardLightModel)
             array(s)(r) = m
         }
         array
     }
 
-    val invTranslation = new Translation(0, -0.075, 0)
+    val invTranslation = new Translation(-0.5, -0.5, -0.5)
 }
 
 trait TCubeMapRender extends TInstancedBlockRender
@@ -43,7 +41,7 @@ trait TCubeMapRender extends TInstancedBlockRender
         TextureUtils.bindAtlas(0)
         CCRenderState.reset()
         CCRenderState.lightMatrix.locate(w, x, y, z)
-        models(s)(rot).render(new Translation(x, y, z), icon)
+        models(s)(rot).render(new Translation(x, y, z), icon, CCRenderState.lightMatrix)
     }
 
     override def renderBreaking(w:IBlockAccess, x:Int, y:Int, z:Int, icon:IIcon)

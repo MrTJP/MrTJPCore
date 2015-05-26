@@ -31,7 +31,7 @@ abstract class ModConfig(modID:String)
         cat.setComment(comment)
 
         def put[T](key:String, value:T, force:Boolean):T =
-            put(key, value, "", true)
+            put(key, value, "", force)
 
         def put[T](key:String, value:T, comment:String = ""):T =
             put(key, value, comment, false)

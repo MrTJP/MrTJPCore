@@ -14,51 +14,54 @@ import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.inventory.{Container, IInventory, Slot}
 import net.minecraft.item.ItemStack
 
+import scala.collection.JavaConversions._
+import scala.collection.mutable.{Buffer => MBuffer}
+
 class WidgetContainer extends Container
 {
-    private var canDrag = true
-    private var canInteract = true
-    private var canShiftClick = true
+    def slots:MBuffer[Slot3] = asScalaBuffer[Slot3](inventorySlots.asInstanceOf[JList[Slot3]])
 
-    override def canInteractWith(var1:EntityPlayer) = canInteract
-    override def canDragIntoSlot(par1Slot:Slot) = canDrag
+    override def canInteractWith(player:EntityPlayer) = true
 
-    def setDrag(flag:Boolean):this.type = {canDrag = flag; this}
+    override def canDragIntoSlot(slot:Slot) = slot match
+    {
+        case s:Slot3 => !s.phantomSlot
+        case _ => super.canDragIntoSlot(slot)
+    }
 
-    def setShift(flag:Boolean):this.type = {canShiftClick = flag; this}
-
-    def setInteract(flag:Boolean):this.type = {canInteract = flag; this}
-
-    def +(s:Slot2):this.type = {addSlotToContainer(s);this}
+    override def addSlotToContainer(slot:Slot) =
+    {
+        if (!slot.isInstanceOf[Slot3])
+            throw new IllegalArgumentException("NodeContainers can only except slots of type Slot3")
+        super.addSlotToContainer(slot)
+    }
 
     @SideOnly(Side.CLIENT)
-    def addPlayerInv(x:Int, y:Int):this.type = addPlayerInv(Minecraft.getMinecraft.thePlayer, x, y)
-    def addPlayerInv(player:EntityPlayer, x:Int, y:Int):this.type =
+    def addPlayerInv(x:Int, y:Int){addPlayerInv(Minecraft.getMinecraft.thePlayer, x, y)}
+    def addPlayerInv(player:EntityPlayer, x:Int, y:Int)
     {
         var next = 0
         def up() = {next+=1;next-1}
 
         for ((x, y) <- GuiLib.createSlotGrid(x, y+58, 9, 1, 0, 0))
-            this + new Slot2(player.inventory, up(), x, y) //hotbar
+            addSlotToContainer(new Slot3(player.inventory, up(), x, y)) //hotbar
 
         for ((x, y) <- GuiLib.createSlotGrid(x, y, 9, 3, 0, 0))
-            this + new Slot2(player.inventory, up(), x, y) //slots
-
-        this
+            addSlotToContainer(new Slot3(player.inventory, up(), x, y)) //slots
     }
 
     override def slotClick(id:Int, mouse:Int, shift:Int, player:EntityPlayer):ItemStack =
     {
-        if (id >= 0 && id < inventorySlots.size)
-            inventorySlots.get(id).asInstanceOf[Slot] match
-            {
-                case slot:Slot2 if slot.ghosting => handleGhostClick(slot, mouse, shift, player)
-                case _ => super.slotClick(id, mouse, shift, player)
-            }
-        else null
+        if (slots.isDefinedAt(id))
+        {
+            val slot = slots(id)
+            if (slot.phantomSlot)
+                return handleGhostClick(slot, mouse, shift, player)
+        }
+        super.slotClick(id, mouse, shift, player)
     }
 
-    private def handleGhostClick(slot:Slot2, mouse:Int, shift:Int, player:EntityPlayer):ItemStack =
+    private def handleGhostClick(slot:Slot3, mouse:Int, shift:Int, player:EntityPlayer):ItemStack =
     {
         val inSlot = slot.getStack
         val inCursor = player.inventory.getItemStack
@@ -91,51 +94,95 @@ class WidgetContainer extends Container
         inCursor
     }
 
-    override def transferStackInSlot(player:EntityPlayer, slotIdx:Int):ItemStack =
+    override def transferStackInSlot(player:EntityPlayer, i:Int):ItemStack =
     {
-        if (!canShiftClick) return null
-
-        val slot = inventorySlots.get(slotIdx).asInstanceOf[Slot]
-        if (slot == null) return null
-
-        var invs = getInvs
-        val indx = invs.indexOf(slot.inventory)
-        if (indx == -1) return null
-
-        invs = invs.drop(indx) ++ invs.take(indx)
-
-        if (!invs.isDefinedAt(1)) return null
-        val toInv = invs(1)
-
-        if (slot.getHasStack)
+        var stack:ItemStack = null
+        if (slots.isDefinedAt(i))
         {
-            val wrap = InvWrapper.wrap(toInv).setSlotsAll()
-            val stack = slot.getStack
-            val stack2 = stack.copy
-            val added = wrap.injectItem(stack, true)
-            if (added > 0) toInv.markDirty()
-            stack.stackSize -= added
+            val slot = slots(i)
+            if (slot != null && slot.getHasStack)
+            {
+                stack = slot.getStack
+                val manipStack = stack.copy
 
-            if (stack.stackSize <= 0) slot.putStack(null)
-            else slot.onSlotChanged()
+                if (!doMerge(manipStack, i)) return null
 
-            stack2
+                if (manipStack.stackSize <= 0) slot.putStack(null)
+                else slot.onSlotChanged()
+            }
         }
-        else null
+        stack
     }
 
-    private def getInvs =
+    def doMerge(stack:ItemStack, from:Int) =
     {
-        var vec = Vector[IInventory]()
-
-        import scala.collection.JavaConversions._
-        for (s:Slot <- inventorySlots.asInstanceOf[JList[Slot]])
-            if (!vec.contains(s.inventory)) vec :+= s.inventory
-
-        vec
+        if (slots.size-36 until slots.size contains from) tryMergeItemStack(stack, 0, slots.size-36, false)
+        else tryMergeItemStack(stack, slots.size-36, slots.size, false)
     }
 
-    override def retrySlotClick(x:Int, y:Int, par3:Boolean, player:EntityPlayer){}
+    def tryMergeItemStack(stack:ItemStack, start:Int, end:Int, reverse:Boolean) =
+    {
+        var flag1 = false
+        var k = if(reverse) end-1 else start
+
+        var slot:Slot3 = null
+        var inslot:ItemStack = null
+        if(stack.isStackable)
+        {
+            while(stack.stackSize > 0 && (!reverse && k < end || reverse && k >= start))
+            {
+                slot = slots(k)
+                inslot = slot.getStack
+                if (!slot.phantomSlot && inslot != null && inslot.getItem == stack.getItem &&
+                        (!stack.getHasSubtypes || stack.getItemDamage == inslot.getItemDamage) &&
+                        ItemStack.areItemStackTagsEqual(stack, inslot))
+                {
+                    val l = inslot.stackSize+stack.stackSize
+                    if(l <= stack.getMaxStackSize)
+                    {
+                        stack.stackSize = 0
+                        inslot.stackSize = l
+                        slot.onSlotChanged()
+                        flag1 = true
+                    }
+                    else if(inslot.stackSize < stack.getMaxStackSize)
+                    {
+                        stack.stackSize -= (stack.getMaxStackSize-inslot.stackSize)
+                        inslot.stackSize = stack.getMaxStackSize
+                        slot.onSlotChanged()
+                        flag1 = true
+                    }
+                }
+                if(reverse) k -= 1 else k += 1
+            }
+        }
+
+        if(stack.stackSize > 0)
+        {
+            var k = if(reverse) end-1 else start
+
+            import scala.util.control.Breaks._
+            breakable
+            {
+                while(!reverse && k < end || reverse && k >= start)
+                {
+                    slot = slots(k)
+                    inslot = slot.getStack
+                    if(!slot.phantomSlot && inslot == null && slot.isItemValid(stack))
+                    {
+                        slot.putStack(stack.copy)
+                        slot.onSlotChanged()
+                        stack.stackSize = 0
+                        flag1 = true
+                        break()
+                    }
+                    if(reverse) k -= 1 else k += 1
+                }
+            }
+        }
+
+        flag1
+    }
 
     //Hack to allow empty containers for use with guis without inventories
     override def putStackInSlot(slot:Int, stack:ItemStack)
@@ -145,40 +192,15 @@ class WidgetContainer extends Container
     }
 }
 
-class Slot2(inv:IInventory, index:Int, x:Int, y:Int) extends Slot(inv, index, x, y)
+class Slot3(inv:IInventory, i:Int, x:Int, y:Int) extends Slot(inv, i, x, y)
 {
-    var remove = true
-    var place = true
-    var ghosting = false
-    var limit = inventory.getInventoryStackLimit
+    var canRemoveDelegate = {() => true}
+    var canPlaceDelegate = {(stack:ItemStack) => inv.isItemValidForSlot(i, stack)}
+    var slotLimitCalculator = {() => inv.getInventoryStackLimit}
 
-    var check:SlotCheck = InvSlotCheck
+    var phantomSlot = false
 
-    def setRemove(flag:Boolean):this.type = {remove = flag; this}
-    def setPlace(flag:Boolean):this.type = {place = flag; this}
-    def setGhosting(flag:Boolean):this.type = {ghosting = flag; this}
-    def setLimit(lim:Int):this.type = {limit = lim; this}
-    def setCheck(c:SlotCheck):this.type = {check = c; this}
-
-    override def getSlotStackLimit = limit
-
-    override def isItemValid(stack:ItemStack) =
-        place && (check == null || check.canPlace(this, stack))
-
-    override def canTakeStack(player:EntityPlayer) =
-        remove && (check == null || check.canTake(this))
-}
-
-trait SlotCheck
-{
-    def canTake(slot:Slot2):Boolean
-    def canPlace(slot:Slot2, stack:ItemStack):Boolean
-}
-
-object InvSlotCheck extends SlotCheck
-{
-    def canTake(slot:Slot2) = true
-
-    def canPlace(slot:Slot2, stack:ItemStack) =
-        slot.inventory.isItemValidForSlot(slot.getSlotIndex, stack)
+    override def getSlotStackLimit = slotLimitCalculator()
+    override def canTakeStack(player:EntityPlayer) = canRemoveDelegate()
+    override def isItemValid(stack:ItemStack) = canPlaceDelegate(stack)
 }

@@ -299,13 +299,13 @@ class InstancedBlock(name:String, mat:Material) extends BlockContainer(mat)
 
     override def isFireSource(w:World, x:Int, y:Int, z:Int, side:ForgeDirection) = w.getTileEntity(x, y, z) match
     {
-        case t:InstancedBlockTile => t.isFireSource(side)
+        case t:InstancedBlockTile => t.isFireSource(side.ordinal)
         case _ => super.isFireSource(w, x, y, z, side)
     }
 
     override def isSideSolid(w:IBlockAccess, x:Int, y:Int, z:Int, side:ForgeDirection) = w.getTileEntity(x, y, z) match
     {
-        case t:InstancedBlockTile => t.isBlockSolidOnSide(side)
+        case t:InstancedBlockTile => t.isBlockSolidOnSide(side.ordinal)
         case _ => super.isSideSolid(w, x, y, z, side)
     }
 
@@ -408,9 +408,9 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
 
     def getLightValue = 0
 
-    def isFireSource(side:ForgeDirection) = false
+    def isFireSource(side:Int) = false
 
-    def isBlockSolidOnSide(side:ForgeDirection) = true
+    def isBlockSolidOnSide(side:Int) = true
 
     def onBlockActivated(player:EntityPlayer, side:Int) = false
 
