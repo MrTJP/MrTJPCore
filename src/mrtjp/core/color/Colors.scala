@@ -11,6 +11,7 @@ import cpw.mods.fml.relauncher.{Side, SideOnly}
 import mrtjp.core.util.Enum
 import net.minecraft.init.Items
 import net.minecraft.item.ItemStack
+import net.minecraftforge.oredict.OreDictionary
 import org.lwjgl.opengl.GL11
 
 object Colors extends Enum
@@ -62,7 +63,17 @@ object Colors extends Enum
         else mixMap.getOrElse(Set(c1, c2), null)
     }
 
-    case class Color(override val name:String, rgb:Int) extends Value
+    def fromWoolID(id:Int) = apply(id)
+    def fromDyeID(id:Int) = apply(15-id)
+    def fromOreDict(id:String) = if (dyeDictionary.contains(id))
+        fromDyeID(dyeDictionary.indexOf(id)) else null
+    def fromStack(stack:ItemStack) =
+    {
+        val ids = OreDictionary.getOreIDs(stack)
+        ids.map(id => fromOreDict(OreDictionary.getOreName(id))).find(_ != null).orNull
+    }
+
+    class Color(override val name:String, val rgb:Int) extends Value
     {
         val rgba = rgb<<8|0xFF
         val argb = 0xFF000000|rgb
