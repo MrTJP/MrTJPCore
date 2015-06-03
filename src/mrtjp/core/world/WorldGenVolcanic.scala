@@ -65,7 +65,7 @@ class WorldGenVolcanic extends TWorldGenerator
 
             val (i, j, k) = stack.dequeue()
             w.getBlock(i, 64, k) //force chunk generation
-            if (w.getChunkProvider.chunkExists(i>>4, k>>4))
+            if (w.getChunkProvider.chunkExists(i>>4, k>>4) && test.contains((i, k)))
             {
                 var pow = test((i, k))
                 var hm = w.getHeightValue(i, k)+1
@@ -93,8 +93,6 @@ class WorldGenVolcanic extends TWorldGenerator
             w.scheduledUpdatesAreImmediate = false
             n -= 1
         }
-
-        println(s"VOLC DONE @[$x 100 $z]")
         true
     }
 
