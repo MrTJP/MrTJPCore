@@ -55,10 +55,10 @@ class WidgetContainer extends Container
         if (slots.isDefinedAt(id))
         {
             val slot = slots(id)
-            if (slot.phantomSlot)
-                return handleGhostClick(slot, mouse, shift, player)
+            if (slot.phantomSlot) handleGhostClick(slot, mouse, shift, player)
+            else super.slotClick(id, mouse, shift, player)
         }
-        super.slotClick(id, mouse, shift, player)
+        else null
     }
 
     private def handleGhostClick(slot:Slot3, mouse:Int, shift:Int, player:EntityPlayer):ItemStack =
