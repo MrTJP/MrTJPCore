@@ -16,7 +16,7 @@ trait TInventory extends IInventory
 {
     def size:Int
     def name:String
-    def stackLimit:Int
+    def stackLimit = 64
 
     private val storage = new Array[ItemStack](size)
 

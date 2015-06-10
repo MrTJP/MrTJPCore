@@ -63,12 +63,13 @@ trait UpdateChecker extends Thread
         {
             case t:Throwable =>
                 t.printStackTrace()
-                Seq()
+                Seq.empty
         }
     }
 
     def downloadChanges:Map[String, Seq[String]] =
     {
+        if (changelogURL == null) return Map.empty
         try
         {
             var cMap = ListMap[String, Seq[String]]().withDefault(_ => Seq())
@@ -86,7 +87,7 @@ trait UpdateChecker extends Thread
         {
             case t:Throwable =>
                 t.printStackTrace()
-                Map()
+                Map.empty
         }
     }
 
@@ -115,8 +116,8 @@ trait UpdateChecker extends Thread
             if (isVersionOutdated(currentVersion))
             {
                 val message = Seq.newBuilder[String]
-                message += "Version "+latestVersion+" of "+project+" is available. Changes:"
-                message ++= compileChanges(currentVersion)
+                message += s"$project $latestVersion available."
+                if (changelogURL != null) message ++= compileChanges(currentVersion)
                 updateMessage = message.result()
             }
         }

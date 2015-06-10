@@ -52,13 +52,16 @@ class WidgetContainer extends Container
 
     override def slotClick(id:Int, mouse:Int, shift:Int, player:EntityPlayer):ItemStack =
     {
-        if (slots.isDefinedAt(id))
-        {
-            val slot = slots(id)
-            if (slot.phantomSlot) handleGhostClick(slot, mouse, shift, player)
-            else super.slotClick(id, mouse, shift, player)
+        try { //Ignore exceptions raised from client-side only slots that wont be found here. To be removed.
+            if (slots.isDefinedAt(id))
+            {
+                val slot = slots(id)
+                if (slot.phantomSlot) return handleGhostClick(slot, mouse, shift, player)
+            }
+            super.slotClick(id, mouse, shift, player)
+        } catch {
+            case e:Exception => null
         }
-        else null
     }
 
     private def handleGhostClick(slot:Slot3, mouse:Int, shift:Int, player:EntityPlayer):ItemStack =
@@ -137,18 +140,18 @@ class WidgetContainer extends Container
                         (!stack.getHasSubtypes || stack.getItemDamage == inslot.getItemDamage) &&
                         ItemStack.areItemStackTagsEqual(stack, inslot))
                 {
-                    val l = inslot.stackSize+stack.stackSize
-                    if(l <= stack.getMaxStackSize)
+                    val space = math.min(slot.getSlotStackLimit, stack.getMaxStackSize)-inslot.stackSize
+                    if (space >= stack.stackSize)
                     {
+                        inslot.stackSize += stack.stackSize
                         stack.stackSize = 0
-                        inslot.stackSize = l
                         slot.onSlotChanged()
                         flag1 = true
                     }
-                    else if(inslot.stackSize < stack.getMaxStackSize)
+                    else if (space > 0)
                     {
-                        stack.stackSize -= (stack.getMaxStackSize-inslot.stackSize)
-                        inslot.stackSize = stack.getMaxStackSize
+                        stack.stackSize -= space
+                        inslot.stackSize += space
                         slot.onSlotChanged()
                         flag1 = true
                     }
@@ -170,11 +173,21 @@ class WidgetContainer extends Container
                     inslot = slot.getStack
                     if(!slot.phantomSlot && inslot == null && slot.isItemValid(stack))
                     {
-                        slot.putStack(stack.copy)
-                        slot.onSlotChanged()
-                        stack.stackSize = 0
-                        flag1 = true
-                        break()
+                        val space = math.min(slot.getSlotStackLimit, stack.getMaxStackSize)
+                        if (space >= stack.stackSize)
+                        {
+                            slot.putStack(stack.copy)
+                            slot.onSlotChanged()
+                            stack.stackSize = 0
+                            flag1 = true
+                            break()
+                        }
+                        else
+                        {
+                            slot.putStack(stack.splitStack(space))
+                            slot.onSlotChanged()
+                            flag1 = true
+                        }
                     }
                     if(reverse) k -= 1 else k += 1
                 }

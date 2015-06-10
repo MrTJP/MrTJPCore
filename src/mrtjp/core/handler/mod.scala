@@ -56,7 +56,7 @@ object MrTJPConfig
         check_versions = config.get("General", "check_versions", true, "Flag to enable or disable the update checker.").getBoolean
         check_unstable = config.get("General", "check_unstable", false, "Flag to set if the update checker should consider unstable builds as a new version.").getBoolean
 
-        retro_gen = config.get("World Gen", "retro_gen", false, "Toggle to enable retrogeneration, a feature that would allow ores to be generated after the world has been created.").getBoolean
+        retro_gen = config.get("World Gen", "retro_gen", true, "Toggle to enable retrogeneration, a feature that would allow ores to be generated after the world has been created.").getBoolean
         retro_gen_id = config.get("World Gen", "retro_gen_id", "mrtjp_gen", "The database ID that is used to store which chunks have been generated already. Changing this will cause generation to run again on the same chunk.").getString
 
         config.save()

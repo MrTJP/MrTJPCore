@@ -9,6 +9,7 @@ import java.util.{ArrayList => JArrayList, List => JList, Random}
 
 import codechicken.lib.data.{MCDataInput, MCDataOutput}
 import codechicken.lib.packet.{ICustomPacketTile, PacketCustom}
+import codechicken.lib.render.TextureUtils
 import codechicken.lib.vec.{BlockCoord, Cuboid6, Rotation, Vector3}
 import cpw.mods.fml.client.registry.ISimpleBlockRenderingHandler
 import cpw.mods.fml.common.registry.GameRegistry
@@ -18,7 +19,7 @@ import mrtjp.core.world.WorldLib
 import net.minecraft.block.material.Material
 import net.minecraft.block.{Block, BlockContainer}
 import net.minecraft.client.renderer.RenderBlocks
-import net.minecraft.client.renderer.texture.IIconRegister
+import net.minecraft.client.renderer.texture.{TextureUtil, IIconRegister}
 import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.Entity
@@ -266,6 +267,11 @@ class InstancedBlock(name:String, mat:Material) extends BlockContainer(mat)
         case _ => false
     }
 
+    override def onBlockClicked(w:World, x:Int, y:Int, z:Int, player:EntityPlayer) = w.getTileEntity(x, y, z) match
+    {
+        case t:InstancedBlockTile => t.onBlockClicked(player)
+        case _ => super.onBlockClicked(w, x, y, z, player)
+    }
 
     override def onEntityCollidedWithBlock(w:World, x:Int, y:Int, z:Int, ent:Entity) = w.getTileEntity(x, y, z) match
     {
@@ -413,6 +419,8 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
     def isBlockSolidOnSide(side:Int) = true
 
     def onBlockActivated(player:EntityPlayer, side:Int) = false
+
+    def onBlockClicked(player:EntityPlayer) = false
 
     def onEntityCollision(ent:Entity){}
 

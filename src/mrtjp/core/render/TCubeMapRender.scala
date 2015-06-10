@@ -61,7 +61,6 @@ trait TCubeMapRender extends TInstancedBlockRender
         CCRenderState.reset()
         CCRenderState.setDynamic()
         CCRenderState.pullLightmap()
-        CCRenderState.setPipeline(icon, invTranslation)
         CCRenderState.startDrawing()
         models(s)(r).render(invTranslation, icon)
         CCRenderState.draw()
