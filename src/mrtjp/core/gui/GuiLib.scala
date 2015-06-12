@@ -146,4 +146,9 @@ object GuiLib
         GL11.glEnable(3553)
         GL11.glPopMatrix()
     }
+
+    def drawVerticalTank(x:Int, y:Int, u:Int, v:Int, w:Int, h:Int, prog:Int)
+    {
+        GuiDraw.drawTexturedModalRect(x, y+h-prog, u, v+h-prog, w, prog)
+    }
 }
