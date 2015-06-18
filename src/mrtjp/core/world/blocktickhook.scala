@@ -43,7 +43,8 @@ object BlockUpdateHandler
         //Reproduces same algorithm used for random block updates
         val world = event.world.asInstanceOf[WorldServer]
         val chunks = world.theChunkProviderServer.loadedChunks.asInstanceOf[JList[Chunk]]
-        for (chunk <- chunks)
+        val cCopy = new Array[Chunk](chunks.size()); chunks.copyToArray(cCopy)
+        for (chunk <- cCopy) if (chunk.isChunkLoaded)
         {
             val extendedblockstorage = chunk.getBlockStorageArray
             for (ebs <- extendedblockstorage) if (ebs != null)
