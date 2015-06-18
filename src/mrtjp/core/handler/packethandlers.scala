@@ -8,6 +8,7 @@ package mrtjp.core.handler
 import codechicken.lib.packet.PacketCustom.{IClientPacketHandler, IServerPacketHandler}
 import codechicken.lib.packet.{ICustomPacketTile, PacketCustom}
 import codechicken.lib.vec.BlockCoord
+import mrtjp.core.data.KeyTracking
 import mrtjp.core.gui.GuiHandler
 import mrtjp.core.world.{Messenger, WorldLib}
 import net.minecraft.client.Minecraft
@@ -22,6 +23,7 @@ class MrTJPCorePH
     val tilePacket = 1
     val messagePacket = 2
     val guiPacket = 3
+    val keyBindPacket = 4
 
     def handleTilePacket(world:World, packet:PacketCustom, pos:BlockCoord)
     {
@@ -52,6 +54,8 @@ object MrTJPCoreSPH extends MrTJPCorePH with IServerPacketHandler
         {
             case this.tilePacket =>
                 handleTilePacket(sender.theItemInWorldManager.theWorld, packet, packet.readCoord())
+            case this.keyBindPacket =>
+                KeyTracking.updatePlayerKey(packet.readUByte(), sender, packet.readBoolean())
         }
     }
 }
