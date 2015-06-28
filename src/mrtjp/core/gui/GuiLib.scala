@@ -69,6 +69,7 @@ object GuiLib
         val v = 29
         ResourceLib.guiExtras.bind()
         GuiDraw.gui.setZLevel(zLevel)
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F)
         GL11.glPushMatrix()
         GL11.glTranslated(x+2, y+2, 0)
         GL11.glScaled(width-4, height-4, 0)
@@ -124,27 +125,30 @@ object GuiLib
 
     def drawLine(x:Double, y:Double, x2:Double, y2:Double, color:Int)
     {
-        val count = FMLClientHandler.instance.getClient.thePlayer.ticksExisted
-        val alpha = 0.3F+MathHelper.sin((count+x).asInstanceOf[Float])*0.3F+0.3F
+        import GL11._
+        import Tessellator.{instance => t}
+
         val c = new Color(color)
         val red = c.getRed/255.0F
         val green = c.getGreen/255.0F
         val blue = c.getBlue/255.0F
-        val var12 = Tessellator.instance
+        val alpha = c.getAlpha/255.0F
 
-        GL11.glPushMatrix()
-        GL11.glLineWidth(3.0F)
-        GL11.glDisable(3553)
-        GL11.glBlendFunc(770, 1)
-        var12.startDrawing(3)
-        var12.setColorRGBA_F(red, green, blue, alpha)
-        var12.addVertex(x, y, 0.0D)
-        var12.addVertex(x2, y2, 0.0D)
-        var12.draw()
-        GL11.glBlendFunc(770, 771)
-        GL11.glDisable(32826)
-        GL11.glEnable(3553)
-        GL11.glPopMatrix()
+        glPushMatrix()
+        glLineWidth(3.0F)
+        glDisable(GL_TEXTURE_2D)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glColor4f(red, green, blue, alpha)
+
+        t.startDrawing(3)
+        t.addVertex(x, y, 0.0D)
+        t.addVertex(x2, y2, 0.0D)
+        t.draw()
+
+        glDisable(GL_BLEND)
+        glEnable(GL_TEXTURE_2D)
+        glPopMatrix()
     }
 
     def drawVerticalTank(x:Int, y:Int, u:Int, v:Int, w:Int, h:Int, prog:Int)

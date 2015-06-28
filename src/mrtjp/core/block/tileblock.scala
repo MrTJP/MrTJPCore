@@ -311,7 +311,7 @@ class InstancedBlock(name:String, mat:Material) extends BlockContainer(mat)
 
     override def isSideSolid(w:IBlockAccess, x:Int, y:Int, z:Int, side:ForgeDirection) = w.getTileEntity(x, y, z) match
     {
-        case t:InstancedBlockTile => t.isBlockSolidOnSide(side.ordinal)
+        case t:InstancedBlockTile => t.isSolid(side.ordinal)
         case _ => super.isSideSolid(w, x, y, z, side)
     }
 
@@ -370,30 +370,6 @@ trait TTileOrient extends InstancedBlockTile
 
     // absRot from absDir
     def absoluteRot(absDir:Int) = Rotation.rotationTo(side, absDir)
-
-    abstract override def save(tag:NBTTagCompound)
-    {
-        super.save(tag)
-        tag.setByte("orient", orientation)
-    }
-
-    abstract override def load(tag:NBTTagCompound)
-    {
-        super.load(tag)
-        orientation = tag.getByte("orient")
-    }
-
-    abstract override def readDesc(in:MCDataInput)
-    {
-        super.readDesc(in)
-        orientation = in.readByte()
-    }
-
-    abstract override def writeDesc(out:MCDataOutput)
-    {
-        super.writeDesc(out)
-        out.writeByte(orientation)
-    }
 }
 
 abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
@@ -416,7 +392,7 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
 
     def isFireSource(side:Int) = false
 
-    def isBlockSolidOnSide(side:Int) = true
+    def isSolid(side:Int) = true
 
     def onBlockActivated(player:EntityPlayer, side:Int) = false
 
@@ -454,7 +430,7 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
 
     def scheduleTick(time:Int)
     {
-        val tn = worldObj.getTotalWorldTime+time
+        val tn = world.getTotalWorldTime+time
         if (schedTick > 0L && schedTick < tn) return
         schedTick = tn
         markDirty()
@@ -493,14 +469,14 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
 
     final override def updateEntity()
     {
-        if (worldObj.isRemote)
+        if (world.isRemote)
         {
             updateClient()
             return
         }
         else update()
         if (schedTick < 0L) return
-        val time = worldObj.getTotalWorldTime
+        val time = world.getTotalWorldTime
         if (schedTick <= time)
         {
             schedTick = -1L

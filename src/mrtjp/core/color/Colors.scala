@@ -75,13 +75,16 @@ object Colors extends Enum
 
     class Color(override val name:String, val rgb:Int) extends Value
     {
-        val rgba = rgb<<8|0xFF
-        val argb = 0xFF000000|rgb
+        val rgba:Int = rgba(0xFF)
+        val argb:Int = argb(0xFF)
         val c = new ColourRGBA(rgba)
 
         val rF = (rgb>>16&255)/255.0F
         val gF = (rgb>>8&255)/255.0F
         val bF = (rgb&255)/255.0F
+
+        def rgba(a:Int):Int = rgb<<8|a&0xFF
+        def argb(a:Int):Int = (a&0xFF)<<24|rgb
 
         lazy val dyeID = 15-ordinal
         lazy val woolID = ordinal

@@ -11,14 +11,19 @@ import cpw.mods.fml.relauncher.{Side, SideOnly}
 import mrtjp.core.inventory.InvWrapper
 import net.minecraft.client.Minecraft
 import net.minecraft.entity.player.EntityPlayer
-import net.minecraft.inventory.{Container, IInventory, Slot}
+import net.minecraft.inventory.{ICrafting, Container, IInventory, Slot}
 import net.minecraft.item.ItemStack
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{Buffer => MBuffer}
 
-class WidgetContainer extends Container
+
+class NodeContainer extends Container
 {
+    var startWatchDelegate = {(p:EntityPlayer) => }
+    var stopWatchDelegate = {(p:EntityPlayer) => }
+    var slotChangeDelegate = {(slot:Int) => }
+
     def slots:MBuffer[Slot3] = asScalaBuffer[Slot3](inventorySlots.asInstanceOf[JList[Slot3]])
 
     override def canInteractWith(player:EntityPlayer) = true
@@ -34,6 +39,10 @@ class WidgetContainer extends Container
         if (!slot.isInstanceOf[Slot3])
             throw new IllegalArgumentException("NodeContainers can only except slots of type Slot3")
         super.addSlotToContainer(slot)
+
+        slot.asInstanceOf[Slot3].slotChangeDelegate2 =
+                {() => slotChangeDelegate(slot.slotNumber)}
+        slot
     }
 
     @SideOnly(Side.CLIENT)
@@ -48,6 +57,33 @@ class WidgetContainer extends Container
 
         for ((x, y) <- GuiLib.createSlotGrid(x, y, 9, 3, 0, 0))
             addSlotToContainer(new Slot3(player.inventory, up(), x, y)) //slots
+    }
+
+    override def addCraftingToCrafters(c:ICrafting)
+    {
+        super.addCraftingToCrafters(c)
+        c match {
+            case p:EntityPlayer if !p.worldObj.isRemote =>
+                startWatchDelegate(p)
+            case _ =>
+        }
+    }
+
+    override def removeCraftingFromCrafters(c :ICrafting)
+    {
+        super.removeCraftingFromCrafters(c)
+        c match {
+            case p:EntityPlayer if !p.worldObj.isRemote =>
+                stopWatchDelegate(p)
+            case _ =>
+        }
+    }
+
+    override def onContainerClosed(p:EntityPlayer)
+    {
+        super.onContainerClosed(p)
+        if (!p.worldObj.isRemote)
+            stopWatchDelegate(p)
     }
 
     override def slotClick(id:Int, mouse:Int, shift:Int, player:EntityPlayer):ItemStack =
@@ -207,13 +243,23 @@ class WidgetContainer extends Container
 
 class Slot3(inv:IInventory, i:Int, x:Int, y:Int) extends Slot(inv, i, x, y)
 {
+    var slotChangeDelegate = {() =>}
     var canRemoveDelegate = {() => true}
     var canPlaceDelegate = {(stack:ItemStack) => inv.isItemValidForSlot(i, stack)}
     var slotLimitCalculator = {() => inv.getInventoryStackLimit}
 
     var phantomSlot = false
 
+    private[gui] var slotChangeDelegate2 = {() =>} //used for container change delegate
+
     override def getSlotStackLimit = slotLimitCalculator()
     override def canTakeStack(player:EntityPlayer) = canRemoveDelegate()
     override def isItemValid(stack:ItemStack) = canPlaceDelegate(stack)
+
+    override def onSlotChanged()
+    {
+        super.onSlotChanged()
+        slotChangeDelegate()
+        slotChangeDelegate2()
+    }
 }

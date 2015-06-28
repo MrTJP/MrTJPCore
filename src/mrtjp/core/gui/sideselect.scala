@@ -5,34 +5,34 @@
  */
 package mrtjp.core.gui
 
-import mrtjp.core.vec.{Point, Rect}
+import mrtjp.core.vec.{Point, Rect, Size}
 
-class SideSelect(x:Int, y:Int, w:Int, h:Int) extends TWidget
+class SideSelectNode(x:Int, y:Int, w:Int, h:Int) extends TNode
 {
-    override val bounds = new Rect().setMin(x, y).setWH(w, h)
+    position = Point(x, y)
+    var size = Size(w, h)
+    override def frame = Rect(position, size)
 
     var sides = 0
     var exclusiveSides = false
 
-    override def runInit_Impl()
     {
-        add(new WidgetButtonMC(0, 0, w/3, h/3).setText("u").setAction("sidesel_"+1))
-        add(new WidgetButtonMC((w/5)*2, 0, w/3, h/3).setText("n").setAction("sidesel_"+2))
-        add(new WidgetButtonMC(0, (h/5)*2, w/3, h/3).setText("w").setAction("sidesel_"+4))
-        add(new WidgetButtonMC((w/5)*4, (h/5)*1*2, w/3, h/3).setText("e").setAction("sidesel_"+5))
-        add(new WidgetButtonMC((w/5)*2, (h/5)*2*2, w/3, h/3).setText("s").setAction("sidesel_"+3))
-        add(new WidgetButtonMC((w/5)*4, (h/5)*2*2, w/3, h/3).setText("d").setAction("sidesel_"+0))
+        addChild(buildButton(0, 0, "u", 1))
+        addChild(buildButton((w/5)*2, 0, "n", 2))
+        addChild(buildButton(0, (h/5)*2, "w", 4))
+        addChild(buildButton((w/5)*4, (h/5)*1*2, "e", 5))
+        addChild(buildButton((w/5)*2, (h/5)*2*2, "s", 3))
+        addChild(buildButton((w/5)*4, (h/5)*2*2, "d", 0))
     }
 
-    override def drawBack_Impl(mouse:Point, frame:Float)
+    private def buildButton(x:Int, y:Int, text:String, side:Int) =
     {
-        super.drawBack_Impl(mouse, frame)
-    }
-
-    override def receiveMessage_Impl(message:String)
-    {
-        if (message.startsWith("sidesel_"))
-            onSidePresed(Integer.parseInt(message.substring(8)))
+        val b = new MCButtonNode
+        b.position = Point(x, y)
+        b.size = size/3
+        b.text = text
+        b.clickDelegate = {() => onSidePresed(side)}
+        b
     }
 
     def onSidePresed(side:Int)

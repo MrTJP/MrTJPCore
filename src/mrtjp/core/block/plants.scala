@@ -93,6 +93,8 @@ trait TPlantTile extends InstancedBlockTile
         }
         else false
     }
+
+    override def isSolid(side:Int) = false
 }
 
 trait TItemSeed extends Item with IPlantable

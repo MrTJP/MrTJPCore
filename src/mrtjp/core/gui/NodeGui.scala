@@ -6,33 +6,30 @@
 package mrtjp.core.gui
 
 import codechicken.lib.gui.GuiDraw
-import mrtjp.core.vec.{Point, Rect}
+import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiScreen
 import net.minecraft.client.gui.inventory.GuiContainer
 import net.minecraft.inventory.Container
 import org.lwjgl.input.Mouse
+import org.lwjgl.opengl.GL11
 
-class WidgetGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TWidget
+class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
 {
     def this(c:Container) = this(c, 176, 166)
-    def this(x:Int, y:Int) = this(new WidgetContainer, x, y)
+    def this(x:Int, y:Int) = this(new NodeContainer, x, y)
 
     xSize = w
     ySize = h
-    this <--> this
 
-    override def mcInst = mc
-    override def renderEngine = mcInst.renderEngine
-    override def fontRenderer = mcInst.fontRenderer
-    override def getZ = zLevel
+    var debugDrawFrames = false
 
-    // Lazy because initGui has to be called before this
-    override lazy val bounds = new Rect().setMin(guiLeft, guiTop).setWH(xSize, ySize)
+    var size = Size.zeroSize
+    override def frame = new Rect(position, size)
 
+    //TODO get rid of this nonsense
     var prevGui:GuiScreen = null
     def setJumpBack(p:GuiScreen){prevGui = p}
-
     def jumpTo(g:GuiScreen, containerHack:Boolean)
     {
         mcInst.displayGuiScreen(g)
@@ -47,7 +44,8 @@ class WidgetGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TWidget
     override def initGui()
     {
         super.initGui()
-        bounds.setMin(guiLeft, guiTop).setWH(xSize, ySize)
+        position = Point(guiLeft, guiTop)
+        size = Size(xSize, ySize)
     }
 
     final override def updateScreen()
@@ -60,7 +58,7 @@ class WidgetGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TWidget
     {
         val init = this.mc == null
         super.setWorldAndResolution(mc, i, j)
-        if (init) runInit()
+        if (init) onAddedToParent_Impl()
     }
 
     final override def mouseClicked(x:Int, y:Int, button:Int)
@@ -92,22 +90,20 @@ class WidgetGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TWidget
         }
     }
 
-    final override def keyTyped(c:Char, i:Int)
+    final override def keyTyped(c:Char, keycode:Int)
     {
-        if (isClosingKey(i)) //esc
+        if (keyPressed(c, keycode, false)) return
+
+        if (isClosingKey(keycode) && prevGui != null) //esc
         {
-            if (prevGui != null) jumpTo(prevGui, prevGui.isInstanceOf[GuiContainer])
-            else if (forwardClosing) super.keyTyped(c, i)
+            jumpTo(prevGui, prevGui.isInstanceOf[GuiContainer])
+            return
         }
-        else if ((2 to 10 contains i) && !(blockedHotkeyNumbers contains i-1))
-            super.keyTyped(c, i) //number for slot moving
-        keyPressed(c, i, false)
+        super.keyTyped(c, keycode)
     }
 
-    def forwardClosing = true
     def isClosingKey(keycode:Int) =
         keycode == 1 || keycode == mc.gameSettings.keyBindInventory.getKeyCode //esc or inv key
-    def blockedHotkeyNumbers:Set[Int] = Set()
 
     /**
      * Front/back rendering overridden, because at root, we dont push the children to our pos, because its zero.
@@ -117,12 +113,37 @@ class WidgetGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TWidget
     {
         lastFrame = f
         val mouse = new Point(mx, my)
+        frameUpdate(mouse, f)
+        GL11.glDisable(GL11.GL_DEPTH_TEST)
         rootDrawBack(mouse, f)
+        GL11.glEnable(GL11.GL_DEPTH_TEST)
     }
 
     final override def drawGuiContainerForegroundLayer(mx:Int, my:Int)
     {
         val mouse = new Point(mx, my)
+        GL11.glDisable(GL11.GL_DEPTH_TEST)
         rootDrawFront(mouse, lastFrame)
+        GL11.glEnable(GL11.GL_DEPTH_TEST)
+
+        if (debugDrawFrames)
+        {
+            GL11.glTranslated(-position.x, -position.y, 0)
+            def render(node:TNode)
+            {
+                if (!node.hidden)
+                {
+                    val f = node.frame
+                    val absF = Rect(node.parent.convertPointToScreen(f.origin), f.size)
+                    GuiLib.drawLine(absF.x, absF.y, absF.x, absF.maxY)
+                    GuiLib.drawLine(absF.x, absF.maxY, absF.maxX, absF.maxY)
+                    GuiLib.drawLine(absF.maxX, absF.maxY, absF.maxX, absF.y)
+                    GuiLib.drawLine(absF.maxX, absF.y, absF.x, absF.y)
+                }
+                for (c <- node.children) render(c)
+            }
+            for (c <- children) render(c)
+            GL11.glTranslated(position.x, position.y, 0)
+        }
     }
 }

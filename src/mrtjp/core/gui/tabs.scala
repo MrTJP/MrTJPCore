@@ -6,8 +6,8 @@
 package mrtjp.core.gui
 
 import codechicken.lib.gui.GuiDraw
-import mrtjp.core.color.Colors_old
-import mrtjp.core.vec.{Point, Rect}
+import mrtjp.core.color.Colors
+import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.renderer.RenderHelper
 import net.minecraft.client.renderer.entity.RenderItem
 import net.minecraft.item.ItemStack
@@ -17,41 +17,45 @@ import org.lwjgl.opengl.{GL11, GL12}
 import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
 
-class WidgetTab(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TWidget
+class TabNode(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TNode
 {
-    def this(wMin:Int, hMin:Int, wMax:Int, hMax:Int) = this(wMin, hMin, wMax, hMax, Colors_old.LIGHT_GREY.rgb)
+    def this(wMin:Int, hMin:Int, wMax:Int, hMax:Int) = this(wMin, hMin, wMax, hMax, Colors.LIGHT_GREY.rgb)
 
     var currentW = wMin.asInstanceOf[Double]
     var currentH = wMin.asInstanceOf[Double]
 
-    def getControl = parentWidget.asInstanceOf[WidgetTabControl]
+    def getControl = parent.asInstanceOf[TabControlNode]
 
-    override val bounds = new Rect().setWH(wMin, hMin)
-    private val startBounds = bounds.copy
+    var size = Size(wMin, hMin)
+    override def frame = Rect(position, size)
+    private val startBounds = frame
 
     var active = false
-    def isOpen = active && bWidth==wMax && bHeight==hMax
+    def isOpen = active && size.width==wMax && size.height==hMax
 
-    override def enableChildren = isOpen
-
-    override def drawBack_Impl(mouse:Point, frame:Float)
+    override def drawBack_Impl(mouse:Point, rframe:Float)
     {
         val w = if (active) wMax else wMin
         val h = if (active) hMax else hMin
 
-        if (w != bWidth) currentW += (w-currentW)/8
-        if (h != bHeight) currentH += (h-currentH)/8
+        if (w != size.width) currentW += (w-currentW)/8
+        if (h != size.height) currentH += (h-currentH)/8
 
-        setSize(currentW.round.asInstanceOf[Int], currentH.round.asInstanceOf[Int])
+        size = Size(currentW.round.toInt, currentH.round.toInt)
 
         drawBox()
         drawIcon()
-        if (isOpen) drawTab()
+        if (isOpen)
+        {
+            drawTab()
+            children.foreach(_.hidden = false)
+        }
+        else children.foreach(_.hidden = true)
     }
 
-    override def drawFront_Impl(mouse:Point, frame:Float)
+    override def drawFront_Impl(mouse:Point, rframe:Float)
     {
-        if (startBounds.intersects(mouse))
+        if (rayTest(mouse))
         {
             val list = ListBuffer[String]()
             buildToolTip(list)
@@ -72,12 +76,12 @@ class WidgetTab(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends T
         val b = (color&255)/255.0F
         GL11.glColor4f(r, g, b, 1)
 
-        GuiLib.drawGuiBox(x, y, bWidth, bHeight, getZ)
+        GuiLib.drawGuiBox(position.x, position.y, size.width, size.height, 0)
     }
 
     override def mouseClicked_Impl(p:Point, button:Int, consumed:Boolean) =
     {
-        if (!consumed && startBounds.intersects(p))
+        if (!consumed && startBounds.contains(p))
         {
             getControl.onTabClicked(this)
             true
@@ -86,7 +90,7 @@ class WidgetTab(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends T
     }
 }
 
-trait TStackTab extends WidgetTab
+trait TStackTab extends TabNode
 {
     var iconStack:ItemStack = null
     def setIconStack(stack:ItemStack):this.type = {iconStack = stack; this}
@@ -97,8 +101,8 @@ trait TStackTab extends WidgetTab
         GL11.glColor4f(1, 1, 1, 1)
         RenderHelper.enableGUIStandardItemLighting()
         GL11.glEnable(GL12.GL_RESCALE_NORMAL)
-        TStackTab.itemRender.zLevel = getZ+50
-        TStackTab.itemRender.renderItemAndEffectIntoGUI(fontRenderer, renderEngine, iconStack, x+3, y+3)
+        TStackTab.itemRender.zLevel = (zPosition+25).toFloat
+        TStackTab.itemRender.renderItemAndEffectIntoGUI(fontRenderer, renderEngine, iconStack, position.x+3, position.y+3)
         GL11.glDisable(GL12.GL_RESCALE_NORMAL)
         GL11.glDisable(GL11.GL_LIGHTING)
         RenderHelper.disableStandardItemLighting()
@@ -110,7 +114,7 @@ object TStackTab
     val itemRender = new RenderItem
 }
 
-trait TIconTab extends WidgetTab
+trait TIconTab extends TabNode
 {
     var icon:IIcon = null
     def setIcon(i:IIcon):this.type = {icon = i; this}
@@ -118,18 +122,19 @@ trait TIconTab extends WidgetTab
     abstract override def drawIcon()
     {
         super.drawIcon()
-        drawTexturedModelRectFromIcon(x+3, x+3, icon, 16, 16)
+        drawTexturedModelRectFromIcon(position.x+3, position.x+3, icon, 16, 16)
     }
 }
 
 
-class WidgetTabControl(x:Int, y:Int) extends TWidget
+class TabControlNode(x:Int, y:Int) extends TNode
 {
-    override val bounds = new Rect(x, y, 0, 0)
+    position = Point(x, y)
+    override def frame = Rect(position, Size.zeroSize)
 
-    var active:WidgetTab = null
+    var active:TabNode = null
 
-    def onTabClicked(tab:WidgetTab)
+    def onTabClicked(tab:TabNode)
     {
         if (tab != active)
         {
@@ -144,14 +149,13 @@ class WidgetTabControl(x:Int, y:Int) extends TWidget
         }
     }
 
-    override def drawBack_Impl(mouse:Point, frame:Float)
+    override def frameUpdate_Impl(mouse:Point, rframe:Float)
     {
-        setSize(0, 0)
-        for (w <- widgets)
+        var dx = 0
+        for (w <- children)
         {
-            w.setPos(w.x, bHeight)
-            bounds.setWidth(bWidth+w.bWidth)
-            bounds.setHeight(bHeight+w.bHeight-1)
+            w.position = Point(w.position.x, dx)
+            dx += w.frame.height
         }
     }
 }

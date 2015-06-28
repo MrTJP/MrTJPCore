@@ -9,22 +9,24 @@ import java.util.{List => JList}
 
 import codechicken.lib.gui.GuiDraw
 import codechicken.lib.render.FontUtils
-import mrtjp.core.color.Colors_old
+import mrtjp.core.color.Colors
 import mrtjp.core.item.ItemKeyStack
-import mrtjp.core.vec.{Point, Rect}
+import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.gui.Gui
 import net.minecraft.client.renderer.entity.RenderItem
 import net.minecraft.client.renderer.{OpenGlHelper, RenderHelper}
 import net.minecraft.item.ItemStack
 import org.lwjgl.opengl.{GL11, GL12}
 
-class WidgetItemList(x:Int, y:Int, w:Int, h:Int) extends TWidget
+class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
 {
-    override val bounds = new Rect().setMin(x, y).setWH(w, h)
+    position = Point(x, y)
+    var size = Size(w, h)
+    override def frame = Rect(position, size)
 
     private val squareSize = 20
-    private val rows = bHeight/squareSize
-    private val columns = bWidth/squareSize
+    private val rows = size.height/squareSize
+    private val columns = size.width/squareSize
 
     private var currentPage = 0
     private var pagesNeeded = 0
@@ -100,7 +102,7 @@ class WidgetItemList(x:Int, y:Int, w:Int, h:Int) extends TWidget
 
     override def drawBack_Impl(mouse:Point, frame:Float)
     {
-        drawGradientRect(x, y, x+bWidth, y+bHeight, 0xff808080, 0xff808080)
+        drawGradientRect(x, y, x+size.width, y+size.height, 0xff808080, 0xff808080)
         pagesNeeded = (getSeachedCount-1)/(rows*columns)
         if (pagesNeeded < 0) pagesNeeded = 0
         if (currentPage > pagesNeeded) currentPage = pagesNeeded
@@ -109,19 +111,19 @@ class WidgetItemList(x:Int, y:Int, w:Int, h:Int) extends TWidget
         else drawAllItems(mouse.x, mouse.y)
     }
 
-    override def drawFront_Impl(mouse:Point, frame:Float)
+    override def drawFront_Impl(mouse:Point, rframe:Float)
     {
         if (hover != null) GuiDraw.drawMultilineTip(
             mouse.x+12, mouse.y-12,
             hover.makeStack.getTooltip(mcInst.thePlayer,
                 mcInst.gameSettings.advancedItemTooltips).asInstanceOf[JList[String]])
         FontUtils.drawCenteredString(
-            "Page: "+(currentPage+1)+"/"+(pagesNeeded+1), x+(bWidth/2), y+bHeight+6, Colors_old.BLACK.rgb)
+            "Page: "+(currentPage+1)+"/"+(pagesNeeded+1), x+(size.width/2), y+frame.height+6, Colors.BLACK.rgb)
     }
 
     override def mouseClicked_Impl(p:Point, button:Int, consumed:Boolean) =
     {
-        if (!consumed && bounds.intersects(p))
+        if (!consumed && frame.contains(p))
         {
             xLast = p.x
             yLast = p.y
@@ -132,15 +134,15 @@ class WidgetItemList(x:Int, y:Int, w:Int, h:Int) extends TWidget
 
     private def drawLoadingScreen()
     {
-        val barSizeX = bWidth/2
+        val barSizeX = size.width/2
         val time = System.currentTimeMillis/(if (waitingForList) 40 else 8)
         val percent = (time%barSizeX).asInstanceOf[Int]
 
         if (!waitingForList && percent > barSizeX-8) downloadFinished = true
-        val xStart = x+bWidth/2-barSizeX/2
-        val yStart = y+bHeight/3
+        val xStart = x+size.width/2-barSizeX/2
+        val yStart = y+frame.height/3
 
-        FontUtils.drawCenteredString("downloading data", (x+bWidth)/2, (y+bHeight)/3+squareSize, 0xff165571)
+        FontUtils.drawCenteredString("downloading data", (x+size.width)/2, (y+frame.height)/3+squareSize, 0xff165571)
         val xSize = percent
         val ySize = 9
 
@@ -159,7 +161,7 @@ class WidgetItemList(x:Int, y:Int, w:Int, h:Int) extends TWidget
 
         glItemPre()
 
-        var b, c = new scala.util.control.Breaks
+        val b, c = new scala.util.control.Breaks
         b.breakable
         {
             for (keystack <- displayList) c.breakable

@@ -5,48 +5,43 @@
  */
 package mrtjp.core.vec
 
-
-
-class Rect(var min:Point, var max:Point)
+case class Rect(origin:Point, size:Size)
 {
-    def this(xmin:Int, ymin:Int, xmax:Int, ymax:Int) = this(new Point(xmin, ymin), new Point(xmax, ymax))
-    def this(r:Rect) = this(r.min.copy, r.max.copy)
-    def this() = this(0, 0, 0, 0)
+    def this(x:Int, y:Int, width:Int, height:Int) = this(Point(x, y), Size(width, height))
+    def this(min:Point, max:Point) = this(min, Size(max.x-min.x, max.y-min.y))
+    def this(r:Rect) = this(r.origin, r.size)
 
-    def set(xmin:Int, ymin:Int, xmax:Int, ymax:Int):this.type = setMin(xmin, ymin).setMax(xmax, ymax)
-    def setMin(x:Int, y:Int):this.type = {min.set(x, y); this}
-    def setMax(x:Int, y:Int):this.type = {max.set(x, y); this}
-
-    def set(min:Point, max:Point):this.type = set(min.x, min.y, max.x, max.y)
-    def setMin(p:Point):this.type = setMin(p.x, p.y)
-    def setMax(p:Point):this.type = setMax(p.x, p.y)
-
-    def width = max.x-min.x
-    def height = max.y-min.y
-
-    def setWH(w:Int, h:Int) = setWidth(w).setHeight(h)
-    def setWidth(w:Int) = {max.set(min.x+w, max.y); this}
-    def setHeight(h:Int) = {max.set(max.x, min.y+h); this}
-
-    def copy = new Rect(min.copy, max.copy)
-
-    def intersects(p:Point) = p >= min && p <= max
-    def intersects(r:Rect):Boolean = intersects(r.min) || intersects(r.max) || r.intersects(min) || r.intersects(max)
-
-    def enclose(p:Point) =
+    override def equals(obj:scala.Any) = obj match
     {
-        if (min.x > p.x) min.x = p.x
-        if (min.y > p.y) min.y = p.y
-        if (max.x < p.x) max.x = p.x
-        if (max.y < p.y) max.y = p.y
-        this
+        case that:Rect => origin == that.origin && size == that.size
+        case _ => false
     }
-    def enclose(r:Rect) =
-    {
-        if (min.x > r.min.x) min.x = r.min.x
-        if (min.y > r.min.y) min.y = r.min.y
-        if (max.x < r.max.x) max.x = r.max.x
-        if (max.y < r.max.y) max.y = r.max.y
-        this
-    }
+
+    def copy = new Rect(origin, size)
+
+    def x = origin.x
+    def y = origin.y
+    def width = size.width
+    def height = size.height
+
+    def maxX = x+width
+    def maxY = y+height
+    def maxPoint = Point(maxX, maxY)
+
+    def midX = x+width/2
+    def midY = y+height/2
+    def midPoint = Point(midX, midY)
+
+    def contains(p:Point):Boolean = p.x >= x && p.y >= y && p.x <= maxX && p.y <= maxY
+    def contains(rect:Rect):Boolean = contains(rect.origin) && contains(rect.maxPoint)
+    def intersects(r:Rect) = contains(r.origin) || contains(r.maxPoint) || r.contains(origin) || r.contains(maxPoint)
+
+    def enclose(p:Point) = new Rect(Point(math.min(x, p.x), math.min(y, p.y)), Point(math.max(maxX, p.x), math.max(maxY, p.y)))
+    def union(r:Rect) = new Rect(Point(math.min(x, r.x), math.min(y, r.y)), Point(math.max(maxX, r.maxX), math.max(maxY, r.maxY)))
+}
+
+object Rect
+{
+    val zeroRect = Rect(Point.zeroPoint, Size.zeroSize)
+    val infiniteRect = Rect(Point.zeroPoint, Size.infiniteSize)
 }

@@ -97,6 +97,16 @@ object MathLib
         bit
     }
 
+    def mostSignificant(mask:Int):Int =
+    {
+        if (mask == 0) return 0
+//        var bit = 31
+//        var m = mask
+//        while((m&1<<31) == 0 && m != 0){ bit -= 1; m <<= 1 }
+//        bit
+        31-Integer.numberOfLeadingZeros(mask)
+    }
+
     def weightedRandom[T](xs:Traversable[(T, Int)], rand:Random = random):T =
     {
         if (xs.size == 1) return xs.head._1
