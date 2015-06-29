@@ -95,7 +95,7 @@ class ItemDisplayNode extends TNode
             if (stack.stackSize == 1) ""
             else if (stack.stackSize < 1000) stack.stackSize+""
             else if (stack.stackSize < 100000) stack.stackSize/1000+"K"
-            else if (stack.stackSize < 1000000) "0M"+stack.stackSize/100000
+            else if (stack.stackSize < 1000000) "0."+stack.stackSize/100000+"M"
             else stack.stackSize/1000000+"M"
         font.drawStringWithShadow(s, position.x+19-2-font.getStringWidth(s), position.y+6+3, 16777215)
 
