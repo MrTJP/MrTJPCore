@@ -45,7 +45,12 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
     {
         super.initGui()
         position = Point(guiLeft, guiTop)
-        size = Size(xSize, ySize)
+        if (size == Size.zeroSize) size = Size(xSize, ySize) //TODO Legacy (size should be set directly)
+        else
+        {
+            xSize = size.width
+            ySize = size.height
+        }
     }
 
     final override def updateScreen()
@@ -96,7 +101,7 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
 
         if (isClosingKey(keycode) && prevGui != null) //esc
         {
-            jumpTo(prevGui, prevGui.isInstanceOf[GuiContainer])
+            jumpTo(prevGui, prevGui.isInstanceOf[GuiContainer]) //TODO REMOVE!
             return
         }
         super.keyTyped(c, keycode)

@@ -16,6 +16,8 @@ class SideSelectNode(x:Int, y:Int, w:Int, h:Int) extends TNode
     var sides = 0
     var exclusiveSides = false
 
+    private val buttons = new Array[ButtonNode](6)
+
     {
         addChild(buildButton(0, 0, "u", 1))
         addChild(buildButton((w/5)*2, 0, "n", 2))
@@ -32,6 +34,7 @@ class SideSelectNode(x:Int, y:Int, w:Int, h:Int) extends TNode
         b.size = size/3
         b.text = text
         b.clickDelegate = {() => onSidePresed(side)}
+        buttons(side) = b
         b
     }
 
@@ -41,6 +44,9 @@ class SideSelectNode(x:Int, y:Int, w:Int, h:Int) extends TNode
         sides ^= 1<<side
         if (exclusiveSides) sides &= 1<<side
         if (old != sides) onSideChanged(side)
+
+        for (s <- 0 until 6)
+            buttons(s).mouseoverLock = (sides&1<<s) != 0
     }
 
     def onSideChanged(oldside:Int){}

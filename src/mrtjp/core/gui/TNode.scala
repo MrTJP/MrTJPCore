@@ -38,7 +38,7 @@ trait TNode extends Gui
         iterate(this)
     }
 
-    private def buildParentHierarchy(to:TNode) =
+    def buildParentHierarchy(to:TNode) =
     {
         var hierarchy = Seq[TNode]()
         def iterate(node:TNode)
@@ -95,9 +95,8 @@ trait TNode extends Gui
 
         var test = Seq.newBuilder[TNode]
         val ap = parent.convertPointToScreen(point)
-        for (c <- getRoot.subTree)
-            if (!c.hidden && c.userInteractionEnabled)
-                if (c.traceHit(ap)) test += c
+        for (c <- getRoot.subTree(true))
+            if (c.traceHit(ap)) test += c
 
         test.result().sortBy(_.zPosition).reverse
     }
@@ -108,15 +107,16 @@ trait TNode extends Gui
         s.nonEmpty && s.head == this
     }
 
-    def subTree =
+    def subTree(activeOnly:Boolean = false) =
     {
         val s = Seq.newBuilder[TNode]
         def gather(children:Seq[TNode])
         {
-            s ++= children
-            for (c <- children) gather(c.children)
+            val ac = if (activeOnly) children.filter(c => !c.hidden && c.userInteractionEnabled) else children
+            s ++= ac
+            for (c <- ac) gather(c.children)
         }
-        gather(children)
+        if (!activeOnly || (!hidden && userInteractionEnabled)) gather(children)
         s.result()
     }
 
@@ -127,7 +127,7 @@ trait TNode extends Gui
 
     def pushZBy(z:Double)
     {
-        for (c <- subTree:+this)
+        for (c <- subTree():+this)
             c.zPosition += z
     }
 
