@@ -43,5 +43,5 @@ case class Rect(origin:Point, size:Size)
 object Rect
 {
     val zeroRect = Rect(Point.zeroPoint, Size.zeroSize)
-    val infiniteRect = Rect(Point.zeroPoint, Size.infiniteSize)
+    val infiniteRect = Rect(-Point.infinitePoint/2, Size.infiniteSize)
 }

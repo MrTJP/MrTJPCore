@@ -147,7 +147,7 @@ class NodeContainer extends Container
                 if (!doMerge(manipStack, i)) return null
 
                 if (manipStack.stackSize <= 0) slot.putStack(null)
-                else slot.onSlotChanged()
+                else slot.putStack(manipStack)
             }
         }
         stack

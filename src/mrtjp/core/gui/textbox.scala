@@ -35,7 +35,7 @@ class SimpleTextboxNode(x:Int, y:Int, w:Int, h:Int, tq:String) extends TNode
     var size = Size(w, h)
     override def frame = Rect(position, size)
 
-    private def setText(t:String)
+    def setText(t:String)
     {
         val old = text
         text = t

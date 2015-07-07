@@ -61,6 +61,7 @@ case class Point(x:Int, y:Int)
 
 object Point
 {
+    val infinitePoint = Point(Int.MaxValue, Int.MaxValue)
     val zeroPoint = Point(0, 0)
 
     def apply(size:Size):Point = Point(size.width, size.height)

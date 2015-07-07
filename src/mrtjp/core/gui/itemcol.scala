@@ -8,23 +8,26 @@ package mrtjp.core.gui
 import java.util.{List => JList}
 
 import codechicken.lib.gui.GuiDraw
-import codechicken.lib.vec.{Vector3, Scale, Translation}
+import codechicken.lib.vec.{Scale, Vector3}
 import mrtjp.core.item.ItemKeyStack
 import mrtjp.core.vec.{Point, Rect, Size}
-import net.minecraft.client.renderer.{OpenGlHelper, RenderHelper}
 import net.minecraft.client.renderer.entity.RenderItem
-import net.minecraft.item.ItemStack
-import org.lwjgl.opengl.{GL12, GL11}
+import net.minecraft.client.renderer.{OpenGlHelper, RenderHelper}
+import net.minecraft.util.EnumChatFormatting
+import org.lwjgl.opengl.{GL11, GL12}
 
 class ItemListNode extends TNode
 {
     var items = Seq[ItemKeyStack]()
-    var itemSize = Size(12, 12)
+    var itemSize = Size(16, 16)
     var gridWidth = 3
 
     var displayNodeFactory = {stack:ItemKeyStack => new ItemDisplayNode}
+    var cullFrame = Rect.infiniteRect
 
     private var dispNodes = Seq[ItemDisplayNode]()
+
+    override def frame = Rect(position, itemSize.multiply(math.min(items.size, gridWidth), items.size/gridWidth+1))
 
     def reset()
     {
@@ -44,10 +47,16 @@ class ItemListNode extends TNode
                 d.size = itemSize
                 d.position = Point(itemSize.multiply(x, y))
                 addChild(d)
-                dispNodes :+= d
+
+                val df = convertRectToScreen(d.frame)
+                if (cullFrame.intersects(df))
+                {
+                    dispNodes :+= d
+                }
+                else d.removeFromParent()
 
                 x += 1
-                if (x >= 3){x = 0; y += 1}
+                if (x >= gridWidth){x = 0; y += 1}
             }
         }
     }
@@ -59,6 +68,7 @@ class ItemDisplayNode extends TNode
     var size = Size.zeroSize
 
     var backgroundColour = 0
+    var clickDelegate = {() => }
 
     override def frame = Rect(position, size)
 
@@ -105,25 +115,6 @@ class ItemDisplayNode extends TNode
         font.setUnicodeFlag(f)
     }
 
-    override def drawFront_Impl(mouse:Point, rframe:Float)
-    {
-        if (rayTest(mouse))
-        {
-            ClipNode.tempDisableScissoring()
-            //draw tooltip with absolute coords to allow it to force-fit on screen
-            translateToScreen()
-            val Point(mx, my) = parent.convertPointToScreen(mouse)
-
-            GuiDraw.drawMultilineTip(
-                mx+12, my-12,
-                stack.makeStack.getTooltip(mcInst.thePlayer,
-                    mcInst.gameSettings.advancedItemTooltips).asInstanceOf[JList[String]])
-
-            translateFromScreen()
-            ClipNode.tempEnableScissoring()
-        }
-    }
-
     private def glItemPre()
     {
         GL11.glPushMatrix()
@@ -139,6 +130,39 @@ class ItemDisplayNode extends TNode
     {
         GL11.glEnable(GL11.GL_DEPTH_TEST)
         GL11.glPopMatrix()
+    }
+
+    override def mouseClicked_Impl(p:Point, button:Int, consumed:Boolean) =
+    {
+        if (!consumed && rayTest(p))
+        {
+            clickDelegate()
+            true
+        }
+        else false
+    }
+
+    override def drawFront_Impl(mouse:Point, rframe:Float)
+    {
+        if (frame.contains(mouse) && rayTest(mouse))
+            drawTooltip(mouse)
+    }
+
+    def drawTooltip(mouse:Point)
+    {
+        ClipNode.tempDisableScissoring()
+        //draw tooltip with absolute coords to allow it to force-fit on screen
+        translateToScreen()
+        val Point(mx, my) = parent.convertPointToScreen(mouse)
+
+        import scala.collection.JavaConversions._
+        val lines = stack.makeStack.getTooltip(mcInst.thePlayer,
+            mcInst.gameSettings.advancedItemTooltips).asInstanceOf[JList[String]]
+        val l2 = Seq(lines.head)++lines.tail.map(EnumChatFormatting.GRAY+_)
+        GuiDraw.drawMultilineTip(mx+12, my-12, l2)
+
+        translateFromScreen()
+        ClipNode.tempEnableScissoring()
     }
 }
 

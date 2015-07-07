@@ -47,7 +47,7 @@ class ButtonNode extends TNode
     override def drawBack_Impl(mouse:Point, rframe:Float)
     {
         GL11.glColor4f(1, 1, 1, 1)
-        val mouseover = mouseoverLock || rayTest(mouse)
+        val mouseover = mouseoverLock || (frame.contains(mouse) && rayTest(mouse))
         drawButtonBackground(mouseover)
         drawButton(mouseover)
     }

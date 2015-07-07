@@ -95,20 +95,43 @@ class ItemKeyStack(val key:ItemKey, var stackSize:Int) extends Ordered[ItemKeySt
     }
 }
 
-class ItemQueue extends Growable[(ItemKey, Int)]
+class ItemQueue
 {
     private var collection = HashMap[ItemKey, Int]()
 
-    override def +=(elem:(ItemKey, Int)) =
+    def +=(elem:(ItemKey, Int)) =
     {
         val current = collection.getOrElse(elem._1, 0)
         collection += elem._1 -> (current+elem._2)
         this
     }
 
-    override def clear(){collection = HashMap[ItemKey, Int]()}
+    def ++=(xs:TraversableOnce[(ItemKey, Int)]) = {xs foreach +=; this}
 
-    def ++=(that:ItemQueue) = {that.result.foreach(this += _); this}
+    def ++=(that:ItemQueue) = {that.result.foreach(+=); this}
+
+    def -=(elem:(ItemKey, Int)) =
+    {
+        val remaining = apply(elem._1)-elem._2
+        if (remaining > 0) this += elem._1 -> remaining
+        else collection -= elem._1
+    }
+
+    def --=(xs:TraversableOnce[(ItemKey, Int)]) = {xs foreach -=; this}
+
+    def --=(that:ItemQueue) = {that.result.foreach(-=); this}
+
+    def remove(item:ItemKey, amount:Int)
+    {
+        var remaining = collection.getOrElse(item, 0)
+        remaining -= amount
+        if (remaining > 0) this += item -> remaining
+        else collection -= item
+    }
+
+    def apply(item:ItemKey):Int = collection.getOrElse(item, 0)
+
+    def clear(){collection = HashMap[ItemKey, Int]()}
 
     def result = collection
 }

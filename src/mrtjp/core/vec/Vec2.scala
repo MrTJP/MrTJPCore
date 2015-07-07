@@ -64,8 +64,8 @@ case class Vec2(dx:Double, dy:Double)
 object Vec2
 {
     val zeroVec = Vec2(0, 0)
+    val up = Vec2(0, -1)
     val right = Vec2(1, 0)
+    val down = Vec2(0, 1)
     val left = Vec2(-1, 0)
-    val up = Vec2(0, 1)
-    val down = Vec2(0, -1)
 }

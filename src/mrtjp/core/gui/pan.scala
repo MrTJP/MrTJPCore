@@ -24,6 +24,7 @@ class PanNode extends TNode
     var scrollBarHorizontal = true
 
     var dragTestFunction = {() => false}
+    var panDelegate = {() => }
 
     var debugShowClampBox = false
 
@@ -41,22 +42,15 @@ class PanNode extends TNode
         val delta = mouse-lastMousePos
         lastMousePos = mouse
 
-        def moveChildren(d:Vec2)
-        {
-            val d2 = d
-            if (d2 != Vec2.zeroVec)
-                for (c <- children) c.position = Point(c.position.vectorize+d2)
-        }
-
         if (mouseDownRight || mouseDownBelow)
         {
             val sf2 = size.vectorize/cFrame.size.vectorize
-            val modVec = if (mouseDownRight) Vec2.down else Vec2.left
-            moveChildren(delta.vectorize*scrollModifier/sf2*modVec)
+            val modVec = if (mouseDownRight) Vec2.up else Vec2.left
+            panChildren(delta.vectorize*scrollModifier/sf2*modVec)
         }
         else if (mouseDown)
         {
-            moveChildren(delta.vectorize*scrollModifier)
+            panChildren(delta.vectorize*scrollModifier)
         }
         else
         {
@@ -76,7 +70,17 @@ class PanNode extends TNode
             val bc = if (cFrame.size.height > size.height) cFrame.maxY min b else cFrame.maxY max b
             val bd = b-bc
 
-            moveChildren(Vec2(ld+rd, td+bd)*0.1*scrollModifier)
+            panChildren(Vec2(ld+rd, td+bd)*0.1*scrollModifier)
+        }
+    }
+
+    def panChildren(d:Vec2)
+    {
+        val d2 = d
+        if (d2 != Vec2.zeroVec)
+        {
+            for (c <- children) c.position = Point(c.position.vectorize+d2)
+            panDelegate()
         }
     }
 
@@ -133,8 +137,8 @@ class PanNode extends TNode
 
         if (!consumed)
         {
-            if (doRayTest(1)) mouseDownRight = true
-            else if (doRayTest(2)) mouseDownBelow = true
+            if (scrollBarVertical && doRayTest(1)) mouseDownRight = true
+            else if (scrollBarHorizontal && doRayTest(2)) mouseDownBelow = true
             else if (doRayTest(3)) mouseDown = true
             else return false
 

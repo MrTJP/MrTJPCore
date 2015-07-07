@@ -72,6 +72,11 @@ trait TNode extends Gui
     }
     def convertPointFrom(p:Point, from:TNode):Point = from.convertPointTo(p, this)
 
+    def convertRectTo(r:Rect, to:TNode):Rect = Rect(convertPointTo(r.origin, to), r.size)
+    def convertRectFrom(r:Rect, from:TNode):Rect = Rect(convertPointFrom(r.origin, from), r.size)
+    def convertRectToScreen(r:Rect):Rect = Rect(convertPointToScreen(r.origin), r.size)
+    def convertRectFromScreen(r:Rect):Rect = Rect(convertPointFromScreen(r.origin), r.size)
+
     def calculateChildrenFrame:Rect =
     {
         val rect = if (children.isEmpty) Rect.zeroRect
