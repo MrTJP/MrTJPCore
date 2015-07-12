@@ -20,8 +20,6 @@ abstract class ParticleAction
 
     def runOn(p:CoreParticle, frame:Float)
     {
-        if (!canOperate(p))
-            throw new RuntimeException("Particle action was run on an incompatible particle class.")
         if (!isFinished)
         {
             val t = life+frame
@@ -32,7 +30,7 @@ abstract class ParticleAction
 
     def operate(p:CoreParticle, time:Double)
 
-    def compile(){}
+    def compile(p:CoreParticle){}
 
     def reset()
     {
@@ -42,6 +40,8 @@ abstract class ParticleAction
     }
 
     def deltaTime(t:Double) = t-lastTime
+
+    def copy:ParticleAction
 }
 
 object ParticleAction
@@ -92,9 +92,9 @@ object ParticleAction
         a
     }
 
-    def moveBy(x:Double, y:Double, z:Double, duration:Double):ParticleAction =
+    def moveFor(x:Double, y:Double, z:Double, duration:Double):ParticleAction =
     {
-        val a = new PositionChangeByAction
+        val a = new PositionChangeForAction
         a.delta = new Vector3(x, y, z)
         a.duration = duration
         a
@@ -108,15 +108,15 @@ object ParticleAction
         a
     }
 
-    def scaleBy(x:Double, y:Double, z:Double, duration:Double):ParticleAction =
+    def scaleFor(x:Double, y:Double, z:Double, duration:Double):ParticleAction =
     {
-        val a = new ScaleByAction
+        val a = new ScaleForAction
         a.delta = new Vector3(x, y, z)
         a.duration = duration
         a
     }
 
-    def changeColourTo(r:Double, g:Double, b:Double, a:Double, duration:Double):ParticleAction =
+    def changeRGBATo(r:Double, g:Double, b:Double, a:Double, duration:Double):ParticleAction =
     {
         val a1 = new ColourChangeToAction
         a1.target = new Vector3(r, g, b)
@@ -127,15 +127,31 @@ object ParticleAction
         group(a1, a2)
     }
 
-    def changeColourBy(r:Double, g:Double, b:Double, a:Double, duration:Double):ParticleAction =
+    def changeRGBAFor(r:Double, g:Double, b:Double, a:Double, duration:Double):ParticleAction =
     {
-        val a1 = new ColourChangeByAction
+        val a1 = new ColourChangeForAction
         a1.delta = new Vector3(r, g, b)
         a1.duration = duration
-        val a2 = new AlphaChangeByAction
+        val a2 = new AlphaChangeForAction
         a2.delta = a
         a2.duration = duration
         group(a1, a2)
+    }
+
+    def changeColourTo(r:Double, g:Double, b:Double, duration:Double):ParticleAction =
+    {
+        val a = new ColourChangeToAction
+        a.target = new Vector3(r, g, b)
+        a.duration = duration
+        a
+    }
+
+    def changeColourFor(r:Double, g:Double, b:Double, duration:Double):ParticleAction =
+    {
+        val a = new ColourChangeForAction
+        a.delta = new Vector3(r, g, b)
+        a.duration = duration
+        a
     }
 
     def changeAlphaTo(alpha:Double, duration:Double):ParticleAction =
@@ -145,6 +161,18 @@ object ParticleAction
         a.duration = duration
         a
     }
+
+    def changeAlphaFor(alpha:Double, duration:Double):ParticleAction =
+    {
+        val a = new AlphaChangeForAction
+        a.delta = alpha
+        a.duration = duration
+        a
+    }
+
+    def fadeInFor(duration:Double):ParticleAction = changeAlphaTo(1, duration)
+
+    def fadeOutFor(duration:Double):ParticleAction = changeAlphaTo(0, duration)
 
     def changeTexture(texture:String):ParticleAction =
     {
@@ -161,9 +189,9 @@ object ParticleAction
         a
     }
 
-    def changeTargetBy(x:Double, y:Double, z:Double, duration:Double):ParticleAction =
+    def changeTargetFor(x:Double, y:Double, z:Double, duration:Double):ParticleAction =
     {
-        val a = new TargetChangeByAction
+        val a = new TargetChangeForAction
         a.delta = new Vector3(x, y, z)
         a.duration = duration
         a

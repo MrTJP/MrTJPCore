@@ -16,4 +16,8 @@ class DelayAction extends ParticleAction
         if (time > delay)
             isFinished = true
     }
+
+    override def compile(p:CoreParticle){}
+
+    override def copy = ParticleAction.delay(delay)
 }

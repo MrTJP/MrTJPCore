@@ -71,14 +71,18 @@ class PositionChangeToAction extends ParticleAction
         if (time < duration)
         {
             val dpos = target.copy.subtract(pos)
-            val speed = dpos.copy.multiply(1/(duration-time))
+            val speed = dpos.copy.multiply(1/(duration-time)).multiply(deltaTime(time))
             pp.setPos(pos.add(speed))
         }
         else isFinished = true
     }
+
+    override def compile(p:CoreParticle){}
+
+    override def copy = ParticleAction.moveTo(target.x, target.y, target.z, duration)
 }
 
-class PositionChangeByAction extends ParticleAction
+class PositionChangeForAction extends ParticleAction
 {
     var delta = Vector3.zero
     var duration = 0.0
@@ -91,4 +95,8 @@ class PositionChangeByAction extends ParticleAction
         if (time < duration) pp.setPos(pp.position.add(delta.copy.multiply(deltaTime(time))))
         else isFinished = true
     }
+
+    override def compile(p:CoreParticle){}
+
+    override def copy = ParticleAction.moveFor(delta.x, delta.y, delta.z, duration)
 }

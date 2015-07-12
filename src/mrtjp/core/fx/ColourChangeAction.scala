@@ -42,14 +42,18 @@ class ColourChangeToAction extends ParticleAction
         if (time < duration)
         {
             val drgb = target.copy.subtract(c.rgb)
-            val speed = drgb.copy.multiply(1/(duration-time))
+            val speed = drgb.copy.multiply(1/(duration-time)).multiply(deltaTime(time))
             c.rgb.add(speed)
         }
         else isFinished = true
     }
+
+    override def compile(p:CoreParticle){}
+
+    override def copy = ParticleAction.changeColourTo(target.x, target.y, target.z, duration)
 }
 
-class ColourChangeByAction extends ParticleAction
+class ColourChangeForAction extends ParticleAction
 {
     var delta = Vector3.zero
     var duration = 0.0
@@ -62,4 +66,8 @@ class ColourChangeByAction extends ParticleAction
         if (time < duration) c.rgb.add(delta.copy.multiply(deltaTime(time)))
         else isFinished = true
     }
+
+    override def compile(p:CoreParticle){}
+
+    override def copy = ParticleAction.changeColourFor(delta.x, delta.y, delta.z, duration)
 }

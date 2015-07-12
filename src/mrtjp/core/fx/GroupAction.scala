@@ -34,10 +34,10 @@ class GroupAction extends ParticleAction
 
     override def operate(p:CoreParticle, time:Double){}
 
-    override def compile()
+    override def compile(p:CoreParticle)
     {
-        super.compile()
-        actions.foreach(_.compile())
+        super.compile(p)
+        actions.foreach(_.compile(p))
     }
 
     override def reset()
@@ -45,4 +45,6 @@ class GroupAction extends ParticleAction
         super.reset()
         actions.foreach(_.reset())
     }
+
+    override def copy = ParticleAction.group(actions.map(_.copy):_*)
 }

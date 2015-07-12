@@ -26,14 +26,20 @@ class AlphaChangeToAction extends ParticleAction
         if (time < duration)
         {
             val da = target-p2.alpha
-            val speed = da*(1/(duration-time))
+            val speed = da*(1/(duration-time))*deltaTime(time)
             p2.alpha = p2.alpha+speed
         }
         else isFinished = true
     }
+
+    override def compile(p:CoreParticle)
+    {
+    }
+
+    override def copy = ParticleAction.changeAlphaTo(target, duration)
 }
 
-class AlphaChangeByAction extends ParticleAction
+class AlphaChangeForAction extends ParticleAction
 {
     var delta = 0.0
     var duration = 0.0
@@ -47,4 +53,8 @@ class AlphaChangeByAction extends ParticleAction
         if (time < duration) p2.alpha = p2.alpha+delta*deltaTime(time)
         else isFinished = true
     }
+
+    override def compile(p:CoreParticle){}
+
+    override def copy = ParticleAction.changeAlphaFor(delta, duration)
 }

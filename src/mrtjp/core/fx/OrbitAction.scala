@@ -31,4 +31,8 @@ class OrbitAction extends ParticleAction
 
         if (time > duration) isFinished = true
     }
+
+    override def compile(p:CoreParticle){}
+
+    override def copy = ParticleAction.orbitAround(target.x, target.z, speed, duration)
 }

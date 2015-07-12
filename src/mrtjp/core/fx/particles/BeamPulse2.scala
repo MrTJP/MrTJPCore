@@ -24,8 +24,8 @@ class BeamPulse2(w:World) extends CoreParticle(w) with TAlphaParticle with TColo
         import ParticleAction._
         removeAction(s)
         s = sequence(
-            changeColourTo(r, g, b, 0.8, 10),
-            changeColourTo(0.5, 0.5, 0.5, 0.3, 32)
+            changeRGBATo(r, g, b, 0.8, 10),
+            changeRGBATo(0.5, 0.5, 0.5, 0.3, 32)
         )
         runAction(s)
     }

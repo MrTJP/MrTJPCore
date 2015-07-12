@@ -35,14 +35,18 @@ class ScaleToAction extends ParticleAction
         if (time < duration)
         {
             val dscale = target.copy.subtract(s.scale)
-            val speed = dscale.copy.multiply(1/(duration-time))
+            val speed = dscale.copy.multiply(1/(duration-time)).multiply(deltaTime(time))
             s.scale.add(speed)
         }
         else isFinished = true
     }
+
+    override def compile(p:CoreParticle){}
+
+    override def copy = ParticleAction.scaleTo(target.x, target.y, target.z, duration)
 }
 
-class ScaleByAction extends ParticleAction
+class ScaleForAction extends ParticleAction
 {
     var delta = Vector3.zero
     var duration = 0.0
@@ -55,4 +59,8 @@ class ScaleByAction extends ParticleAction
         if (time < duration) s.scale.add(delta.copy.multiply(deltaTime(time)))
         else isFinished = true
     }
+
+    override def compile(p:CoreParticle){}
+
+    override def copy = ParticleAction.scaleFor(delta.x, delta.y, delta.z, duration)
 }

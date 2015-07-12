@@ -14,4 +14,8 @@ class KillAction extends ParticleAction
         p.setDead()
         isFinished = true
     }
+
+    override def compile(p:CoreParticle){}
+
+    override def copy = ParticleAction.kill()
 }

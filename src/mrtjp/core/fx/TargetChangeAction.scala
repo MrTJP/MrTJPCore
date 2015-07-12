@@ -59,14 +59,18 @@ class TargetChangeToAction extends ParticleAction
         if (time < duration)
         {
             val dpos = target.copy.subtract(tp.target)
-            val speed = dpos.copy.multiply(1/(duration-time))
+            val speed = dpos.copy.multiply(1/(duration-time)).multiply(deltaTime(time))
             tp.target.add(speed)
         }
         else isFinished = true
     }
+
+    override def compile(p:CoreParticle){}
+
+    override def copy = ParticleAction.changeTargetTo(target.x, target.y, target.z, duration)
 }
 
-class TargetChangeByAction extends ParticleAction
+class TargetChangeForAction extends ParticleAction
 {
     var delta = Vector3.zero
     var duration = 0.0
@@ -79,4 +83,8 @@ class TargetChangeByAction extends ParticleAction
         if (time < duration) tp.target.add(delta.copy.multiply(deltaTime(time)))
         else isFinished = true
     }
+
+    override def compile(p:CoreParticle){}
+
+    override def copy = ParticleAction.changeTargetFor(delta.x, delta.y, delta.z, duration)
 }

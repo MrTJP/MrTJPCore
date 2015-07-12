@@ -43,10 +43,10 @@ class RepeatAction extends ParticleAction
 
     override def operate(p:CoreParticle, time:Double){}
 
-    override def compile()
+    override def compile(p:CoreParticle)
     {
-        super.compile()
-        action.compile()
+        super.compile(p)
+        action.compile(p)
     }
 
     override def reset()
@@ -55,6 +55,8 @@ class RepeatAction extends ParticleAction
         iter = 0
         action.reset()
     }
+
+    override def copy = ParticleAction.repeat(action.copy, repeatTimes)
 }
 
 class RepeatForeverAction extends ParticleAction
@@ -78,10 +80,10 @@ class RepeatForeverAction extends ParticleAction
 
     override def operate(p:CoreParticle, time:Double){}
 
-    override def compile()
+    override def compile(p:CoreParticle)
     {
-        super.compile()
-        action.compile()
+        super.compile(p)
+        action.compile(p)
     }
 
     override def reset()
@@ -89,4 +91,6 @@ class RepeatForeverAction extends ParticleAction
         super.reset()
         action.reset()
     }
+
+    override def copy = ParticleAction.repeatForever(action.copy)
 }

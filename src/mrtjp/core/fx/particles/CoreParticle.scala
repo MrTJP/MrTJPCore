@@ -22,7 +22,7 @@ class CoreParticle(w:World) extends EntityFX(w, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.
     var hasVelocity = false
     var isImmortal = false
 
-    var actions = ListBuffer[ParticleAction]()
+    private var actions = ListBuffer[ParticleAction]()
 
     def setMaxAge(age:Int)
     {
@@ -40,8 +40,11 @@ class CoreParticle(w:World) extends EntityFX(w, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.
 
     def runAction(action:ParticleAction)
     {
-        action.compile()
-        actions += action
+        if (!action.canOperate(this))
+            throw new RuntimeException("Particle action was run on an incompatible particle class.")
+        val a1 = action.copy
+        a1.compile(this)
+        actions += a1
     }
 
     def removeAction(action:ParticleAction)
@@ -55,10 +58,6 @@ class CoreParticle(w:World) extends EntityFX(w, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.
     {
         ticksExisted += 1
         prevDistanceWalkedModified = distanceWalkedModified
-
-//        prevPosX = posX
-//        prevPosY = posY
-//        prevPosZ = posZ
 
         prevRotationPitch = rotationPitch
         prevRotationYaw = rotationYaw

@@ -23,4 +23,8 @@ class TextureChangeAction extends ParticleAction
         p.asInstanceOf[TTextureParticle].texture = tex
         isFinished = true
     }
+
+    override def compile(p:CoreParticle){}
+
+    override def copy = ParticleAction.changeTexture(tex)
 }
