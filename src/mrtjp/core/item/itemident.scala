@@ -110,10 +110,15 @@ class ItemQueue
 
     def ++=(that:ItemQueue) = {that.result.foreach(+=); this}
 
+    def add(item:ItemKey, amount:Int)
+    {
+        this += item -> amount
+    }
+
     def -=(elem:(ItemKey, Int)) =
     {
         val remaining = apply(elem._1)-elem._2
-        if (remaining > 0) this += elem._1 -> remaining
+        if (remaining > 0) collection += elem._1 -> remaining
         else collection -= elem._1
     }
 
@@ -123,17 +128,23 @@ class ItemQueue
 
     def remove(item:ItemKey, amount:Int)
     {
-        var remaining = collection.getOrElse(item, 0)
-        remaining -= amount
-        if (remaining > 0) this += item -> remaining
-        else collection -= item
+        this -= item -> amount
     }
 
     def apply(item:ItemKey):Int = collection.getOrElse(item, 0)
 
     def clear(){collection = HashMap[ItemKey, Int]()}
 
-    def result = collection
+    def isEmpty = collection.isEmpty
+
+    def nonEmpty = collection.nonEmpty
+
+    def result =
+    {
+        val b = HashMap.newBuilder[ItemKey, Int]
+        b ++= collection
+        b.result()
+    }
 }
 
 object ItemKeyConversions

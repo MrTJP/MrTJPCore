@@ -104,6 +104,8 @@ class NodeContainer extends Container
     {
         val inSlot = slot.getStack
         val inCursor = player.inventory.getItemStack
+        if (inCursor != null && !slot.isItemValid(inCursor)) return inCursor
+
         val stackable = InvWrapper.areItemsStackable(inSlot, inCursor)
         if (stackable)
         {
@@ -111,14 +113,14 @@ class NodeContainer extends Container
             else if (inSlot == null && inCursor != null)
             {
                 val newStack = inCursor.copy
-                newStack.stackSize = if (mouse == 0) Math.min(inCursor.stackSize, slot.getSlotStackLimit) else 1
+                newStack.stackSize = if (mouse == 0) math.min(inCursor.stackSize, slot.getSlotStackLimit) else 1
                 slot.putStack(newStack)
             }
             else if (inSlot != null)
             {
                 val toAdd = if (shift == 1) 10 else 1
-                if (mouse == 0) inSlot.stackSize = Math.min(slot.getSlotStackLimit, inSlot.stackSize+toAdd)
-                else if (mouse == 1) inSlot.stackSize = Math.max(0, inSlot.stackSize-toAdd)
+                if (mouse == 0) inSlot.stackSize = math.min(slot.getSlotStackLimit, inSlot.stackSize+toAdd)
+                else if (mouse == 1) inSlot.stackSize = math.max(0, inSlot.stackSize-toAdd)
                 if (inSlot.stackSize > 0) slot.putStack(inSlot)
                 else slot.putStack(null)
             }
@@ -126,7 +128,7 @@ class NodeContainer extends Container
         else
         {
             val newStack = inCursor.copy
-            newStack.stackSize = if (mouse == 0) Math.min(inCursor.stackSize, slot.getSlotStackLimit) else 1
+            newStack.stackSize = if (mouse == 0) math.min(inCursor.stackSize, slot.getSlotStackLimit) else 1
             slot.putStack(newStack)
         }
 

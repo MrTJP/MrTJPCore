@@ -104,6 +104,7 @@ object FXEngine
         glDepthMask(false)
         glEnable(GL_BLEND)
         glAlphaFunc(GL_GREATER, 0.003921569F)
+        glDisable(GL_LIGHTING)
 
         for (layer <- 0 until 4)
         {
@@ -140,6 +141,7 @@ object FXEngine
         glDisable(GL_BLEND)
         glDepthMask(true)
         glAlphaFunc(GL_GREATER, 0.1F)
+        glEnable(GL_LIGHTING)
         glPopMatrix()
     }
 }
