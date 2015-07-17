@@ -170,9 +170,9 @@ object ParticleAction
         a
     }
 
-    def fadeInFor(duration:Double):ParticleAction = changeAlphaTo(1, duration)
+    def fadeIn(duration:Double):ParticleAction = changeAlphaTo(1, duration)
 
-    def fadeOutFor(duration:Double):ParticleAction = changeAlphaTo(0, duration)
+    def fadeOut(duration:Double):ParticleAction = changeAlphaTo(0, duration)
 
     def changeTexture(texture:String):ParticleAction =
     {

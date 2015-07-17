@@ -100,10 +100,6 @@ object MathLib
     def mostSignificant(mask:Int):Int =
     {
         if (mask == 0) return 0
-//        var bit = 31
-//        var m = mask
-//        while((m&1<<31) == 0 && m != 0){ bit -= 1; m <<= 1 }
-//        bit
         31-Integer.numberOfLeadingZeros(mask)
     }
 

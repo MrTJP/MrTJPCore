@@ -15,9 +15,6 @@ case class Point(x:Int, y:Int)
 
     def copy = Point(x, y)
 
-    def negate = Point(-x, -y)
-    def invert = Point(y, x)
-
     def add(dx:Int, dy:Int) = Point(x+dx, y+dy)
     def subtract(dx:Int, dy:Int) = add(-dx, -dy)
     def multiply(i:Int, j:Int) = Point(x*i, y*j)
@@ -33,6 +30,19 @@ case class Point(x:Int, y:Int)
     def multiply(that:Point):Point = multiply(that.x, that.y)
     def divide(that:Point):Point = divide(that.x, that.y)
 
+    def negate = Point(-x, -y)
+    def invert = Point(y, x)
+    def vectorize = Vec2(x, y)
+
+    def max(that:Point) = Point(x max that.x, y max that.y)
+    def min(that:Point) = Point(x min that.x, y min that.y)
+
+    def clamp(rect:Rect) = this min rect.maxPoint max rect.origin
+    def clamp(size:Size) = this min Point(size) max Point.zeroPoint
+
+    def offset(r:Int):Point = offset(r, 1)
+    def offset(r:Int, amount:Int):Point = this+(Point.dirOffsets(r)*amount)
+
     def unary_- = negate
     def unary_~ = invert
 
@@ -45,16 +55,6 @@ case class Point(x:Int, y:Int)
     def -(that:Int) = subtract(that)
     def *(that:Int) = multiply(that)
     def /(that:Int) = divide(that)
-
-    def max(that:Point) = Point(x max that.x, y max that.y)
-    def min(that:Point) = Point(x min that.x, y min that.y)
-
-    def clamp(rect:Rect) = this min rect.maxPoint max rect.origin
-    def clamp(size:Size) = this min Point(size) max Point.zeroPoint
-    def vectorize = Vec2(x, y)
-
-    def offset(r:Int):Point = offset(r, 1)
-    def offset(r:Int, amount:Int):Point = this+(Point.dirOffsets(r)*amount)
 
     override def toString = s"Point @[$x $y]"
 }

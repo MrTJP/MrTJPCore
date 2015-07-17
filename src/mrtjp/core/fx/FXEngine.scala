@@ -14,7 +14,6 @@ import mrtjp.core.fx.particles.CoreParticle
 import net.minecraft.client.Minecraft
 import net.minecraft.client.particle.EntityFX
 import net.minecraft.client.renderer.{ActiveRenderInfo, Tessellator}
-import net.minecraft.world.World
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.event.world.WorldEvent
@@ -43,11 +42,11 @@ object FXEngine
         registered = true
     }
 
-    def addEffect(world:World, effect:CoreParticle)
+    def addEffect(effect:CoreParticle)
     {
         if (!registered)
             throw new RuntimeException("FXEngine has not been registered.")
-        val dim = world.provider.dimensionId
+        val dim = effect.worldObj.provider.dimensionId
         val dimList = layers(effect.getFXLayer).getOrElseUpdate(dim, ListBuffer[CoreParticle]())
         if (dimList.size > 1600) dimList.remove(0)
         dimList += effect

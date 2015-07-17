@@ -54,9 +54,6 @@ class BeamPulse2(w:World) extends CoreParticle(w) with TAlphaParticle with TColo
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 10497.0F)
         glDisable(GL_CULL_FACE)
 
-        val var11 = slide+f
-        val var12 = -var11*0.2F-math.floor(-var11*0.1F)
-
         glBlendFunc(GL_SRC_ALPHA, GL_ONE)
         glDepthMask(false)
 
@@ -71,6 +68,9 @@ class BeamPulse2(w:World) extends CoreParticle(w) with TAlphaParticle with TColo
         glRotatef(90.0F, 1.0F, 0.0F, 0.0F)
         glRotatef(180.0F+ry, 0.0F, 0.0F, -1.0F)
         glRotatef(rp, 1.0F, 0.0F, 0.0F)
+
+        val var11 = slide+f
+        val var12 = -var11*0.2F-math.floor(-var11*0.1F)
         val var44 = -0.15D*size
         val var17 = 0.15D*size
 
