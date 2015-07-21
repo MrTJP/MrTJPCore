@@ -33,8 +33,6 @@ class MrTJPCoreProxy_client extends MrTJPCoreProxy_server
     override def preInit()
     {
         super.preInit()
-
-        new CoreUpdateChecker
     }
 
     @SideOnly(Side.CLIENT)

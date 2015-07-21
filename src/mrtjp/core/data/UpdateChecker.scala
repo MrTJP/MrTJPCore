@@ -5,16 +5,15 @@
  */
 package mrtjp.core.data
 
+import java.io.{BufferedReader, InputStreamReader}
+import java.net.URL
+
 import cpw.mods.fml.common.FMLCommonHandler
 import cpw.mods.fml.common.eventhandler.SubscribeEvent
 import cpw.mods.fml.common.gameevent.TickEvent
 import cpw.mods.fml.common.gameevent.TickEvent.PlayerTickEvent
 import net.minecraft.client.Minecraft
 import net.minecraft.util.ChatComponentText
-
-import scala.collection.immutable.ListMap
-import scala.util.control.Breaks
-import scala.xml.XML
 
 trait UpdateChecker extends Thread
 {
@@ -23,88 +22,34 @@ trait UpdateChecker extends Thread
 
     try { if (shouldRun) FMLCommonHandler.instance.bus.register(this) } catch { case t:Throwable => }
 
-    def mavenRootURL:String
-    def group:String
     def project:String
     def changelogURL:String
 
     def currentVersion:String
     def shouldRun:Boolean
-    def checkUnstable:Boolean
-
-    def projectRoot = mavenRootURL+"/"+group+"/"+project
-    def projectMD = XML.loadString(IO.forceRead(projectRoot+"/"+"maven-metadata.xml"))
-    def versionMD(v:String) = XML.loadString(IO.forceRead(projectRoot+"/"+v+"/"+project+"-"+v+".xml"))
 
     val availableVersions = downloadVersions
-    val availableMainVersions = availableVersions.map(_.split("-")(1))
-    val allChanges = downloadChanges
-
-    def latestVersion = availableMainVersions(0)
 
     def downloadVersions:Seq[String] =
     {
-        try
-        {
-            val seq = Seq.newBuilder[String]
-            val meta = projectMD
-            for (v <- meta\"versioning"\"versions"\"version") seq += v.text.trim
+        val url = new URL(changelogURL)
+        val in = new BufferedReader(new InputStreamReader(url.openStream()))
 
-            def isVerAvailable(v:String) =
-            {
-                val meta = versionMD(v)
-                (meta\"isPublic").text.trim == "true" &&
-                        (checkUnstable || (meta\"isRecommended").text.trim == "true")
-            }
+        var line:String = ""
+        def next() = {line = in.readLine(); line}
 
-            seq.result().filter(isVerAvailable).reverse
-        }
-        catch
-        {
-            case t:Throwable =>
-                t.printStackTrace()
-                Seq.empty
-        }
-    }
-
-    def downloadChanges:Map[String, Seq[String]] =
-    {
-        if (changelogURL == null) return Map.empty
-        try
-        {
-            var cMap = ListMap[String, Seq[String]]().withDefault(_ => Seq())
-            val reader = IO.forceReadBuffer(changelogURL)
-            var v = ""
-            var in = ""
-            while ({in = reader.readLine(); in} != null)
-            {
-                if (in.startsWith("v")) v = in.substring(1)
-                else if (!in.isEmpty) cMap += v -> (cMap(v):+in.substring(2))
-            }
-            cMap
-        }
-        catch
-        {
-            case t:Throwable =>
-                t.printStackTrace()
-                Map.empty
-        }
-    }
-
-    def isVersionOutdated(v:String) = v != latestVersion && availableMainVersions.contains(v)
-
-    def compileChanges(since:String) =
-    {
         val builder = Seq.newBuilder[String]
-        val vsince = since.split('.').take(3).mkString(".")
-        Breaks.breakable { for ((v, seq) <- allChanges)
+
+        while (next() != null)
         {
-            if (v == vsince) Breaks.break()
-            builder += "   --- as of v"+v+" ---   "
-            for (c <- seq) builder += c
-        }}
+            if (line.startsWith("v"))
+                builder += line.substring(1)
+        }
+
         builder.result()
     }
+
+    def isVersionOutdated(v:String) = v != availableVersions.head && availableVersions.contains(v)
 
     var updatesChecked = false
     override def run()
@@ -116,8 +61,7 @@ trait UpdateChecker extends Thread
             if (isVersionOutdated(currentVersion))
             {
                 val message = Seq.newBuilder[String]
-                message += s"$project $latestVersion available."
-                if (changelogURL != null) message ++= compileChanges(currentVersion)
+                message += s"$project ${availableVersions.head} available."
                 updateMessage = message.result()
             }
         }
@@ -128,8 +72,9 @@ trait UpdateChecker extends Thread
         updatesChecked = true
     }
 
-    var messageDisplayed = false
-    var updateMessage:Seq[String] = null
+    private var messageDisplayed = false
+    private var updateMessage:Seq[String] = null
+
     @SubscribeEvent
     def tickEnd(event:PlayerTickEvent)
     {

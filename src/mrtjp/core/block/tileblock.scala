@@ -458,8 +458,7 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
 
     final def markLight()
     {
-        world.updateLightByType(EnumSkyBlock.Block, x, y, z)
-        world.updateLightByType(EnumSkyBlock.Sky, x, y, z)
+        world.func_147451_t(x, y, z)
     }
 
     final def markDescUpdate()

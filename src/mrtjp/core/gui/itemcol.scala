@@ -67,6 +67,9 @@ class ItemDisplayNode extends TNode
     var stack:ItemKeyStack = null
     var size = Size.zeroSize
 
+    var drawNumber = true
+    var drawTooltip = true
+
     var backgroundColour = 0
     var clickDelegate = {() => }
 
@@ -101,13 +104,17 @@ class ItemDisplayNode extends TNode
         GL11.glDisable(GL11.GL_LIGHTING)
         GL11.glDisable(GL11.GL_DEPTH_TEST)
         renderItem.zLevel = zPosition.toFloat
-        val s =
-            if (stack.stackSize == 1) ""
-            else if (stack.stackSize < 1000) stack.stackSize+""
-            else if (stack.stackSize < 100000) stack.stackSize/1000+"K"
-            else if (stack.stackSize < 1000000) "0."+stack.stackSize/100000+"M"
-            else stack.stackSize/1000000+"M"
-        font.drawStringWithShadow(s, position.x+19-2-font.getStringWidth(s), position.y+6+3, 16777215)
+
+        if (drawNumber)
+        {
+            val s =
+                if (stack.stackSize == 1) ""
+                else if (stack.stackSize < 1000) stack.stackSize+""
+                else if (stack.stackSize < 100000) stack.stackSize/1000+"K"
+                else if (stack.stackSize < 1000000) "0."+stack.stackSize/100000+"M"
+                else stack.stackSize/1000000+"M"
+            font.drawStringWithShadow(s, position.x+19-2-font.getStringWidth(s), position.y+6+3, 16777215)
+        }
 
         GL11.glPopMatrix()
         glItemPost()
@@ -144,7 +151,7 @@ class ItemDisplayNode extends TNode
 
     override def drawFront_Impl(mouse:Point, rframe:Float)
     {
-        if (frame.contains(mouse) && rayTest(mouse))
+        if (drawTooltip && frame.contains(mouse) && rayTest(mouse))
             drawTooltip(mouse)
     }
 

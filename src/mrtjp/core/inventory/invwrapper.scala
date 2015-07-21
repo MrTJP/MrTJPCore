@@ -249,8 +249,7 @@ abstract class InvWrapper(val inv:IInventory)
 
     /**
      * Return an ordered map of all available [ItemStack, Amount] in the
-     * inventory. The actual inventory is not manipulated. Keys are ItemStacks
-     * with zero stack size.
+     * inventory. The actual inventory is not manipulated.
      *
      * @return
      */
@@ -311,7 +310,7 @@ trait TDefWrapHandler extends InvWrapper
     {
         var space = 0
         val item2 = item.makeStack(0)
-        val slotStackLimit = Math.min(inv.getInventoryStackLimit, item2.getMaxStackSize)
+        val slotStackLimit = math.min(inv.getInventoryStackLimit, item2.getMaxStackSize)
         for (slot <- slots)
         {
             val s = inv.getStackInSlot(slot)
@@ -327,7 +326,7 @@ trait TDefWrapHandler extends InvWrapper
     override def hasSpaceForItem(item:ItemKey):Boolean =
     {
         val item2 = item.makeStack(0)
-        val slotStackLimit = Math.min(inv.getInventoryStackLimit, item2.getMaxStackSize)
+        val slotStackLimit = math.min(inv.getInventoryStackLimit, item2.getMaxStackSize)
         for (slot <- slots)
         {
             val s = inv.getStackInSlot(slot)
@@ -375,9 +374,9 @@ trait TDefWrapHandler extends InvWrapper
 
     override def injectItem(item:ItemStack, doAdd:Boolean):Int =
     {
-        if (!doAdd) return Math.min(getSpaceForItem(ItemKey.get(item)), item.stackSize)
+        if (!doAdd) return math.min(getSpaceForItem(ItemKey.get(item)), item.stackSize)
         var itemsLeft = item.stackSize
-        val slotStackLimit = Math.min(inv.getInventoryStackLimit, item.getMaxStackSize)
+        val slotStackLimit = math.min(inv.getInventoryStackLimit, item.getMaxStackSize)
 
         for (pass <- Seq(0, 1)) for (slot <- slots) if (canInsertItem(slot, item))
         {
@@ -385,7 +384,7 @@ trait TDefWrapHandler extends InvWrapper
 
             if (inSlot != null && InvWrapper.areItemsStackable(item, inSlot))
             {
-                val fit = Math.min(slotStackLimit-inSlot.stackSize, itemsLeft)
+                val fit = math.min(slotStackLimit-inSlot.stackSize, itemsLeft)
                 inSlot.stackSize += fit
                 itemsLeft -= fit
                 inv.setInventorySlotContents(slot, inSlot)
@@ -393,7 +392,7 @@ trait TDefWrapHandler extends InvWrapper
             else if (pass == 1 && inSlot == null)
             {
                 val toInsert = item.copy
-                toInsert.stackSize = Math.min(inv.getInventoryStackLimit, itemsLeft)
+                toInsert.stackSize = math.min(inv.getInventoryStackLimit, itemsLeft)
                 itemsLeft -= toInsert.stackSize
                 inv.setInventorySlotContents(slot, toInsert)
             }
@@ -415,7 +414,7 @@ trait TDefWrapHandler extends InvWrapper
             val inSlot = inv.getStackInSlot(slot)
             if (resolveItemMatch(inSlot, item2))
             {
-                left -= inv.decrStackSize(slot, Math.min(left, inSlot.stackSize-(if (hidePerSlot || hidePerType&&first) 1 else 0))).stackSize
+                left -= inv.decrStackSize(slot, math.min(left, inSlot.stackSize-(if (hidePerSlot || hidePerType&&first) 1 else 0))).stackSize
                 first = false
             }
             if (left <= 0) return toExtract

@@ -24,23 +24,23 @@ class NodeContainer extends Container
     var stopWatchDelegate = {(p:EntityPlayer) => }
     var slotChangeDelegate = {(slot:Int) => }
 
-    def slots:MBuffer[Slot3] = asScalaBuffer[Slot3](inventorySlots.asInstanceOf[JList[Slot3]])
+    def slots:MBuffer[TSlot3] = asScalaBuffer[TSlot3](inventorySlots.asInstanceOf[JList[TSlot3]])
 
     override def canInteractWith(player:EntityPlayer) = true
 
     override def canDragIntoSlot(slot:Slot) = slot match
     {
-        case s:Slot3 => !s.phantomSlot
+        case s:TSlot3 => !s.phantomSlot
         case _ => super.canDragIntoSlot(slot)
     }
 
     override def addSlotToContainer(slot:Slot) =
     {
-        if (!slot.isInstanceOf[Slot3])
+        if (!slot.isInstanceOf[TSlot3])
             throw new IllegalArgumentException("NodeContainers can only except slots of type Slot3")
         super.addSlotToContainer(slot)
 
-        slot.asInstanceOf[Slot3].slotChangeDelegate2 =
+        slot.asInstanceOf[TSlot3].slotChangeDelegate2 =
                 {() => slotChangeDelegate(slot.slotNumber)}
         slot
     }
@@ -100,7 +100,7 @@ class NodeContainer extends Container
         }
     }
 
-    private def handleGhostClick(slot:Slot3, mouse:Int, shift:Int, player:EntityPlayer):ItemStack =
+    private def handleGhostClick(slot:TSlot3, mouse:Int, shift:Int, player:EntityPlayer):ItemStack =
     {
         val inSlot = slot.getStack
         val inCursor = player.inventory.getItemStack
@@ -146,10 +146,12 @@ class NodeContainer extends Container
                 stack = slot.getStack
                 val manipStack = stack.copy
 
-                if (!doMerge(manipStack, i)) return null
+                if (!doMerge(manipStack, i) || stack.stackSize == manipStack.stackSize) return null
 
                 if (manipStack.stackSize <= 0) slot.putStack(null)
                 else slot.putStack(manipStack)
+
+                slot.onPickupFromSlot(player, stack)
             }
         }
         stack
@@ -166,7 +168,7 @@ class NodeContainer extends Container
         var flag1 = false
         var k = if(reverse) end-1 else start
 
-        var slot:Slot3 = null
+        var slot:TSlot3 = null
         var inslot:ItemStack = null
         if(stack.isStackable)
         {
@@ -243,12 +245,14 @@ class NodeContainer extends Container
     }
 }
 
-class Slot3(inv:IInventory, i:Int, x:Int, y:Int) extends Slot(inv, i, x, y)
+class Slot3(inv:IInventory, i:Int, x:Int, y:Int) extends Slot(inv, i, x, y) with TSlot3
+
+trait TSlot3 extends Slot
 {
     var slotChangeDelegate = {() =>}
     var canRemoveDelegate = {() => true}
-    var canPlaceDelegate = {(stack:ItemStack) => inv.isItemValidForSlot(i, stack)}
-    var slotLimitCalculator = {() => inv.getInventoryStackLimit}
+    var canPlaceDelegate = {(stack:ItemStack) => inventory.isItemValidForSlot(getSlotIndex, stack)}
+    var slotLimitCalculator = {() => inventory.getInventoryStackLimit}
 
     var phantomSlot = false
 
