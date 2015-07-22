@@ -13,16 +13,22 @@ import scala.collection.immutable.HashMap
 
 object ItemKey
 {
-    def get(stack:ItemStack) = //TODO remove sanity check, should be done externally
+    def get(stack:ItemStack):ItemKey = //TODO remove sanity check, should be done externally
     {
         if (stack == null) null
         else new ItemKey(stack.getItem, stack.getItemDamage, stack.getTagCompound)
+    }
+
+    def getOrNull(stack:ItemStack):ItemKey =
+    {
+        if (stack == null) null
+        else get(stack)
     }
 }
 
 class ItemKey(val item:Item, val itemDamage:Int, val tag:NBTTagCompound) extends Ordered[ItemKey]
 {
-    val itemID = Item.getIdFromItem(item)
+    lazy val itemID = Item.getIdFromItem(item)
     private val hash = itemID*1000001*itemDamage+(if (tag != null) tag.hashCode else 0)
 
     override def hashCode = hash
@@ -63,10 +69,16 @@ object ItemKeyStack
 {
     def get(key:ItemKey, size:Int) = new ItemKeyStack(key, size)
 
-    def get(stack:ItemStack) = //TODO remove sanity check, should be done externally
+    def get(stack:ItemStack):ItemKeyStack = //TODO remove sanity check, should be done externally
     {
         if (stack == null) null
         else new ItemKeyStack(ItemKey.get(stack), stack.stackSize)
+    }
+
+    def getOrNull(stack:ItemStack):ItemKeyStack =
+    {
+        if (stack == null) null
+        else get(stack)
     }
 }
 
@@ -138,6 +150,8 @@ class ItemQueue
     def isEmpty = collection.isEmpty
 
     def nonEmpty = collection.nonEmpty
+
+    def keySet = collection.keySet
 
     def result =
     {

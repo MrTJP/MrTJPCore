@@ -11,10 +11,13 @@ import codechicken.lib.gui.GuiDraw
 import codechicken.lib.vec.{Scale, Vector3}
 import mrtjp.core.item.ItemKeyStack
 import mrtjp.core.vec.{Point, Rect, Size}
+import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.entity.RenderItem
 import net.minecraft.client.renderer.{OpenGlHelper, RenderHelper}
+import net.minecraft.item.ItemStack
 import net.minecraft.util.EnumChatFormatting
-import org.lwjgl.opengl.{GL11, GL12}
+import org.lwjgl.opengl.GL11._
+import org.lwjgl.opengl.GL12
 
 class ItemListNode extends TNode
 {
@@ -78,65 +81,7 @@ class ItemDisplayNode extends TNode
     override def drawBack_Impl(mouse:Point, rframe:Float)
     {
         GuiDraw.drawRect(position.x, position.y, size.width, size.height, backgroundColour)
-
-        val istack = stack.makeStack
-        val font = stack.key.item.getFontRenderer(istack) match
-        {
-            case null => fontRenderer
-            case r => r
-        }
-
-        import ItemDisplayNode._
-
-        val f = font.getUnicodeFlag
-        font.setUnicodeFlag(true)
-
-        glItemPre()
-        GL11.glPushMatrix()
-        new Scale(size.width/16.0, size.height/16.0, 1)
-                .at(new Vector3(position.x, position.y, 0)).glApply()
-
-        renderItem.zLevel = (zPosition+10.0).toFloat
-        GL11.glEnable(GL11.GL_DEPTH_TEST)
-        GL11.glEnable(GL11.GL_LIGHTING)
-        renderItem.renderItemAndEffectIntoGUI(font, renderEngine, istack, position.x, position.y)
-        renderItem.renderItemOverlayIntoGUI(font, renderEngine, istack, position.x, position.y, "")
-        GL11.glDisable(GL11.GL_LIGHTING)
-        GL11.glDisable(GL11.GL_DEPTH_TEST)
-        renderItem.zLevel = zPosition.toFloat
-
-        if (drawNumber)
-        {
-            val s =
-                if (stack.stackSize == 1) ""
-                else if (stack.stackSize < 1000) stack.stackSize+""
-                else if (stack.stackSize < 100000) stack.stackSize/1000+"K"
-                else if (stack.stackSize < 1000000) "0."+stack.stackSize/100000+"M"
-                else stack.stackSize/1000000+"M"
-            font.drawStringWithShadow(s, position.x+19-2-font.getStringWidth(s), position.y+6+3, 16777215)
-        }
-
-        GL11.glPopMatrix()
-        glItemPost()
-
-        font.setUnicodeFlag(f)
-    }
-
-    private def glItemPre()
-    {
-        GL11.glPushMatrix()
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F)
-        RenderHelper.enableGUIStandardItemLighting()
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL)
-        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240/1.0F, 240/1.0F)
-        GL11.glDisable(GL11.GL_DEPTH_TEST)
-        GL11.glDisable(GL11.GL_LIGHTING)
-    }
-
-    private def glItemPost()
-    {
-        GL11.glEnable(GL11.GL_DEPTH_TEST)
-        GL11.glPopMatrix()
+        ItemDisplayNode.renderItem(position, size, zPosition, drawNumber, stack.makeStack)
     }
 
     override def mouseClicked_Impl(p:Point, button:Int, consumed:Boolean) =
@@ -176,4 +121,65 @@ class ItemDisplayNode extends TNode
 object ItemDisplayNode
 {
     val renderItem = new RenderItem
+
+    def renderItem(position:Point, size:Size, zPosition:Double, drawNumber:Boolean, stack:ItemStack)
+    {
+        val font = stack.getItem.getFontRenderer(stack) match
+        {
+            case null => Minecraft.getMinecraft.fontRenderer
+            case r => r
+        }
+        val renderEngine = Minecraft.getMinecraft.renderEngine
+
+        val f = font.getUnicodeFlag
+        font.setUnicodeFlag(true)
+
+        glItemPre()
+        glPushMatrix()
+        new Scale(size.width/16.0, size.height/16.0, 1)
+                .at(new Vector3(position.x, position.y, 0)).glApply()
+
+        renderItem.zLevel = (zPosition+10.0).toFloat
+        glEnable(GL_DEPTH_TEST)
+        glEnable(GL_LIGHTING)
+        renderItem.renderItemAndEffectIntoGUI(font, renderEngine, stack, position.x, position.y)
+        renderItem.renderItemOverlayIntoGUI(font, renderEngine, stack, position.x, position.y, "")
+        glDisable(GL_LIGHTING)
+        glDisable(GL_DEPTH_TEST)
+        renderItem.zLevel = zPosition.toFloat
+
+        if (drawNumber)
+        {
+            val s =
+                if (stack.stackSize == 1) ""
+                else if (stack.stackSize < 1000) stack.stackSize+""
+                else if (stack.stackSize < 100000) stack.stackSize/1000+"K"
+                else if (stack.stackSize < 1000000) "0."+stack.stackSize/100000+"M"
+                else stack.stackSize/1000000+"M"
+            font.drawStringWithShadow(s, position.x+19-2-font.getStringWidth(s), position.y+6+3, 16777215)
+        }
+
+        glPopMatrix()
+        glItemPost()
+
+        font.setUnicodeFlag(f)
+    }
+
+    def glItemPre()
+    {
+        glPushMatrix()
+        glColor4f(1.0F, 1.0F, 1.0F, 1.0F)
+        RenderHelper.enableGUIStandardItemLighting()
+        glEnable(GL12.GL_RESCALE_NORMAL)
+        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240/1.0F, 240/1.0F)
+        glDisable(GL_DEPTH_TEST)
+        glDisable(GL_LIGHTING)
+    }
+
+    def glItemPost()
+    {
+        glEnable(GL_DEPTH_TEST)
+        glPopMatrix()
+    }
+
 }
