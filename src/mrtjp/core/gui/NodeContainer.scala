@@ -11,12 +11,11 @@ import cpw.mods.fml.relauncher.{Side, SideOnly}
 import mrtjp.core.inventory.InvWrapper
 import net.minecraft.client.Minecraft
 import net.minecraft.entity.player.EntityPlayer
-import net.minecraft.inventory.{ICrafting, Container, IInventory, Slot}
+import net.minecraft.inventory.{Container, ICrafting, IInventory, Slot}
 import net.minecraft.item.ItemStack
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{Buffer => MBuffer}
-
 
 class NodeContainer extends Container
 {
@@ -246,6 +245,18 @@ class NodeContainer extends Container
 }
 
 class Slot3(inv:IInventory, i:Int, x:Int, y:Int) extends Slot(inv, i, x, y) with TSlot3
+{
+    override def getSlotStackLimit:Int = slotLimitCalculator()
+    override def canTakeStack(player:EntityPlayer):Boolean = canRemoveDelegate()
+    override def isItemValid(stack:ItemStack):Boolean = canPlaceDelegate(stack)
+
+    override def onSlotChanged()
+    {
+        super.onSlotChanged()
+        slotChangeDelegate()
+        slotChangeDelegate2()
+    }
+}
 
 trait TSlot3 extends Slot
 {
@@ -256,16 +267,7 @@ trait TSlot3 extends Slot
 
     var phantomSlot = false
 
-    private[gui] var slotChangeDelegate2 = {() =>} //used for container change delegate
+    var slotChangeDelegate2 = {() =>} //used for container change delegate, do not set yourself!
 
-    override def getSlotStackLimit = slotLimitCalculator()
-    override def canTakeStack(player:EntityPlayer) = canRemoveDelegate()
-    override def isItemValid(stack:ItemStack) = canPlaceDelegate(stack)
-
-    override def onSlotChanged()
-    {
-        super.onSlotChanged()
-        slotChangeDelegate()
-        slotChangeDelegate2()
-    }
+    //additional methods required for this trait to work are located in class Slot3
 }
