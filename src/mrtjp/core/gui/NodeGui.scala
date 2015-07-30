@@ -8,11 +8,10 @@ package mrtjp.core.gui
 import codechicken.lib.gui.GuiDraw
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiScreen
 import net.minecraft.client.gui.inventory.GuiContainer
 import net.minecraft.inventory.Container
 import org.lwjgl.input.Mouse
-import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL11._
 
 class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
 {
@@ -26,20 +25,6 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
 
     var size = Size.zeroSize
     override def frame = new Rect(position, size)
-
-    //TODO get rid of this nonsense
-    var prevGui:GuiScreen = null
-    def setJumpBack(p:GuiScreen){prevGui = p}
-    def jumpTo(g:GuiScreen, containerHack:Boolean)
-    {
-        mcInst.displayGuiScreen(g)
-        if (containerHack) g match
-        {
-            case cont:GuiContainer =>
-                cont.inventorySlots.windowId = inventorySlots.windowId
-            case _ =>
-        }
-    }
 
     override def initGui()
     {
@@ -99,11 +84,6 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
     {
         if (keyPressed(c, keycode, false)) return
 
-        if (isClosingKey(keycode) && prevGui != null) //esc
-        {
-            jumpTo(prevGui, prevGui.isInstanceOf[GuiContainer]) //TODO REMOVE!
-            return
-        }
         super.keyTyped(c, keycode)
     }
 
@@ -119,21 +99,25 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
         lastFrame = f
         val mouse = new Point(mx, my)
         frameUpdate(mouse, f)
-        GL11.glDisable(GL11.GL_DEPTH_TEST)
+        glDisable(GL_DEPTH_TEST)
+        glColor4d(1, 1, 1, 1)
         rootDrawBack(mouse, f)
-        GL11.glEnable(GL11.GL_DEPTH_TEST)
+        glColor4d(1, 1, 1, 1)
+        glEnable(GL_DEPTH_TEST)
     }
 
     final override def drawGuiContainerForegroundLayer(mx:Int, my:Int)
     {
         val mouse = new Point(mx, my)
-        GL11.glDisable(GL11.GL_DEPTH_TEST)
+        glDisable(GL_DEPTH_TEST)
+        glColor4d(1, 1, 1, 1)
         rootDrawFront(mouse, lastFrame)
-        GL11.glEnable(GL11.GL_DEPTH_TEST)
+        glColor4d(1, 1, 1, 1)
+        glEnable(GL_DEPTH_TEST)
 
         if (debugDrawFrames)
         {
-            GL11.glTranslated(-position.x, -position.y, 0)
+            glTranslated(-position.x, -position.y, 0)
             def render(node:TNode)
             {
                 if (!node.hidden)
@@ -148,7 +132,7 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
                 for (c <- node.children) render(c)
             }
             for (c <- children) render(c)
-            GL11.glTranslated(position.x, position.y, 0)
+            glTranslated(position.x, position.y, 0)
         }
     }
 }

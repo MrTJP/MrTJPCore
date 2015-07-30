@@ -6,20 +6,18 @@
 package mrtjp.core.inventory
 
 import codechicken.lib.vec.BlockCoord
-import mrtjp.core.item.ItemKey
+import mrtjp.core.item.{ItemEquality, ItemKey}
 import mrtjp.core.world.WorldLib
 import net.minecraft.inventory.{IInventory, ISidedInventory, InventoryLargeChest}
 import net.minecraft.item.ItemStack
 import net.minecraft.tileentity.TileEntityChest
 import net.minecraft.world.World
-import net.minecraftforge.oredict.OreDictionary
 
-//TODO refine for external registration
 object InvWrapper
 {
-    var wrappers = Seq[InvWrapper]()
+    var wrappers = Seq[IInvWrapperRegister]()
 
-    def register(w:InvWrapper)
+    def register(w:IInvWrapperRegister)
     {
         for (wr <- wrappers) if (wr.wrapperID == w.wrapperID) return
         wrappers :+= w
@@ -89,28 +87,8 @@ class HashableLargeChest(name:String, val inv1:IInventory, val inv2:IInventory) 
     }
 }
 
-abstract class InvWrapper(val inv:IInventory)
+trait IInvWrapperRegister
 {
-    val sidedInv = inv match
-    {
-        case inv2:ISidedInventory => inv2
-        case _ => null
-    }
-    var side = -1
-
-    var slots:Seq[Int] = (0 until inv.getSizeInventory).toSeq
-
-    var hidePerSlot = false
-    var hidePerType = false
-
-    var damageGroup = -1
-
-    var matchMeta = true
-    var matchNBT = true
-    var matchOre = false
-
-    var internalMode = false
-
     /**
      * Unique ID for each type of wrapper.
      */
@@ -125,6 +103,25 @@ abstract class InvWrapper(val inv:IInventory)
      * Returns a new instance of this wrapper.
      */
     def create(inv:IInventory):InvWrapper
+}
+
+abstract class InvWrapper(val inv:IInventory)
+{
+    val sidedInv = inv match
+    {
+        case inv2:ISidedInventory => inv2
+        case _ => null
+    }
+    var side = -1
+
+    var slots:Seq[Int] = (0 until inv.getSizeInventory).toSeq
+
+    var hidePerSlot = false
+    var hidePerType = false
+
+    var eq = new ItemEquality
+
+    var internalMode = false
 
     def setSlotsFromSide(s:Int) =
     {
@@ -160,15 +157,15 @@ abstract class InvWrapper(val inv:IInventory)
 
     def setMatchOptions(meta:Boolean, nbt:Boolean, ore:Boolean) =
     {
-        matchMeta = meta
-        matchNBT = nbt
-        matchOre = ore
+        eq.matchMeta = meta
+        eq.matchNBT = nbt
+        eq.matchOre = ore
         this
     }
 
     def setDamageGroup(percent:Int) =
     {
-        damageGroup = percent
+        eq.damageGroup = percent
         this
     }
 
@@ -231,19 +228,17 @@ abstract class InvWrapper(val inv:IInventory)
      * empty slots.
      *
      * @param item The item to try and merge. Not manipulated in any way.
-     * @param doAdd whether or not to actually do the merge. Useful for
-     *              obtaining a count of how many items COULD be merged.
-     * @return The number of items that were merged in. Equal to the item stack
-     *         size if all were merged.
+     * @param toAdd Amount to try to add.
+     * @return The number of items that were merged in, between 0 and toAdd.
      */
-    def injectItem(item:ItemStack, doAdd:Boolean):Int
+    def injectItem(item:ItemKey, toAdd:Int):Int
 
     /**
      * Extract the item a specified number of times.
      *
      * @param item Item to extract from inventory. Not manipulated in any way.
      * @param toExtract Amount to try to extract.
-     * @return Amount extracted.
+     * @return Amount extracted, between 0 and toExtract.
      */
     def extractItem(item:ItemKey, toExtract:Int):Int
 
@@ -266,42 +261,6 @@ abstract class InvWrapper(val inv:IInventory)
         if (internalMode) return true
         if (side < 0) inv.isItemValidForSlot(slot, item) else sidedInv.canExtractItem(slot, item, side)
     }
-
-    protected def areDamagesGrouped(stack1:ItemStack, stack2:ItemStack):Boolean =
-    {
-        if (stack1 == null || stack2 == null) return stack1 == stack2
-        if (!stack1.isItemStackDamageable || !stack2.isItemStackDamageable) return false
-        val percentDamage1 = stack1.getItemDamage.asInstanceOf[Double]/stack1.getMaxDamage*100
-        val percentDamage2 = stack2.getItemDamage.asInstanceOf[Double]/stack2.getMaxDamage*100
-        val isUpperGroup1 = percentDamage1 >= damageGroup
-        val isUpperGroup2 = percentDamage2 >= damageGroup
-        isUpperGroup1 == isUpperGroup2
-    }
-
-    protected def resolveItemMatch(stack1:ItemStack, stack2:ItemStack):Boolean =
-    {
-        if (stack1 == null || stack2 == null) return stack1 == stack2
-
-        if (matchOre)
-        {
-            val a = OreDictionary.getOreIDs(stack1)
-            val b = OreDictionary.getOreIDs(stack2)
-            if (a == b && a.length != 0) return true
-        }
-
-        if (stack1.getItem == stack2.getItem)
-        {
-            if (matchNBT && !ItemStack.areItemStackTagsEqual(stack1, stack2)) return false
-            if (matchMeta)
-            {
-                if (stack1.isItemStackDamageable && stack2.isItemStackDamageable && damageGroup > -1) return areDamagesGrouped(stack1, stack2)
-                else return stack1.getItemDamage == stack2.getItemDamage
-            }
-
-            return true
-        }
-        false
-    }
 }
 
 trait TDefWrapHandler extends InvWrapper
@@ -309,8 +268,8 @@ trait TDefWrapHandler extends InvWrapper
     override def getSpaceForItem(item:ItemKey):Int =
     {
         var space = 0
-        val item2 = item.makeStack(0)
-        val slotStackLimit = math.min(inv.getInventoryStackLimit, item2.getMaxStackSize)
+        val item2 = item.testStack
+        val slotStackLimit = math.min(inv.getInventoryStackLimit, item.getMaxStackSize)
         for (slot <- slots)
         {
             val s = inv.getStackInSlot(slot)
@@ -325,7 +284,7 @@ trait TDefWrapHandler extends InvWrapper
 
     override def hasSpaceForItem(item:ItemKey):Boolean =
     {
-        val item2 = item.makeStack(0)
+        val item2 = item.testStack
         val slotStackLimit = math.min(inv.getInventoryStackLimit, item2.getMaxStackSize)
         for (slot <- slots)
         {
@@ -341,7 +300,6 @@ trait TDefWrapHandler extends InvWrapper
 
     override def getItemCount(item:ItemKey) =
     {
-        val item2 = item.makeStack(0)
         var count = 0
 
         var first = true
@@ -349,7 +307,7 @@ trait TDefWrapHandler extends InvWrapper
         for (slot <- slots)
         {
             val inSlot = inv.getStackInSlot(slot)
-            if (resolveItemMatch(inSlot, item2))
+            if (inSlot != null && eq.matches(item, ItemKey.get(inSlot)))
             {
                 val toAdd = inSlot.stackSize-(if (hidePerSlot || hidePerType && first) 1 else 0)
                 first = false
@@ -361,28 +319,25 @@ trait TDefWrapHandler extends InvWrapper
 
     override def hasItem(item:ItemKey):Boolean =
     {
-        val item2 = item.makeStack(0)
-
         for (slot <- slots)
         {
             val inSlot = inv.getStackInSlot(slot)
-            if (resolveItemMatch(inSlot, item2)) return true
+            if (inSlot != null && eq.matches(item, ItemKey.get(inSlot))) return true
         }
 
         false
     }
 
-    override def injectItem(item:ItemStack, doAdd:Boolean):Int =
+    override def injectItem(item:ItemKey, toAdd:Int):Int =
     {
-        if (!doAdd) return math.min(getSpaceForItem(ItemKey.get(item)), item.stackSize)
-        var itemsLeft = item.stackSize
+        var itemsLeft = toAdd
         val slotStackLimit = math.min(inv.getInventoryStackLimit, item.getMaxStackSize)
 
-        for (pass <- Seq(0, 1)) for (slot <- slots) if (canInsertItem(slot, item))
+        for (pass <- Seq(0, 1)) for (slot <- slots) if (canInsertItem(slot, item.testStack))
         {
             val inSlot = inv.getStackInSlot(slot)
 
-            if (inSlot != null && InvWrapper.areItemsStackable(item, inSlot))
+            if (inSlot != null && InvWrapper.areItemsStackable(item.testStack, inSlot))
             {
                 val fit = math.min(slotStackLimit-inSlot.stackSize, itemsLeft)
                 inSlot.stackSize += fit
@@ -391,28 +346,26 @@ trait TDefWrapHandler extends InvWrapper
             }
             else if (pass == 1 && inSlot == null)
             {
-                val toInsert = item.copy
-                toInsert.stackSize = math.min(inv.getInventoryStackLimit, itemsLeft)
+                val toInsert = item.makeStack(math.min(inv.getInventoryStackLimit, itemsLeft))
                 itemsLeft -= toInsert.stackSize
                 inv.setInventorySlotContents(slot, toInsert)
             }
 
-            if (itemsLeft == 0) return item.stackSize
+            if (itemsLeft == 0) return toAdd
         }
 
-        item.stackSize-itemsLeft
+        toAdd-itemsLeft
     }
 
     override def extractItem(item:ItemKey, toExtract:Int):Int =
     {
         if (toExtract <= 0) return 0
-        val item2 = item.makeStack(0)
         var left = toExtract
         var first = true
-        for (slot <- slots) if (canExtractItem(slot, item2))
+        for (slot <- slots) if (canExtractItem(slot, item.testStack))
         {
             val inSlot = inv.getStackInSlot(slot)
-            if (resolveItemMatch(inSlot, item2))
+            if (inSlot != null && eq.matches(item, ItemKey.get(inSlot))) //TODO extraction shouldnt rely on eq matches..?
             {
                 left -= inv.decrStackSize(slot, math.min(left, inSlot.stackSize-(if (hidePerSlot || hidePerType&&first) 1 else 0))).stackSize
                 first = false
@@ -443,10 +396,3 @@ trait TDefWrapHandler extends InvWrapper
 }
 
 class VanillaWrapper(inv:IInventory) extends InvWrapper(inv) with TDefWrapHandler
-{
-    override def create(inv:IInventory) = new VanillaWrapper(inv)
-
-    override def matches(inv:IInventory) = inv != null
-
-    override def wrapperID = "vanilla"
-}

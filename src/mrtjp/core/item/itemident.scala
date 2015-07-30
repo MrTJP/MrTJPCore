@@ -28,9 +28,10 @@ object ItemKey
 
 class ItemKey(val item:Item, val itemDamage:Int, val tag:NBTTagCompound) extends Ordered[ItemKey]
 {
+    lazy val testStack = makeStack(0)
     lazy val itemID = Item.getIdFromItem(item)
-    private val hash = itemID*1000001*itemDamage+(if (tag != null) tag.hashCode else 0)
 
+    private val hash = itemID*1000001*itemDamage+(if (tag != null) tag.hashCode else 0)
     override def hashCode = hash
 
     override def equals(other:Any) = other match
@@ -61,8 +62,8 @@ class ItemKey(val item:Item, val itemDamage:Int, val tag:NBTTagCompound) extends
 
     /** Interactions **/
     def getItem = item
-    def getMaxStackSize = makeStack(0).getMaxStackSize
-    def getName = makeStack(0).getDisplayName
+    def getMaxStackSize = testStack.getMaxStackSize
+    def getName = testStack.getDisplayName
 }
 
 object ItemKeyStack
@@ -152,6 +153,14 @@ class ItemQueue
     def nonEmpty = collection.nonEmpty
 
     def keySet = collection.keySet
+
+    def count(p:ItemKey => Boolean) =
+        collection.foldLeft(0){(i, pair) =>
+            if (p(pair._1)) i+pair._2 else i
+        }
+
+    def countItems(p:ItemKey => Boolean) =
+        collection.count(pair => p(pair._1))
 
     def result =
     {
