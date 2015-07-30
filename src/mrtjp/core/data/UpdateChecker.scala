@@ -32,21 +32,27 @@ trait UpdateChecker extends Thread
 
     def downloadVersions:Seq[String] =
     {
-        val url = new URL(changelogURL)
-        val in = new BufferedReader(new InputStreamReader(url.openStream()))
-
-        var line:String = ""
-        def next() = {line = in.readLine(); line}
-
-        val builder = Seq.newBuilder[String]
-
-        while (next() != null)
+        try
         {
-            if (line.startsWith("v"))
-                builder += line.substring(1)
-        }
+            val url = new URL(changelogURL)
+            val in = new BufferedReader(new InputStreamReader(url.openStream()))
 
-        builder.result()
+            var line:String = ""
+            def next() = {line = in.readLine(); line}
+
+            val builder = Seq.newBuilder[String]
+
+            while (next() != null)
+            {
+                if (line.startsWith("v"))
+                    builder += line.substring(1)
+            }
+            builder.result()
+        }
+        catch
+        {
+            case e:Exception => Seq.empty
+        }
     }
 
     def isVersionOutdated(v:String) = v != availableVersions.head && availableVersions.contains(v)
