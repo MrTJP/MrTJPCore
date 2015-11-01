@@ -259,7 +259,7 @@ abstract class InvWrapper(val inv:IInventory)
     protected def canExtractItem(slot:Int, item:ItemStack):Boolean =
     {
         if (internalMode) return true
-        if (side < 0) inv.isItemValidForSlot(slot, item) else sidedInv.canExtractItem(slot, item, side)
+        side < 0 || sidedInv.canExtractItem(slot, item, side)
     }
 }
 
