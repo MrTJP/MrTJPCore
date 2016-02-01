@@ -42,11 +42,11 @@ abstract class ModConfig(modID:String)
             def getType(value:Any):Property.Type = value match
             {
                 case xs:Array[_] => getType(xs.head)
-                case b:Boolean  => BOOLEAN
-                case i:Int      => INTEGER
-                case s:String   => STRING
-                case d:Double   => DOUBLE
-                case _          => STRING
+                case b:Boolean   => BOOLEAN
+                case i:Int       => INTEGER
+                case s:String    => STRING
+                case d:Double    => DOUBLE
+                case _           => STRING
             }
 
             val propType = getType(value)
@@ -62,7 +62,7 @@ abstract class ModConfig(modID:String)
 
             val reslult = value match
             {
-                case xs:Array[_]          => propType match
+                case xs:Array[_]    => propType match
                 {
                     case BOOLEAN    => prop.getBooleanList
                     case INTEGER    => prop.getIntList
@@ -70,11 +70,11 @@ abstract class ModConfig(modID:String)
                     case DOUBLE     => prop.getDoubleList
                     case _          => prop.getStringList
                 }
-                case b:Boolean                  => prop.getBoolean
-                case i:Int                      => prop.getInt
-                case s:String                   => prop.getString
-                case d:Double                   => prop.getDouble
-                case _                          => prop.getString
+                case b:Boolean      => prop.getBoolean
+                case i:Int          => prop.getInt
+                case s:String       => prop.getString
+                case d:Double       => prop.getDouble
+                case _              => prop.getString
             }
             reslult.asInstanceOf[T]
         }
@@ -82,10 +82,12 @@ abstract class ModConfig(modID:String)
         def containsKey(key:Any) = cat.containsKey(key.toString)
     }
 
+    def getFileName = modID
+
     private var registered = false
     def loadConfig()
     {
-        config = new Configuration(new File(Loader.instance.getConfigDir, modID+".cfg"))
+        config = new Configuration(new File(Loader.instance.getConfigDir, getFileName+".cfg"))
         initValues()
         if (config.hasChanged) config.save()
 
@@ -99,7 +101,11 @@ abstract class ModConfig(modID:String)
     @SubscribeEvent
     def onConfigChanged(event:ConfigChangedEvent.OnConfigChangedEvent)
     {
-        if (event.modID == modID) loadConfig()
+        if (event.modID == modID)
+        {
+            initValues()
+            config.save()
+        }
     }
 
     protected def initValues()

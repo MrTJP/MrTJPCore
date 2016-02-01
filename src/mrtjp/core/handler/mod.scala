@@ -5,14 +5,13 @@
  */
 package mrtjp.core.handler
 
-import java.io.File
-
+import cpw.mods.fml.common.Mod
 import cpw.mods.fml.common.event.{FMLInitializationEvent, FMLPostInitializationEvent, FMLPreInitializationEvent}
-import cpw.mods.fml.common.{Loader, Mod}
-import net.minecraftforge.common.config.Configuration
+import mrtjp.core.data.{ModConfig, SpecialConfigGui, TModGuiFactory}
+import net.minecraft.client.gui.GuiScreen
 import org.apache.logging.log4j.LogManager
 
-@Mod(modid = "MrTJPCoreMod", useMetadata = true, modLanguage = "scala")
+@Mod(modid = "MrTJPCoreMod", useMetadata = true, modLanguage = "scala", guiFactory = "mrtjp.core.handler.GuiConfigFactory")
 object MrTJPCoreMod
 {
     final val version = "@VERSION@"
@@ -40,7 +39,7 @@ object MrTJPCoreMod
     }
 }
 
-object MrTJPConfig
+object MrTJPConfig extends ModConfig("MrTJPCoreMod")
 {
     var retro_gen = false
     var retro_gen_id = "mrtjp_gen"
@@ -48,17 +47,22 @@ object MrTJPConfig
     var check_versions = true
     var check_unstable = false
 
-    def loadConfig()
+    override def getFileName = "MrTJPCore"
+
+    override protected def initValues()
     {
-        val config = new Configuration(new File(Loader.instance.getConfigDir, "MrTJPCore.cfg"))
-        config.load()
+        val general = new BaseCategory("General", "General settings for MrTJPCore")
+        check_versions = general.put("Version Checking", check_versions, "Flag to enable or disable the update checker.")
+        check_unstable = general.put("Include Unstable", check_unstable, "Flag to set if the update checker should consider unstable builds as a new version.")
 
-        check_versions = config.get("General", "check_versions", true, "Flag to enable or disable the update checker.").getBoolean
-        check_unstable = config.get("General", "check_unstable", false, "Flag to set if the update checker should consider unstable builds as a new version.").getBoolean
-
-        retro_gen = config.get("World Gen", "retro_gen", true, "Toggle to enable retrogeneration, a feature that would allow ores to be generated after the world has been created.").getBoolean
-        retro_gen_id = config.get("World Gen", "retro_gen_id", "mrtjp_gen", "The database ID that is used to store which chunks have been generated already. Changing this will cause generation to run again on the same chunk.").getString
-
-        config.save()
+        val gen = new BaseCategory("World Gen", "Settings related to world generation")
+        retro_gen = gen.put("Retroactive World Generation", retro_gen, "Toggle to enable retrogeneration, a feature that would allow ores to be generated after the world has been created.")
+        retro_gen_id = gen.put("RetroGen ID", retro_gen_id, "The database ID that is used to store which chunks have been generated already. Changing this will cause generation to run again on the same chunk.")
     }
+}
+
+class MrTJPConfigGui(parent:GuiScreen) extends SpecialConfigGui(parent, "MrTJPCoreMod", MrTJPConfig.config)
+class GuiConfigFactory extends TModGuiFactory
+{
+    override def mainConfigGuiClass() = classOf[MrTJPConfigGui]
 }
