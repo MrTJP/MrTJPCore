@@ -8,7 +8,6 @@ package mrtjp.core.item
 import net.minecraft.item.{Item, ItemStack}
 import net.minecraft.nbt.NBTTagCompound
 
-import scala.collection.generic.Growable
 import scala.collection.immutable.HashMap
 
 object ItemKey
@@ -54,7 +53,7 @@ class ItemKey(val item:Item, val itemDamage:Int, val tag:NBTTagCompound) extends
     def makeStack(size:Int) =
     {
         val stack = new ItemStack(item, size, itemDamage)
-        if (tag != null) stack.setTagCompound(tag.copy().asInstanceOf[NBTTagCompound])
+        if (tag != null) stack.setTagCompound(tag.copy())
         stack
     }
 

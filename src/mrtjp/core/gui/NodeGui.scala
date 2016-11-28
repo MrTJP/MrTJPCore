@@ -5,6 +5,7 @@
  */
 package mrtjp.core.gui
 
+import codechicken.lib.colour.EnumColour
 import codechicken.lib.gui.GuiDraw
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
@@ -57,9 +58,10 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
         mouseClicked(new Point(x, y), button, false)
     }
 
-    final override def mouseMovedOrUp(x:Int, y:Int, button:Int)
+
+    final override def mouseReleased(x:Int, y:Int, button:Int)
     {
-        super.mouseMovedOrUp(x, y, button)
+        super.mouseReleased(x, y, button)
         if (button != -1) mouseReleased(new Point(x, y), button, false)
     }
 
@@ -124,10 +126,10 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
                 {
                     val f = node.frame
                     val absF = Rect(node.parent.convertPointToScreen(f.origin), f.size)
-                    GuiLib.drawLine(absF.x, absF.y, absF.x, absF.maxY)
-                    GuiLib.drawLine(absF.x, absF.maxY, absF.maxX, absF.maxY)
-                    GuiLib.drawLine(absF.maxX, absF.maxY, absF.maxX, absF.y)
-                    GuiLib.drawLine(absF.maxX, absF.y, absF.x, absF.y)
+                    GuiDraw.drawLine(absF.x, absF.y, absF.x, absF.maxY, EnumColour.RED.rgba())
+                    GuiDraw.drawLine(absF.x, absF.maxY, absF.maxX, absF.maxY, EnumColour.RED.rgba())
+                    GuiDraw.drawLine(absF.maxX, absF.maxY, absF.maxX, absF.y, EnumColour.RED.rgba())
+                    GuiDraw.drawLine(absF.maxX, absF.y, absF.x, absF.y, EnumColour.RED.rgba())
                 }
                 for (c <- node.children) render(c)
             }

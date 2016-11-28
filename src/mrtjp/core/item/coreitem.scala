@@ -5,43 +5,24 @@
  */
 package mrtjp.core.item
 
-import cpw.mods.fml.common.registry.GameRegistry
 import mrtjp.core.util.Enum
-import net.minecraft.block.Block
-import net.minecraft.block.Block.SoundType
+import net.minecraft.block.SoundType
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.{Item, ItemStack}
+import net.minecraft.util.math.BlockPos
+import net.minecraft.util.{EnumActionResult, EnumFacing, EnumHand, SoundCategory}
 import net.minecraft.world.World
+import net.minecraftforge.fml.common.registry.GameRegistry
+import net.minecraftforge.fml.relauncher.{Side, SideOnly}
 
-class ItemCore(name:String) extends Item
+class ItemCore(registryName:String) extends Item
 {
-    setUnlocalizedName(name)
-    GameRegistry.registerItem(this, name)
+    GameRegistry.register(this.setRegistryName(registryName))
+    setUnlocalizedName(getRegistryName.toString)
 
     override def getUnlocalizedName(stack:ItemStack):String =
         if (hasSubtypes) getUnlocalizedName()+"|"+stack.getItemDamage
         else getUnlocalizedName()
-}
-
-trait TItemSound extends Item
-{
-    def getSoundType:SoundType
-
-    abstract override def onItemUse(stack:ItemStack, player:EntityPlayer, w:World, x:Int, y:Int, z:Int, side:Int, f:Float, f2:Float, f3:Float) =
-    {
-        if (super.onItemUse(stack, player, w, x, y, z, side, f, f2, f3))
-        {
-            w.playSoundEffect(x+0.5, y+0.5, z+0.5, getSoundType.func_150496_b(),
-                getSoundType.getVolume*5.0F, getSoundType.getPitch*0.9F)
-            true
-        }
-        else false
-    }
-}
-
-trait TItemGlassSound extends TItemSound
-{
-    override def getSoundType = Block.soundTypeGlass
 }
 
 /**
@@ -60,8 +41,14 @@ abstract class ItemDefinition extends Enum
      *
      */
 
+    private var metaToDef = Map[Int, ItemDef]()
+
+    def getEnumFromMeta(meta:Int) = metaToDef.getOrElse(meta, null)
+
     class ItemDef extends Value
     {
+        metaToDef += meta -> this
+
         val meta = ordinal
 
         override def name = getItem.getUnlocalizedName(makeStack)

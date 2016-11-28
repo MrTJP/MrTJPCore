@@ -24,7 +24,7 @@ trait TNode extends Gui
 
     def mcInst:Minecraft = Minecraft.getMinecraft
     def renderEngine:TextureManager = mcInst.renderEngine
-    def fontRenderer:FontRenderer = mcInst.fontRenderer
+    def fontRenderer:FontRenderer = mcInst.fontRendererObj
 
     def isRoot = this.isInstanceOf[NodeGui]
     def getRoot:NodeGui =
@@ -51,23 +51,30 @@ trait TNode extends Gui
         hierarchy
     }
 
-    def isDecendantOf(someParent:TNode) =
-        someParent != this && buildParentHierarchy(someParent).contains(someParent)
+    def isDecendantOf(someAncestor:TNode) =
+        someAncestor != this && buildParentHierarchy(someAncestor).contains(someAncestor)
+
+    def isRelativeOf(someRelative:TNode) =
+        someRelative != this && someRelative.getRoot == this.getRoot
 
     def convertPointToScreen(p:Point) = getRoot.position+convertPointTo(p, getRoot)
     def convertPointFromScreen(p:Point) = convertPointFrom(p, getRoot)-getRoot.position
 
     def convertPointTo(p:Point, to:TNode):Point =
     {
-        def fold(low:TNode, high:TNode)(op:(Point, TNode) => Point) =
+        def fold(low:TNode, high:TNode, p:Point)(op:(Point, TNode) => Point) =
             low.buildParentHierarchy(high).dropRight(1).foldLeft(p)(op)
 
-        def convertUp(low:TNode, high:TNode) = fold(low, high){_+_.position}
-        def convertDown(low:TNode, high:TNode) = fold(low, high){_-_.position}
+        def convertUp(low:TNode, high:TNode, p:Point) = fold(low, high, p){_+_.position}
+        def convertDown(high:TNode, low:TNode, p:Point) = fold(low, high, p){_-_.position}
 
         if (this == to) p
-        else if (this.isDecendantOf(to)) convertUp(this, to)
-        else if (to.isDecendantOf(this)) convertDown(to, this) //TODO sibling conversion by conv to screen, then conv from screen on other node
+//        else if (this isDecendantOf to) convertUp(this, to, p)
+//        else if (to isDecendantOf this) convertDown(this, to, p)
+        else if (this isRelativeOf to) { //TODO see if this still works...
+            val root = getRoot
+            convertDown(root, to, convertUp(this, root, p))
+        }
         else throw new Exception("Attempted to convert points between unrelated nodes.")
     }
     def convertPointFrom(p:Point, from:TNode):Point = from.convertPointTo(p, this)

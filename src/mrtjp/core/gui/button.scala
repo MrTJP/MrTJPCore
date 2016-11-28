@@ -6,7 +6,7 @@
 package mrtjp.core.gui
 
 import codechicken.lib.gui.GuiDraw
-import mrtjp.core.resource.ResourceLib
+import codechicken.lib.texture.TextureUtils
 import mrtjp.core.vec.{Point, Rect, Size}
 import org.lwjgl.opengl.GL11
 
@@ -32,7 +32,7 @@ class ButtonNode extends TNode
     {
         if (!consumed && rayTest(p))
         {
-            ResourceLib.soundButton.play()
+            //ResourceLib.soundButton.play()
             onButtonClicked()
             true
         }
@@ -80,7 +80,8 @@ trait TButtonMC extends ButtonNode
     {
         super.drawButtonBackground(mouseover)
 
-        ResourceLib.guiTex.bind()
+        TextureUtils.changeTexture(GuiLib.guiTex)
+
         GL11.glColor4f(1, 1, 1, 1)
         val state = if (mouseover) 2 else 1
 
@@ -117,7 +118,7 @@ class DotSelectNode extends ButtonNode
     override def drawButtonBackground(mouseover:Boolean)
     {
         super.drawButtonBackground(mouseover)
-        ResourceLib.guiExtras.bind()
+        TextureUtils.changeTexture(GuiLib.guiExtras)
         GL11.glColor4f(1, 1, 1, 1)
         drawTexturedModalRect(position.x, position.y, if (mouseover) 11 else 1, 1, 8, 8)
     }
@@ -145,7 +146,7 @@ class CheckBoxNode extends ButtonNode with TButtonMC
     override def drawButton(mouseover:Boolean)
     {
         super.drawButton(mouseover)
-        ResourceLib.guiExtras.bind()
+        TextureUtils.changeTexture(GuiLib.guiExtras)
         val u = if (state) 17 else 1
         drawTexturedModalRect(position.x, position.y, u, 134, 14, 14)
     }

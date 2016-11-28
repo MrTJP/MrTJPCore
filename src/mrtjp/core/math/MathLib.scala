@@ -7,13 +7,14 @@ package mrtjp.core.math
 
 import java.util.Random
 
-import codechicken.lib.vec.{BlockCoord, Vector3}
+import codechicken.lib.vec.Vector3
+import net.minecraft.util.math.BlockPos
 
 object MathLib
 {
     def clamp(min:Float, max:Float, v:Float) = Math.min(max, Math.max(min, v))
 
-    def normal(bc:BlockCoord, dir:Int):(Int, Int) = normal(bc.x, bc.y, bc.z, dir)
+    def normal(bc:BlockPos, dir:Int):(Int, Int) = normal(bc.getX, bc.getY, bc.getZ, dir)
     def normal(x:Int, y:Int, z:Int, dir:Int):(Int, Int) = dir match
     {
         case 0 => (x, z)
@@ -24,7 +25,7 @@ object MathLib
         case 5 => (y, z)
     }
 
-    def basis(bc:BlockCoord, dir:Int):Int = basis(bc.x, bc.y, bc.z, dir)
+    def basis(bc:BlockPos, dir:Int):Int = basis(bc.getX, bc.getY, bc.getZ, dir)
     def basis(x:Int, y:Int, z:Int, dir:Int):Int = dir match
     {
         case 0 => y
@@ -58,14 +59,14 @@ object MathLib
         }
     }
 
-    def rhrAxis(dir:Int, normal:(Int, Int), basis:Int):BlockCoord = dir match
+    def rhrAxis(dir:Int, normal:(Int, Int), basis:Int):BlockPos = dir match
     {
-        case 0 => new BlockCoord(normal._1, basis, normal._2)
-        case 1 => new BlockCoord(normal._1, basis, normal._2)
-        case 2 => new BlockCoord(normal._1, normal._2, basis)
-        case 3 => new BlockCoord(normal._1, normal._2, basis)
-        case 4 => new BlockCoord(basis, normal._1, normal._2)
-        case 5 => new BlockCoord(basis, normal._1, normal._2)
+        case 0 => new BlockPos(normal._1, basis, normal._2)
+        case 1 => new BlockPos(normal._1, basis, normal._2)
+        case 2 => new BlockPos(normal._1, normal._2, basis)
+        case 3 => new BlockPos(normal._1, normal._2, basis)
+        case 4 => new BlockPos(basis, normal._1, normal._2)
+        case 5 => new BlockPos(basis, normal._1, normal._2)
     }
 
     def bezier(s:Vector3, c1:Vector3, c2:Vector3, e:Vector3, t:Float):Vector3 =

@@ -12,10 +12,9 @@ import codechicken.lib.vec.{Scale, Vector3}
 import mrtjp.core.item.ItemKeyStack
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.entity.RenderItem
 import net.minecraft.client.renderer.{OpenGlHelper, RenderHelper}
 import net.minecraft.item.ItemStack
-import net.minecraft.util.EnumChatFormatting
+import net.minecraft.util.text.TextFormatting
 import org.lwjgl.opengl.GL11._
 import org.lwjgl.opengl.GL12
 
@@ -109,8 +108,8 @@ class ItemDisplayNode extends TNode
 
         import scala.collection.JavaConversions._
         val lines = stack.makeStack.getTooltip(mcInst.thePlayer,
-            mcInst.gameSettings.advancedItemTooltips).asInstanceOf[JList[String]]
-        val l2 = Seq(lines.head)++lines.tail.map(EnumChatFormatting.GRAY+_)
+            mcInst.gameSettings.advancedItemTooltips)
+        val l2 = Seq(lines.head)++lines.tail.map(TextFormatting.GRAY + _)
         GuiDraw.drawMultilineTip(mx+12, my-12, l2)
 
         translateFromScreen()
@@ -120,16 +119,14 @@ class ItemDisplayNode extends TNode
 
 object ItemDisplayNode
 {
-    val renderItem = new RenderItem
+    val renderItem = Minecraft.getMinecraft.getRenderItem
 
     def renderItem(position:Point, size:Size, zPosition:Double, drawNumber:Boolean, stack:ItemStack)
     {
-        val font = stack.getItem.getFontRenderer(stack) match
-        {
-            case null => Minecraft.getMinecraft.fontRenderer
+        val font = stack.getItem.getFontRenderer(stack) match {
+            case null => Minecraft.getMinecraft.fontRendererObj
             case r => r
         }
-        val renderEngine = Minecraft.getMinecraft.renderEngine
 
         val f = font.getUnicodeFlag
         font.setUnicodeFlag(true)
@@ -142,8 +139,8 @@ object ItemDisplayNode
         renderItem.zLevel = (zPosition+10.0).toFloat
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_LIGHTING)
-        renderItem.renderItemAndEffectIntoGUI(font, renderEngine, stack, position.x, position.y)
-        renderItem.renderItemOverlayIntoGUI(font, renderEngine, stack, position.x, position.y, "")
+        renderItem.renderItemAndEffectIntoGUI(stack, position.x, position.y)
+        renderItem.renderItemOverlayIntoGUI(font, stack, position.x, position.y, "")
         glDisable(GL_LIGHTING)
         glDisable(GL_DEPTH_TEST)
         renderItem.zLevel = zPosition.toFloat

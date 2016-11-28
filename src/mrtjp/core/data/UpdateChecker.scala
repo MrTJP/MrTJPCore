@@ -8,19 +8,19 @@ package mrtjp.core.data
 import java.io.{BufferedReader, InputStreamReader}
 import java.net.URL
 
-import cpw.mods.fml.common.FMLCommonHandler
-import cpw.mods.fml.common.eventhandler.SubscribeEvent
-import cpw.mods.fml.common.gameevent.TickEvent
-import cpw.mods.fml.common.gameevent.TickEvent.PlayerTickEvent
 import net.minecraft.client.Minecraft
-import net.minecraft.util.ChatComponentText
+import net.minecraft.util.text.TextComponentString
+import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import net.minecraftforge.fml.common.gameevent.TickEvent
+import net.minecraftforge.fml.common.gameevent.TickEvent.PlayerTickEvent
 
 trait UpdateChecker extends Thread
 {
     setName(project+" version checker")
     setDaemon(true)
 
-    try { if (shouldRun) FMLCommonHandler.instance.bus.register(this) } catch { case t:Throwable => }
+    try { if (shouldRun) MinecraftForge.EVENT_BUS.register(this) } catch { case t:Throwable => }
 
     def project:String
     def changelogURL:String
@@ -90,7 +90,7 @@ trait UpdateChecker extends Thread
             if (updateMessage != null)
             {
                 val p = Minecraft.getMinecraft.thePlayer
-                for (s <- updateMessage) p.addChatMessage(new ChatComponentText(s))
+                for (s <- updateMessage) p.addChatMessage(new TextComponentString(s))
             }
             messageDisplayed = true
         }

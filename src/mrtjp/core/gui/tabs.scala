@@ -5,13 +5,13 @@
  */
 package mrtjp.core.gui
 
+import codechicken.lib.colour.EnumColour
 import codechicken.lib.gui.GuiDraw
-import mrtjp.core.color.Colors
 import mrtjp.core.vec.{Point, Rect, Size}
+import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.RenderHelper
-import net.minecraft.client.renderer.entity.RenderItem
+import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.item.ItemStack
-import net.minecraft.util.IIcon
 import org.lwjgl.opengl.{GL11, GL12}
 
 import scala.collection.JavaConversions
@@ -19,7 +19,7 @@ import scala.collection.mutable.ListBuffer
 
 class TabNode(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TNode
 {
-    def this(wMin:Int, hMin:Int, wMax:Int, hMax:Int) = this(wMin, hMin, wMax, hMax, Colors.LIGHT_GREY.rgb)
+    def this(wMin:Int, hMin:Int, wMax:Int, hMax:Int) = this(wMin, hMin, wMax, hMax, EnumColour.LIGHT_GRAY.rgb)
 
     var currentW = wMin.asInstanceOf[Double]
     var currentH = wMin.asInstanceOf[Double]
@@ -102,7 +102,7 @@ trait TStackTab extends TabNode
         RenderHelper.enableGUIStandardItemLighting()
         GL11.glEnable(GL12.GL_RESCALE_NORMAL)
         TStackTab.itemRender.zLevel = (zPosition+25).toFloat
-        TStackTab.itemRender.renderItemAndEffectIntoGUI(fontRenderer, renderEngine, iconStack, position.x+3, position.y+3)
+        TStackTab.itemRender.renderItemAndEffectIntoGUI(iconStack, position.x+3, position.y+3)
         GL11.glDisable(GL12.GL_RESCALE_NORMAL)
         GL11.glDisable(GL11.GL_LIGHTING)
         RenderHelper.disableStandardItemLighting()
@@ -111,18 +111,18 @@ trait TStackTab extends TabNode
 
 object TStackTab
 {
-    val itemRender = new RenderItem
+    val itemRender = Minecraft.getMinecraft.getRenderItem
 }
 
 trait TIconTab extends TabNode
 {
-    var icon:IIcon = null
-    def setIcon(i:IIcon):this.type = {icon = i; this}
+    var icon:TextureAtlasSprite = null
+    def setIcon(i:TextureAtlasSprite):this.type = {icon = i; this}
 
     abstract override def drawIcon()
     {
         super.drawIcon()
-        drawTexturedModelRectFromIcon(position.x+3, position.x+3, icon, 16, 16)
+        drawTexturedModalRect(position.x+3, position.x+3, icon, 16, 16)
     }
 }
 

@@ -5,7 +5,7 @@
  */
 package mrtjp.core.vec
 
-import codechicken.lib.vec.BlockCoord
+import net.minecraft.util.math.BlockPos
 
 case class Point3(x:Int, y:Int, z:Int)
 {
@@ -72,5 +72,5 @@ object Point3
 
     def apply(vec3:Vec3):Point3 = Point3(vec3.dx.toInt, vec3.dy.toInt, vec3.dz.toInt)
 
-    def apply(bc:BlockCoord):Point3 = Point3(bc.x, bc.y, bc.z)
+    def apply(pos:BlockPos):Point3 = Point3(pos.getX, pos.getY, pos.getZ)
 }

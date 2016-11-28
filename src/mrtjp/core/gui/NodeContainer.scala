@@ -7,12 +7,11 @@ package mrtjp.core.gui
 
 import java.util.{List => JList}
 
-import cpw.mods.fml.relauncher.{Side, SideOnly}
-import mrtjp.core.inventory.InvWrapper
 import net.minecraft.client.Minecraft
 import net.minecraft.entity.player.EntityPlayer
-import net.minecraft.inventory.{Container, ICrafting, IInventory, Slot}
+import net.minecraft.inventory._
 import net.minecraft.item.ItemStack
+import net.minecraftforge.fml.relauncher.{Side, SideOnly}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{Buffer => MBuffer}
@@ -58,20 +57,21 @@ class NodeContainer extends Container
             addSlotToContainer(new Slot3(player.inventory, up(), x, y)) //slots
     }
 
-    override def addCraftingToCrafters(c:ICrafting)
+    override def addListener(listener:IContainerListener)
     {
-        super.addCraftingToCrafters(c)
-        c match {
+        super.addListener(listener)
+        listener match {
             case p:EntityPlayer if !p.worldObj.isRemote =>
                 startWatchDelegate(p)
             case _ =>
         }
     }
 
-    override def removeCraftingFromCrafters(c :ICrafting)
+
+    override def removeListener(listener:IContainerListener)
     {
-        super.removeCraftingFromCrafters(c)
-        c match {
+        super.removeListener(listener)
+        listener match {
             case p:EntityPlayer if !p.worldObj.isRemote =>
                 stopWatchDelegate(p)
             case _ =>
@@ -85,53 +85,56 @@ class NodeContainer extends Container
             stopWatchDelegate(p)
     }
 
-    override def slotClick(id:Int, mouse:Int, shift:Int, player:EntityPlayer):ItemStack =
+
+    override def slotClick(id:Int, dragType:Int, clickType:ClickType, player:EntityPlayer):ItemStack =
     {
         try { //Ignore exceptions raised from client-side only slots that wont be found here. To be removed.
             if (slots.isDefinedAt(id))
             {
                 val slot = slots(id)
-                if (slot.phantomSlot) return handleGhostClick(slot, mouse, shift, player)
+                if (slot.phantomSlot) return handleGhostClick(slot, dragType, clickType, player)
             }
-            super.slotClick(id, mouse, shift, player)
+            super.slotClick(id, dragType, clickType, player)
         } catch {
             case e:Exception => null
         }
     }
 
-    private def handleGhostClick(slot:TSlot3, mouse:Int, shift:Int, player:EntityPlayer):ItemStack =
+    private def handleGhostClick(slot:TSlot3, dragType:Int, clickType:ClickType, player:EntityPlayer):ItemStack =
     {
-        val inSlot = slot.getStack
-        val inCursor = player.inventory.getItemStack
-        if (inCursor != null && !slot.isItemValid(inCursor)) return inCursor
-
-        val stackable = InvWrapper.areItemsStackable(inSlot, inCursor)
-        if (stackable)
-        {
-            if (inSlot != null && inCursor == null) slot.putStack(null)
-            else if (inSlot == null && inCursor != null)
-            {
-                val newStack = inCursor.copy
-                newStack.stackSize = if (mouse == 0) math.min(inCursor.stackSize, slot.getSlotStackLimit) else 1
-                slot.putStack(newStack)
-            }
-            else if (inSlot != null)
-            {
-                val toAdd = if (shift == 1) 10 else 1
-                if (mouse == 0) inSlot.stackSize = math.min(slot.getSlotStackLimit, inSlot.stackSize+toAdd)
-                else if (mouse == 1) inSlot.stackSize = math.max(0, inSlot.stackSize-toAdd)
-                if (inSlot.stackSize > 0) slot.putStack(inSlot)
-                else slot.putStack(null)
-            }
-        }
-        else
-        {
-            val newStack = inCursor.copy
-            newStack.stackSize = if (mouse == 0) math.min(inCursor.stackSize, slot.getSlotStackLimit) else 1
-            slot.putStack(newStack)
-        }
-
-        inCursor
+        //TODO look into how this works
+//        val inSlot = slot.getStack
+//        val inCursor = player.inventory.getItemStack
+//        if (inCursor != null && !slot.isItemValid(inCursor)) return inCursor
+//
+//        val stackable = InvWrapper.areItemsStackable(inSlot, inCursor)
+//        if (stackable)
+//        {
+//            if (inSlot != null && inCursor == null) slot.putStack(null)
+//            else if (inSlot == null && inCursor != null)
+//            {
+//                val newStack = inCursor.copy
+//                newStack.stackSize = if (mouse == 0) math.min(inCursor.stackSize, slot.getSlotStackLimit) else 1
+//                slot.putStack(newStack)
+//            }
+//            else if (inSlot != null)
+//            {
+//                val toAdd = if (shift == 1) 10 else 1
+//                if (mouse == 0) inSlot.stackSize = math.min(slot.getSlotStackLimit, inSlot.stackSize+toAdd)
+//                else if (mouse == 1) inSlot.stackSize = math.max(0, inSlot.stackSize-toAdd)
+//                if (inSlot.stackSize > 0) slot.putStack(inSlot)
+//                else slot.putStack(null)
+//            }
+//        }
+//        else
+//        {
+//            val newStack = inCursor.copy
+//            newStack.stackSize = if (mouse == 0) math.min(inCursor.stackSize, slot.getSlotStackLimit) else 1
+//            slot.putStack(newStack)
+//        }
+//
+//        inCursor
+        null
     }
 
     override def transferStackInSlot(player:EntityPlayer, i:Int):ItemStack =

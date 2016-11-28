@@ -7,22 +7,23 @@ package mrtjp.core.gui
 
 import codechicken.lib.data.{MCDataInput, MCDataOutput}
 import codechicken.lib.packet.PacketCustom
-import cpw.mods.fml.relauncher.{Side, SideOnly}
 import mrtjp.core.handler.MrTJPCoreSPH
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiScreen
 import net.minecraft.entity.player.{EntityPlayer, EntityPlayerMP}
 import net.minecraft.inventory.Container
+import net.minecraftforge.fml.relauncher.{Side, SideOnly}
 
 object GuiHandler
 {
     /**
-     * Called serverside to open a syncronized container GUI
-     * @param player1 Serverside player
-     * @param cont Serverside container
-     * @param guiID Gui ID defined in GuiIDs object
-     * @param dataWrite Partial function that adds data to a packet
-     */
+      * Called serverside to open a syncronized container GUI
+      *
+      * @param player1 Serverside player
+      * @param cont Serverside container
+      * @param guiID Gui ID defined in GuiIDs object
+      * @param dataWrite Partial function that adds data to a packet
+      */
     def openSMPContainer(player1:EntityPlayer, cont:Container, guiID:Int, dataWrite:MCDataOutput => Unit)
     {
         if (!player1.isInstanceOf[EntityPlayerMP]) return
@@ -36,16 +37,17 @@ object GuiHandler
         {
             player.openContainer = cont
             player.openContainer.windowId = player.currentWindowId
-            player.openContainer.addCraftingToCrafters(player)
+            player.openContainer.addListener(player)
         }
     }
 
     /**
-     * Called client side upon receiving a request to open a gui. Server requests client
-     * to do so with the above method.
-     * @param windowID The window ID the server defined to client
-     * @param gui The gui created by the client
-     */
+      * Called client side upon receiving a request to open a gui. Server requests client
+      * to do so with the above method.
+      *
+      * @param windowID The window ID the server defined to client
+      * @param gui The gui created by the client
+      */
     @SideOnly(Side.CLIENT)
     def openSMPContainer(windowID:Int, gui:GuiScreen)
     {
@@ -55,11 +57,12 @@ object GuiHandler
     }
 
     /**
-     * Internally called by the client when it receives a gui request from the
-     * server with openSMPContainer.
-     * @param data Raw data built by the server, includes windowID as byte and
-     *             guiID as short, as well as custom gui data.
-     */
+      * Internally called by the client when it receives a gui request from the
+      * server with openSMPContainer.
+      *
+      * @param data Raw data built by the server, includes windowID as byte and
+      *             guiID as short, as well as custom gui data.
+      */
     @SideOnly(Side.CLIENT)
     def receiveGuiPacket(data:MCDataInput)
     {

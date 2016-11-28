@@ -5,10 +5,10 @@
  */
 package mrtjp.core.handler
 
-import cpw.mods.fml.common.Mod
-import cpw.mods.fml.common.event.{FMLInitializationEvent, FMLPostInitializationEvent, FMLPreInitializationEvent}
 import mrtjp.core.data.{ModConfig, SpecialConfigGui, TModGuiFactory}
 import net.minecraft.client.gui.GuiScreen
+import net.minecraftforge.fml.common.Mod
+import net.minecraftforge.fml.common.event.{FMLInitializationEvent, FMLPostInitializationEvent, FMLPreInitializationEvent}
 import org.apache.logging.log4j.LogManager
 
 @Mod(modid = "MrTJPCoreMod", useMetadata = true, modLanguage = "scala", guiFactory = "mrtjp.core.handler.GuiConfigFactory")

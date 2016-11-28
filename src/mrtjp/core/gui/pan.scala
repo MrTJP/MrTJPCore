@@ -5,8 +5,8 @@
  */
 package mrtjp.core.gui
 
+import codechicken.lib.colour.EnumColour
 import codechicken.lib.gui.GuiDraw
-import mrtjp.core.color.Colors
 import mrtjp.core.vec.{Point, Rect, Size, Vec2}
 
 class PanNode extends TNode
@@ -18,8 +18,8 @@ class PanNode extends TNode
 
     var scrollModifier = Vec2(1, 1)
     var scrollBarThickness = 4
-    var scrollBarBGColour = Colors.LIGHT_GREY.argb(0x66)
-    var scrollBarColour = Colors.GREY.argb(0x99)
+    var scrollBarBGColour = EnumColour.LIGHT_GRAY.argb(0x66)
+    var scrollBarColour = EnumColour.GRAY.argb(0x99)
     var scrollBarVertical = true
     var scrollBarHorizontal = true
 

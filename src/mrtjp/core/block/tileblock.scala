@@ -9,329 +9,365 @@ import java.util.{ArrayList => JArrayList, List => JList, Random}
 
 import codechicken.lib.data.{MCDataInput, MCDataOutput}
 import codechicken.lib.packet.{ICustomPacketTile, PacketCustom}
-import codechicken.lib.render.TextureUtils
-import codechicken.lib.vec.{BlockCoord, Cuboid6, Rotation, Vector3}
-import cpw.mods.fml.client.registry.ISimpleBlockRenderingHandler
-import cpw.mods.fml.common.registry.GameRegistry
-import cpw.mods.fml.relauncher.{Side, SideOnly}
+import codechicken.lib.render.block.{BlockRenderingRegistry, ICCBlockRenderer}
+import codechicken.lib.vec.{Cuboid6, Rotation, Vector3}
 import mrtjp.core.handler.MrTJPCoreSPH
 import mrtjp.core.world.WorldLib
+import net.minecraft.block.Block
 import net.minecraft.block.material.Material
-import net.minecraft.block.{Block, BlockContainer}
-import net.minecraft.client.renderer.RenderBlocks
-import net.minecraft.client.renderer.texture.{TextureUtil, IIconRegister}
+import net.minecraft.block.properties.{IProperty, PropertyInteger}
+import net.minecraft.block.state.{BlockStateContainer, IBlockState}
+import net.minecraft.client.renderer.VertexBuffer
+import net.minecraft.client.renderer.texture.{TextureAtlasSprite, TextureMap}
 import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.enchantment.EnchantmentHelper
-import net.minecraft.entity.Entity
 import net.minecraft.entity.player.EntityPlayer
-import net.minecraft.item.{Item, ItemBlock, ItemStack}
+import net.minecraft.entity.{Entity, EntityLivingBase}
+import net.minecraft.init.Enchantments
+import net.minecraft.item.{Item, ItemStack}
 import net.minecraft.nbt.NBTTagCompound
+import net.minecraft.network.NetworkManager
+import net.minecraft.network.play.server.SPacketUpdateTileEntity
 import net.minecraft.tileentity.TileEntity
-import net.minecraft.util.{IIcon, MovingObjectPosition}
-import net.minecraft.world.{EnumSkyBlock, IBlockAccess, World}
-import net.minecraftforge.common.util.ForgeDirection
+import net.minecraft.util.math.{AxisAlignedBB, BlockPos, RayTraceResult}
+import net.minecraft.util.{BlockRenderLayer, EnumFacing, EnumHand, ITickable}
+import net.minecraft.world.{Explosion, IBlockAccess, World}
+import net.minecraftforge.fml.common.registry.GameRegistry
+import net.minecraftforge.fml.relauncher.{Side, SideOnly}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 
-object TileRenderRegistry extends ISimpleBlockRenderingHandler
+@SideOnly(Side.CLIENT)
+object MultiTileRenderRegistry extends ICCBlockRenderer
 {
-    var renderID = -1
+    val renderType = BlockRenderingRegistry.createRenderType("MrTJPLib_MultiTileBlock")
 
-    var renders = Map[String, Array[TInstancedBlockRender]]()
-        .withDefaultValue(new Array[TInstancedBlockRender](16))
+    BlockRenderingRegistry.registerRenderer(renderType, this)
 
-    def setRenderer(b:Block, meta:Int, r:TInstancedBlockRender)
+    var renders = Map[String, Array[TMultiTileBlockRender]]()
+        .withDefaultValue(new Array[TMultiTileBlockRender](16))
+
+    def setRenderer(b:Block, meta:Int, r:TMultiTileBlockRender)
     {
-        val name = b.getUnlocalizedName
-        val a = renders.get(name) match
-        {
+        val name = b.getRegistryName.toString
+        val a = renders.get(name) match {
             case Some(e) => e
-            case None => new Array[TInstancedBlockRender](16)
+            case None => new Array[TMultiTileBlockRender](16)
         }
         a(meta) = r
         renders += name -> a
     }
 
-    def getRenderer(b:Block, meta:Int) = renders.get(b.getUnlocalizedName) match
-    {
-        case Some(e) => e(meta)
-        case None => NullRenderer
-    }
-
-    def registerIcons(b:Block, reg:IIconRegister)
-    {
-        for (r <- renders(b.getUnlocalizedName))
-            if (r != null) r.registerIcons(reg)
-    }
-
-    def getIcon(b:Block, side:Int, meta:Int) = getRenderer(b, meta).getIcon(side, meta)
-
-    override def getRenderId = renderID
-
-    override def shouldRender3DInInventory(modelId:Int) = true
-
-    override def renderInventoryBlock(b:Block, meta:Int, rID:Int, r:RenderBlocks)
-    {
-        if (rID != renderID) return
-
-        val render = getRenderer(b, meta)
-        if (render == null)
-        {
-            println("No render mapping found for "+b.getUnlocalizedName+":"+meta)
-            return
+    def getRenderer(b:Block, meta:Int) =
+        renders.get(b.getRegistryName.toString) match {
+            case Some(e) => e(meta)
+            case None => null
         }
 
-        render.renderInvBlock(r, meta)
-    }
-
-    override def renderWorldBlock(w:IBlockAccess, x:Int, y:Int, z:Int, b:Block, rID:Int, r:RenderBlocks):Boolean =
+    override def renderBlock(world:IBlockAccess, pos:BlockPos, state:IBlockState, buffer:VertexBuffer) =
     {
-        if (rID != renderID) return false
-
-        val meta = w.getBlockMetadata(x, y, z)
-        val render = getRenderer(b, meta)
-
-        if (render == null)
-        {
-            println("No render mapping found for "+b.getUnlocalizedName+":"+meta)
-            return true
+        val meta = state.getValue(MultiTileBlock.TILE_INDEX)
+        getRenderer(state.getBlock, meta) match {
+            case null => println("No render mapping found for "+state.getBlock.getUnlocalizedName+":"+meta)
+            case r => r.renderBlock(world, pos, buffer)
         }
-
-        if (r.hasOverrideBlockTexture) render.renderBreaking(w, x, y, z, r.overrideBlockTexture)
-        else render.renderWorldBlock(r, w, x, y, z, meta)
         true
     }
-}
 
-trait TInstancedBlockRender
-{
-    def renderWorldBlock(r:RenderBlocks, w:IBlockAccess, x:Int, y:Int, z:Int, meta:Int)
-
-    def renderInvBlock(r:RenderBlocks, meta:Int)
-
-    def renderBreaking(w:IBlockAccess, x:Int, y:Int, z:Int, icon:IIcon){}
-
-    def randomDisplayTick(w:World, x:Int, y:Int, z:Int, r:Random){}
-
-    def registerIcons(reg:IIconRegister)
-
-    def getIcon(side:Int, meta:Int):IIcon
-}
-
-object NullRenderer extends TInstancedBlockRender
-{
-    override def renderWorldBlock(r:RenderBlocks, w:IBlockAccess, x:Int, y:Int, z:Int, meta:Int){}
-    override def getIcon(side:Int, meta:Int) = null
-    override def renderInvBlock(r:RenderBlocks, meta:Int){}
-    override def registerIcons(reg:IIconRegister){}
-}
-
-class InstancedBlock(name:String, mat:Material) extends BlockContainer(mat)
-{
-    setBlockName(name)
-    GameRegistry.registerBlock(this, getItemBlockClass, name)
-    def getItemBlockClass:Class[_ <: ItemBlock] = classOf[ItemBlockCore]
-
-    private var singleTile = false
-    private val tiles = new Array[Class[_ <: InstancedBlockTile]](16)
-
-    def addTile[A <: InstancedBlockTile](t:Class[A], meta:Int)
+    override def handleRenderBlockDamage(world:IBlockAccess, pos:BlockPos, state:IBlockState, sprite:TextureAtlasSprite, buffer:VertexBuffer)
     {
-        tiles(meta) = t
-        GameRegistry.registerTileEntity(t, getUnlocalizedName+"|"+meta)
+        val meta = state.getValue(MultiTileBlock.TILE_INDEX)
+        getRenderer(state.getBlock, meta) match {
+            case null => println("No render mapping found for "+state.getBlock.getUnlocalizedName+":"+meta)
+            case r => r.renderBreaking(world, pos, buffer, sprite)
+        }
     }
 
-    def addSingleTile[A <: InstancedBlockTile](t:Class[A]){addTile(t, 0); singleTile = true}
+    override def renderBrightness(state:IBlockState, brightness:Float){}
 
-    override def hasTileEntity(metadata:Int) = tiles.exists(_ != null)
-
-    override def isOpaqueCube = false
-
-    override def renderAsNormalBlock = false
-
-    override def damageDropped(damage:Int) = damage
-
-    override def harvestBlock(w:World, player:EntityPlayer, x:Int, y:Int, z:Int, l:Int){}
-
-    override def getRenderType = TileRenderRegistry.renderID
-
-    @SideOnly(Side.CLIENT)
-    override def registerBlockIcons(reg:IIconRegister){TileRenderRegistry.registerIcons(this, reg)}
-
-    override def getIcon(side:Int, meta:Int) = TileRenderRegistry.getIcon(this, side, meta)
-
-    @SideOnly(Side.CLIENT)
-    override def randomDisplayTick(w:World, x:Int, y:Int, z:Int, rand:Random)
+    override def registerTextures(map:TextureMap)
     {
-        val md = w.getBlockMetadata(x, y, z)
-        val r = TileRenderRegistry.getRenderer(this, md)
-        if (r != null) r.randomDisplayTick(w, x, y, z, rand)
+        for (r <- renders.flatMap(_._2))
+            if (r != null) r.registerTextures(map)
+    }
+}
+
+trait TMultiTileBlockRender
+{
+    def renderBlock(w:IBlockAccess, pos:BlockPos, buffer:VertexBuffer)
+
+    def renderBreaking(w:IBlockAccess, pos:BlockPos, buffer:VertexBuffer, sprite:TextureAtlasSprite)
+
+    def randomDisplayTick(w:IBlockAccess, pos:BlockPos, r:Random)
+
+    def registerTextures(map:TextureMap)
+}
+
+object MultiTileBlock
+{
+    val TILE_INDEX:IProperty[Integer] = PropertyInteger.create("tile_idx", 0, 15)
+}
+
+class MultiTileBlock(name:String, registryName:String, mat:Material) extends Block(mat)
+{
+    import MultiTileBlock._
+
+    setUnlocalizedName(name)
+    GameRegistry.register(this.setRegistryName(registryName))
+
+    private val tiles = new Array[Class[_ <: MTBlockTile]](16)
+
+    override def createBlockState() = new BlockStateContainer(this, TILE_INDEX)
+
+    override def getActualState(state:IBlockState, world:IBlockAccess, pos:BlockPos) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => state.withProperty(TILE_INDEX, tiles.indexOf(t.getClass).asInstanceOf[Integer])
+            case _ => state
+        }
+
+    override def getMetaFromState(state:IBlockState) = state.getValue(TILE_INDEX)
+
+    override def getStateFromMeta(meta:Int) = getDefaultState.withProperty(TILE_INDEX, (meta%16).asInstanceOf[Integer])
+
+    override def getRenderType(state:IBlockState) = MultiTileRenderRegistry.renderType
+
+    override def canRenderInLayer(layer:BlockRenderLayer) = true
+
+    def addTile[A <: MTBlockTile](t:Class[A], index:Int)
+    {
+        tiles(index) = t
+        GameRegistry.registerTileEntity(t, getRegistryName.toString+"|"+index)
     }
 
-    override def createNewTileEntity(var1:World, var2:Int) = null
+    override def hasTileEntity(state:IBlockState) = true
 
-    override def createTileEntity(world:World, meta:Int) =
+    override def createTileEntity(world:World, state:IBlockState) =
     {
-        var t:InstancedBlockTile = null
-        try {t = if (singleTile) tiles(0).newInstance else tiles(meta).newInstance}
+        var t:MTBlockTile = null
+        try { t = tiles(getMetaFromState(state)).newInstance }
         catch {case e:Exception => e.printStackTrace()}
-        if (t != null) t.prepair(meta)
         t
     }
 
-    override def removedByPlayer(world:World, player:EntityPlayer, x:Int, y:Int, z:Int) =
+    override def damageDropped(state:IBlockState) = getMetaFromState(state)
+
+    override def isBlockNormalCube(state:IBlockState) = false
+
+    override def isOpaqueCube(state:IBlockState) = false
+
+    override def isFullCube(state:IBlockState) = false
+
+    override def isFullBlock(state:IBlockState) = false
+
+    override def getTickRandomly = true
+
+    override def addCollisionBoxToList(state:IBlockState, world:World, pos:BlockPos, entityBox:AxisAlignedBB, collidingBoxes:JList[AxisAlignedBB], entity:Entity)
+    {
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile =>
+                val bounds = t.getCollisionBounds.aabb()
+                val mask = entityBox.offset(-pos.getX, -pos.getY, -pos.getZ)
+                if (bounds.intersectsWith(mask))
+                    collidingBoxes.add(bounds.offset(pos))
+            case _ =>
+        }
+    }
+
+    override def getBoundingBox(state:IBlockState, world:IBlockAccess, pos:BlockPos) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.getBlockBounds.aabb()
+            case _ => super.getBoundingBox(state, world, pos)
+        }
+
+    override def isBlockSolid(world:IBlockAccess, pos:BlockPos, side:EnumFacing) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.isSolid(side.ordinal())
+            case _ => false
+        }
+
+    override def isSideSolid(state:IBlockState, world:IBlockAccess, pos:BlockPos, side:EnumFacing) = isBlockSolid(world, pos, side)
+
+    override def canPlaceTorchOnTop(state:IBlockState, world:IBlockAccess, pos:BlockPos) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.canPlaceTorchOnTop
+        }
+
+    override def getExplosionResistance(world:World, pos:BlockPos, exploder:Entity, explosion:Explosion) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.getExplosionResistance
+            case _ => 0F
+        }
+
+    override def getLightValue(state:IBlockState, world:IBlockAccess, pos:BlockPos) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.getLightValue
+            case _ => super.getLightValue(state, world, pos)
+        }
+
+    override def getPlayerRelativeBlockHardness(state:IBlockState, player:EntityPlayer, world:World, pos:BlockPos) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.getHardness
+            case _ => super.getPlayerRelativeBlockHardness(state, player, world, pos)
+        }
+
+    override def removedByPlayer(state:IBlockState, world:World, pos:BlockPos, player:EntityPlayer, willHarvest:Boolean) =
     {
         if (world.isRemote) true
-        else
-        {
-            val b = world.getBlock(x, y, z)
-            val md = world.getBlockMetadata(x, y, z)
-            if (b.canHarvestBlock(player, md) && !player.capabilities.isCreativeMode)
-            {
-                val il = getDrops(world, x, y, z, md, EnchantmentHelper.getFortuneModifier(player))
-                for (it <- il) WorldLib.dropItem(world, x, y, z, it)
+        else {
+            val b = state.getBlock
+            if (b.canHarvestBlock(world, pos, player) && !player.capabilities.isCreativeMode) {
+                val stacks = getDrops(world, pos, state, EnchantmentHelper.getEnchantmentLevel(Enchantments.FORTUNE, player.getHeldItemMainhand))
+                for (stack <- stacks) WorldLib.dropItem(world, pos, stack)
             }
-            world.setBlockToAir(x, y, z)
+            world.setBlockToAir(pos)
             true
         }
     }
 
-    override def getDrops(w:World, x:Int, y:Int, z:Int, meta:Int, fortune:Int) =
+    override def breakBlock(world:World, pos:BlockPos, state:IBlockState)
+    {
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.onBlockRemoval()
+            case _ =>
+        }
+        super.breakBlock(world, pos, state)
+    }
+
+    override def harvestBlock(worldIn:World, player:EntityPlayer, pos:BlockPos, state:IBlockState, te:TileEntity, stack:ItemStack){}
+
+    override def getDrops(world:IBlockAccess, pos:BlockPos, state:IBlockState, fortune:Int) =
     {
         val list = new ListBuffer[ItemStack]
-        w.getTileEntity(x, y, z) match
-        {
-            case t:InstancedBlockTile => t.addHarvestContents(list)
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.addHarvestContents(list)
             case _ =>
         }
         new JArrayList[ItemStack](list)
     }
 
-    override def getPickBlock(target:MovingObjectPosition, w:World, x:Int, y:Int, z:Int, p:EntityPlayer) =  w.getTileEntity(x, y, z) match
-    {
-        case t:InstancedBlockTile => t.getPickBlock
-        case _ => super.getPickBlock(target, w, x, y, z, p)
-    }
+    override def getPickBlock(state:IBlockState, target:RayTraceResult, world:World, pos:BlockPos, player:EntityPlayer) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.getPickBlock
+            case _ => super.getPickBlock(state, target, world, pos, player)
+        }
 
-    override def onNeighborBlockChange(w:World, x:Int, y:Int, z:Int, b:Block)
+    override def onBlockActivated(world:World, pos:BlockPos, state:IBlockState, player:EntityPlayer, hand:EnumHand, held:ItemStack, side:EnumFacing, hitX:Float, hitY:Float, hitZ:Float) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.onBlockActivated(player, side.ordinal)
+            case _ => false
+        }
+
+    override def onBlockClicked(world:World, pos:BlockPos, player:EntityPlayer)
     {
-        w.getTileEntity(x, y, z) match
-        {
-            case t:InstancedBlockTile => t.onNeighborChange(b)
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.onBlockClicked(player)
             case _ =>
         }
     }
 
-    def postBlockSetup(w:World, x:Int, y:Int, z:Int, side:Int, meta:Int, player:EntityPlayer, stack:ItemStack, hit:Vector3)
+    override def onEntityCollidedWithBlock(world:World, pos:BlockPos, state:IBlockState, entity:Entity)
     {
-        w.getTileEntity(x, y, z) match
-        {
-            case t:InstancedBlockTile => t.onBlockPlaced(side, meta, player, stack, hit)
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.onEntityCollision(entity)
             case _ =>
         }
     }
 
-    override def breakBlock(w:World, x:Int, y:Int, z:Int, b:Block, meta:Int)
+    override def onEntityWalk(world:World, pos:BlockPos, entity:Entity) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.onEntityWalk(entity)
+        }
+
+
+    override def neighborChanged(state:IBlockState, world:World, pos:BlockPos, block:Block)
     {
-        w.getTileEntity(x, y, z) match
-        {
-            case t:InstancedBlockTile => t.onBlockRemoval()
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.onNeighborBlockChange()
             case _ =>
         }
-        super.breakBlock(w, x, y, z, b, meta)
     }
 
-    override def canConnectRedstone(w:IBlockAccess, x:Int, y:Int, z:Int, side:Int) = w.getTileEntity(x, y, z) match
+    override def onNeighborChange(world:IBlockAccess, pos:BlockPos, neighbor:BlockPos)
     {
-        case t:InstancedBlockTile => t.canConnectRS
-        case _ => super.canConnectRedstone(w, x, y, z, side)
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.onNeighborTileChange(neighbor)
+            case _ =>
+        }
     }
 
-    override def isProvidingStrongPower(w:IBlockAccess, x:Int, y:Int, z:Int, side:Int) = w.getTileEntity(x, y, z) match
+    override def onBlockPlaced(world:World, pos:BlockPos, facing:EnumFacing, hitX:Float, hitY:Float, hitZ:Float, meta:Int, placer:EntityLivingBase) =
     {
-        case t:InstancedBlockTile => t.strongPower(side)
-        case _ => 0
+        if (tiles.isDefinedAt(meta) && tiles(meta) != null)
+            super.onBlockPlaced(world, pos, facing, hitX, hitY, hitZ, meta, placer)
+        else
+            throw new RuntimeException("MultiTileBlock "+this.getRegistryName+" was placed w/ invalid metadata. Most likely an invalid return value on this block's ItemBlock#getMetadata")
     }
 
-    override def isProvidingWeakPower(w:IBlockAccess, x:Int, y:Int, z:Int, side:Int) =
-        w.getTileEntity(x, y, z) match
-        {
-            case t:InstancedBlockTile => t.weakPower(side)
+    def postBlockSetup(w:World, pos:BlockPos, side:Int, player:EntityPlayer, stack:ItemStack, hit:Vector3)
+    {
+        w.getTileEntity(pos) match {
+            case t:MTBlockTile => t.onBlockPlaced(side, player, stack)
+            case _ =>
+        }
+    }
+
+    override def getWeakChanges(world:IBlockAccess, pos:BlockPos) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.getWeakChanges
+            case _ => false
+        }
+
+    override def canProvidePower(state:IBlockState) = true
+
+    override def canConnectRedstone(state:IBlockState, world:IBlockAccess, pos:BlockPos, side:EnumFacing) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.canConnectRS
+            case _ => super.canConnectRedstone(state, world, pos, side)
+        }
+
+    override def getStrongPower(state:IBlockState, world:IBlockAccess, pos:BlockPos, side:EnumFacing) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.strongPower(side.ordinal)
             case _ => 0
         }
 
-    override def onBlockActivated(w:World, x:Int, y:Int, z:Int, player:EntityPlayer, side:Int, hx:Float, hy:Float, hz:Float) = w.getTileEntity(x, y, z) match
-    {
-        case t:InstancedBlockTile => t.onBlockActivated(player, side)
-        case _ => false
-    }
-
-    override def onBlockClicked(w:World, x:Int, y:Int, z:Int, player:EntityPlayer) = w.getTileEntity(x, y, z) match
-    {
-        case t:InstancedBlockTile => t.onBlockClicked(player)
-        case _ => super.onBlockClicked(w, x, y, z, player)
-    }
-
-    override def onEntityCollidedWithBlock(w:World, x:Int, y:Int, z:Int, ent:Entity) = w.getTileEntity(x, y, z) match
-    {
-        case t:InstancedBlockTile => t.onEntityCollision(ent)
-        case _ =>
-    }
-
-    override def setBlockBoundsBasedOnState(w:IBlockAccess, x:Int, y:Int, z:Int)
-    {
-        w.getTileEntity(x, y, z) match
-        {
-            case t:InstancedBlockTile => t.getBlockBounds.setBlockBounds(this)
-            case _ => super.setBlockBoundsBasedOnState(w, x, y, z)
+    override def getWeakPower(state:IBlockState, world:IBlockAccess, pos:BlockPos, side:EnumFacing) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.weakPower(side.ordinal)
+            case _ => 0
         }
-    }
 
-    override def getCollisionBoundingBoxFromPool(w:World, x:Int, y:Int, z:Int) = w.getTileEntity(x, y, z) match
-    {
-        case t:InstancedBlockTile =>
-            val box = t.getCollisionBounds
-            if (box != null) box.copy.add(new Vector3(x, y, z)).toAABB
-            else null
-        case _ => super.getCollisionBoundingBoxFromPool(w, x, y, z)
-    }
+    override def isFireSource(world:World, pos:BlockPos, side:EnumFacing) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.isFireSource(side.ordinal)
+            case _ => super.isFireSource(world, pos, side)
+        }
 
-    override def getLightValue(w:IBlockAccess, x:Int, y:Int, z:Int) = w.getTileEntity(x, y, z) match
-    {
-        case t:InstancedBlockTile => t.getLightValue
-        case _ => super.getLightValue(w, x, y, z)
-    }
+    override def updateTick(world:World, pos:BlockPos, state:IBlockState, rand:Random) =
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.randomTick(rand)
+            case _ => super.updateTick(world, pos, state, rand)
+        }
 
-    override def isFireSource(w:World, x:Int, y:Int, z:Int, side:ForgeDirection) = w.getTileEntity(x, y, z) match
+    @SideOnly(Side.CLIENT)
+    override def getSubBlocks(item:Item, tab:CreativeTabs, list:JList[ItemStack])
     {
-        case t:InstancedBlockTile => t.isFireSource(side.ordinal)
-        case _ => super.isFireSource(w, x, y, z, side)
-    }
-
-    override def isSideSolid(w:IBlockAccess, x:Int, y:Int, z:Int, side:ForgeDirection) = w.getTileEntity(x, y, z) match
-    {
-        case t:InstancedBlockTile => t.isSolid(side.ordinal)
-        case _ => super.isSideSolid(w, x, y, z, side)
-    }
-
-    override def updateTick(w:World, x:Int, y:Int, z:Int, rand:Random) = w.getTileEntity(x, y, z) match
-    {
-        case t:InstancedBlockTile => t.randomTick(rand)
-        case _ => super.updateTick(w, x, y, z, rand)
+        for (i <- 0 until tiles.length) if (tiles(i) != null)
+            list.add(new ItemStack(item, 1, i))
     }
 
     @SideOnly(Side.CLIENT)
-    override def getSubBlocks(thisItem:Item, tab:CreativeTabs, list:JList[_])
+    override def randomDisplayTick(state:IBlockState, world:World, pos:BlockPos, rand:Random)
     {
-        val itemList = list.asInstanceOf[JList[ItemStack]]
-        itemList.add(new ItemStack(thisItem, 1, 0))
-        for (i <- 1 until tiles.length) if (tiles(i) != null)
-            itemList.add(new ItemStack(thisItem, 1, i))
+        world.getTileEntity(pos) match {
+            case t:MTBlockTile => t.randomDisplayTick(rand)
+            case _ =>
+        }
     }
 }
 
-trait TTileOrient extends InstancedBlockTile
+trait TTileOrient extends MTBlockTile
 {
     var orientation:Byte = 0
 
@@ -353,7 +389,7 @@ trait TTileOrient extends InstancedBlockTile
         if (oldOrient != orientation) onOrientChanged(oldOrient)
     }
 
-    def position = new BlockCoord(xCoord, yCoord, zCoord)
+    //def position = new BlockCoord(getPos)
 
     def rotationT = Rotation.sideOrientation(side, rotation).at(Vector3.center)
 
@@ -372,17 +408,19 @@ trait TTileOrient extends InstancedBlockTile
     def absoluteRot(absDir:Int) = Rotation.rotationTo(side, absDir)
 }
 
-abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
+abstract class MTBlockTile extends TileEntity with ICustomPacketTile with ITickable
 {
     protected var schedTick = -1L
 
-    def prepair(meta:Int){}
-
-    def onBlockPlaced(side:Int, meta:Int, player:EntityPlayer, stack:ItemStack, hit:Vector3){}
+    def onBlockPlaced(side:Int, player:EntityPlayer, stack:ItemStack){}
 
     def onBlockRemoval(){}
 
-    def onNeighborChange(b:Block){}
+    def onNeighborBlockChange(){}
+
+    def onNeighborTileChange(neighbor:BlockPos){}
+
+    def getWeakChanges = false
 
     def canConnectRS = false
     def strongPower(side:Int) = 0
@@ -394,11 +432,19 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
 
     def isSolid(side:Int) = true
 
+    def canPlaceTorchOnTop = true
+
+    def getExplosionResistance = 0
+
+    def getHardness = 1F
+
     def onBlockActivated(player:EntityPlayer, side:Int) = false
 
     def onBlockClicked(player:EntityPlayer) = false
 
     def onEntityCollision(ent:Entity){}
+
+    def onEntityWalk(ent:Entity){}
 
     def getBlockBounds = Cuboid6.full
 
@@ -408,15 +454,16 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
 
     def updateClient(){}
 
-    def update(){}
+    def updateServer(){}
 
     def randomTick(rand:Random){}
 
+    @SideOnly(Side.CLIENT)
+    def randomDisplayTick(rand:Random){}
+
     def getBlock:Block
 
-    def getMetaData = getBlockMetadata
-
-    def getPickBlock = new ItemStack(getBlock, 1, getMetaData)
+    def getPickBlock = new ItemStack(getBlock, 1, getBlockMetadata)
 
     def addHarvestContents(ist:ListBuffer[ItemStack])
     {
@@ -424,9 +471,9 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
     }
 
     def world = worldObj
-    def x = xCoord
-    def y = yCoord
-    def z = zCoord
+    def x = getPos.getX
+    def y = getPos.getY
+    def z = getPos.getZ
 
     def scheduleTick(time:Int)
     {
@@ -442,46 +489,57 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
     {
         val il = new ListBuffer[ItemStack]
         addHarvestContents(il)
-        for (stack <- il) WorldLib.dropItem(world, x, y, z, stack)
-        world.setBlockToAir(x, y, z)
+        for (stack <- il) WorldLib.dropItem(world, pos, stack)
+        world.setBlockToAir(pos)
     }
 
     override def markDirty()
     {
-        world.markTileEntityChunkModified(x, y, z, this)
+        world.markChunkDirty(pos, this)
     }
 
     final def markRender()
     {
-        world.func_147479_m(x, y, z)
+        world.markBlockRangeForRenderUpdate(pos, pos)
     }
 
     final def markLight()
     {
-        world.func_147451_t(x, y, z)
+        world.checkLight(pos)
     }
 
     final def markDescUpdate()
     {
-        world.markBlockForUpdate(x, y, z)
+//        val state = world.getBlockState(pos)
+//        world.notifyBlockUpdate(pos, state, state, 3)
+        val packet = writeStream(0)
+        writeDesc(packet)
+        sendWriteStream(packet)
     }
 
-    final override def updateEntity()
+    final override def update()
     {
-        if (world.isRemote)
-        {
+        if (world.isRemote) {
             updateClient()
             return
         }
-        else update()
+        else updateServer()
+
         if (schedTick < 0L) return
         val time = world.getTotalWorldTime
-        if (schedTick <= time)
-        {
+        if (schedTick <= time) {
             schedTick = -1L
             onScheduledTick()
             markDirty()
         }
+    }
+
+    final override def writeToNBT(tag:NBTTagCompound) =
+    {
+        super.writeToNBT(tag)
+        tag.setLong("sched", schedTick)
+        save(tag)
+        tag
     }
 
     final override def readFromNBT(tag:NBTTagCompound)
@@ -491,52 +549,65 @@ abstract class InstancedBlockTile extends TileEntity with ICustomPacketTile
         load(tag)
     }
 
-    final override def writeToNBT(tag:NBTTagCompound)
+
+    override def getUpdateTag =
     {
-        super.writeToNBT(tag)
-        tag.setLong("sched", schedTick)
-        save(tag)
+        val tag = super.getUpdateTag
+        writeToNBT(tag)
+        tag
+    }
+
+    override def handleUpdateTag(tag:NBTTagCompound)
+    {
+        super.handleUpdateTag(tag)
+        readFromNBT(tag)
+    }
+
+    override def getUpdatePacket =
+    {
+//        val packet = new PacketCustom(MrTJPCoreSPH.channel, MrTJPCoreSPH.tilePacket)
+//        writeToPacket(packet)
+//        packet.toTilePacket(getPos)
+        null
+    }
+
+    override def onDataPacket(net:NetworkManager, pkt:SPacketUpdateTileEntity)
+    {
+        //readFromPacket(PacketCustom.fromTilePacket(pkt))
     }
 
     def save(tag:NBTTagCompound){}
+
     def load(tag:NBTTagCompound){}
 
-    final override def getDescriptionPacket =
+    def writeDesc(out:MCDataOutput){}
+
+    def readDesc(in:MCDataInput){}
+
+    final override def readFromPacket(packet:MCDataInput)
     {
-        val packet = writeStream(0)
-        writeDesc(packet)
-        if (compressDesc) packet.compress()
-        packet.toPacket
+        packet.readUByte() match {
+            case 0 => readDesc(packet)
+            case key => read(packet, key)
+        }
     }
 
-    def compressDesc = false
-
-    final def handleDescriptionPacket(packet:PacketCustom) = packet.readUByte() match
+    final override def writeToPacket(packet:MCDataOutput)
     {
-        case 0 => readDesc(packet)
-        case key => read(packet, key)
+        writeDesc(packet.writeByte(0))
     }
 
     def read(in:MCDataInput, key:Int){}
 
-    def readDesc(in:MCDataInput){}
-    def writeDesc(out:MCDataOutput){}
-
     final def writeStream(key:Int):PacketCustom =
     {
         val stream = new PacketCustom(MrTJPCoreSPH.channel, MrTJPCoreSPH.tilePacket)
-        stream.writeCoord(x, y, z).writeByte(key)
+        stream.writePos(pos).writeByte(key)
         stream
     }
 
-    implicit def streamToSend(out:PacketCustom) = StreamSender(out)
-    implicit def sendToStream(send:StreamSender) = send.out
-
-    case class StreamSender(out:PacketCustom)
+    final def sendWriteStream(packet:PacketCustom)
     {
-        def sendToChunk()
-        {
-            out.sendToChunk(world, x>>4, z>>4)
-        }
+        packet.sendToChunk(world, x>>4, z>>4)
     }
 }

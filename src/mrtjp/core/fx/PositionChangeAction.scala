@@ -10,21 +10,22 @@ import mrtjp.core.fx.particles.CoreParticle
 
 trait TPositionedParticle extends CoreParticle
 {
-    def x = posX
-    def y = posY
-    def z = posZ
+    //Implement manually because x, y, z are protected now
+    def x:Double
+    def y:Double
+    def z:Double
 
     def x_=(x:Double){setPosition(x, y, z)}
     def y_=(y:Double){setPosition(x, y, z)}
     def z_=(z:Double){setPosition(x, y, z)}
 
-    def px = prevPosX
-    def py = prevPosY
-    def pz = prevPosZ
+    def px:Double
+    def py:Double
+    def pz:Double
 
-    def px_=(x:Double){prevPosX = x}
-    def py_=(y:Double){prevPosY = y}
-    def pz_=(z:Double){prevPosZ = z}
+    def px_=(x:Double)
+    def py_=(y:Double)
+    def pz_=(z:Double)
 
     def dx = x-px
     def dy = y-py

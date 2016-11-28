@@ -7,19 +7,19 @@ package mrtjp.core.vec
 
 import codechicken.lib.render.CCModel
 import codechicken.lib.vec.Vector3
-import net.minecraft.util
-import net.minecraft.util.MovingObjectPosition
+import net.minecraft.util.EnumFacing
+import net.minecraft.util.math.{BlockPos, RayTraceResult, Vec3d}
 
 object ModelRayTracer
 {
-    def raytraceModel(x:Double, y:Double, z:Double, from1:util.Vec3, to1:util.Vec3, model:CCModel):MovingObjectPosition =
+    def raytraceModel(x:Double, y:Double, z:Double, from1:Vec3d, to1:Vec3d, model:CCModel):RayTraceResult =
     {
         val from = new Vector3(from1)
         val to = new Vector3(to1)
 
         val offset = new Vector3(x, y, z)
-        val start = from.copy.sub(offset)
-        val dir = to.copy.sub(from)
+        val start = from.copy.subtract(offset)
+        val dir = to.copy.subtract(from)
 
         def getSide(vec:Vector3) =
         {
@@ -31,8 +31,9 @@ object ModelRayTracer
         {
             case Some((dist, tri)) =>
                 val side = getSide(tri.normal.copy.add(start.copy.add(dir).multiply(dist).multiply(0.001)))
-                val mop = new MovingObjectPosition(x.toInt, y.toInt, z.toInt, side,
-                    calcPlayerHit(new Vector3(x, y, z), from.copy.add(dir.copy.multiply(dist))).toVec3D)
+                val mop = new RayTraceResult(RayTraceResult.Type.BLOCK,
+                    calcPlayerHit(new Vector3(x, y, z), from.copy.add(dir.copy.multiply(dist))).vec3(),
+                    EnumFacing.values()(side), new BlockPos(x.toInt, y.toInt, z.toInt))
                 mop.subHit = 0
                 mop
             case None => null
@@ -43,7 +44,7 @@ object ModelRayTracer
     {
         val shift = 1/4096F
         val thresh = 0.5
-        val c = p.copy.sub(b).add(-0.5)
+        val c = p.copy.subtract(b).add(-0.5)
         val ac = new Vector3(c.x.abs, c.y.abs, c.z.abs)
 
         if (ac.x < thresh && ac.x >= ac.y && ac.x >= ac.z)
@@ -77,8 +78,8 @@ object ModelRayTracer
     private def mt(origin:Vector3, dir:Vector3, v0:Vector3, v1:Vector3, v2:Vector3, cullBack:Boolean = true, epsilon:Double = 1e-6) =
     {
         // 2 edges of a triangle
-        val e1 = v1.copy.sub(v0)
-        val e2 = v2.copy.sub(v0)
+        val e1 = v1.copy.subtract(v0)
+        val e2 = v2.copy.subtract(v0)
         // determinant of the equation
         val p = dir.copy.crossProduct(e2)
 
@@ -89,7 +90,7 @@ object ModelRayTracer
             if (det < epsilon) None
             else
             {
-                val t = origin.copy.sub(v0)
+                val t = origin.copy.subtract(v0)
                 val du = t.dotProduct(p)
                 if (du < 0.0 || du > det) None
                 else
@@ -107,7 +108,7 @@ object ModelRayTracer
             else
             {
                 val invDet = 1.0/det
-                val t = origin.copy.sub(v0)
+                val t = origin.copy.subtract(v0)
                 val u = t.dotProduct(p)*invDet
                 if (u < 0.0 || u > 1.0) None
                 else
@@ -123,7 +124,7 @@ object ModelRayTracer
 
     private case class Tri(v0:Vector3, v1:Vector3, v2:Vector3)
     {
-        val normal = v1.copy.sub(v0).crossProduct(v2.copy.sub(v0)).normalize()
+        val normal = v1.copy.subtract(v0).crossProduct(v2.copy.subtract(v0)).normalize()
     }
 
     private case class Quad(v0:Vector3, v1:Vector3, v2:Vector3, v3:Vector3)

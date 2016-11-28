@@ -5,17 +5,20 @@
  */
 package mrtjp.core.gui
 
-import java.awt.Color
-
 import codechicken.lib.gui.GuiDraw
-import cpw.mods.fml.client.FMLClientHandler
-import mrtjp.core.resource.ResourceLib
-import net.minecraft.client.renderer.Tessellator
-import net.minecraft.util.MathHelper
+import codechicken.lib.render.CCRenderState
+import codechicken.lib.texture.TextureUtils
+import net.minecraft.client.renderer.GlStateManager._
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats
+import net.minecraft.util.ResourceLocation
 import org.lwjgl.opengl.GL11
 
 object GuiLib
 {
+    val guiSlot = new ResourceLocation("mrtjpcore", "textures/gui/slot.png")
+    val guiExtras = new ResourceLocation("mrtjpcore", "textures/gui/guiextras.png")
+    val guiTex = new ResourceLocation("minecraft", "textures/gui/widgets.png")
+
     /**
      *
      * @param x x pos of grid
@@ -47,15 +50,17 @@ object GuiLib
 
     def drawSlotBackground(x:Int, y:Int)
     {
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F)
-        ResourceLib.guiSlot.bind()
-        val t = Tessellator.instance
-        t.startDrawingQuads()
-        t.addVertexWithUV(x, y+18, 0, 0, 1)
-        t.addVertexWithUV(x+18, y+18, 0, 1, 1)
-        t.addVertexWithUV(x+18, y, 0, 1, 0)
-        t.addVertexWithUV(x, y, 0, 0, 0)
-        t.draw()
+        color(1, 1, 1, 1)
+
+        TextureUtils.changeTexture(guiSlot)
+
+        val rs = CCRenderState.instance()
+        val vb = rs.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX)
+        vb.pos(x, y+18, 0).tex(0, 1).endVertex()
+        vb.pos(x+18, y+18, 0).tex(1, 1).endVertex()
+        vb.pos(x+18, y, 0).tex(1, 0).endVertex()
+        vb.pos(x, y, 0).tex(0, 0).endVertex()
+        rs.draw()
     }
 
     def drawGuiBox(x:Int, y:Int, width:Int, height:Int, zLevel:Float)
@@ -67,88 +72,53 @@ object GuiLib
     {
         val u = 1
         val v = 29
-        ResourceLib.guiExtras.bind()
+
+        TextureUtils.changeTexture(guiExtras)
+
         GuiDraw.gui.setZLevel(zLevel)
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F)
-        GL11.glPushMatrix()
-        GL11.glTranslated(x+2, y+2, 0)
-        GL11.glScaled(width-4, height-4, 0)
+        color(1, 1, 1, 1)
+        pushMatrix()
+        translate(x+2, y+2, 0)
+        scale(width-4, height-4, 0)
         GuiDraw.drawTexturedModalRect(0, 0, u+19, v, 1, 1)
-        GL11.glPopMatrix()
+        popMatrix()
         if (top)
         {
-            GL11.glPushMatrix()
-            GL11.glTranslated(x+3, y, 0)
-            GL11.glScaled(width-6, 1, 0)
+            pushMatrix()
+            translate(x+3, y, 0)
+            scale(width-6, 1, 0)
             GuiDraw.drawTexturedModalRect(0, 0, u+4, v, 1, 3)
-            GL11.glPopMatrix()
+            popMatrix()
         }
         if (bottom)
         {
-            GL11.glPushMatrix()
-            GL11.glTranslated(x+3, y+height-3, 0)
-            GL11.glScaled(width-6, 1, 0)
+            pushMatrix()
+            translate(x+3, y+height-3, 0)
+            scale(width-6, 1, 0)
             GuiDraw.drawTexturedModalRect(0, 0, u+14, v, 1, 3)
-            GL11.glPopMatrix()
+            popMatrix()
         }
         if (left)
         {
-            GL11.glPushMatrix()
-            GL11.glTranslated(x, y+3, 0)
-            GL11.glScaled(1, height-6, 0)
+            pushMatrix()
+            translate(x, y+3, 0)
+            scale(1, height-6, 0)
             GuiDraw.drawTexturedModalRect(0, 0, u, v+4, 3, 1)
-            GL11.glPopMatrix()
+            popMatrix()
         }
         if (right)
         {
-            GL11.glPushMatrix()
-            GL11.glTranslated(x+width-3, y+3, 0)
-            GL11.glScaled(1, height-6, 0)
+            pushMatrix()
+            translate(x+width-3, y+3, 0)
+            scale(1, height-6, 0)
             GuiDraw.drawTexturedModalRect(0, 0, u+8, v, 3, 1)
-            GL11.glPopMatrix()
+            popMatrix()
         }
 
         if (top && left) GuiDraw.drawTexturedModalRect(x, y, u, v, 4, 4)
         if (top && right) GuiDraw.drawTexturedModalRect(x+width-3, y, u+5, v, 3, 3)
         if (bottom && left) GuiDraw.drawTexturedModalRect(x, y+height-3, u+11, v, 3, 3)
         if (bottom && right) GuiDraw.drawTexturedModalRect(x+width-4, y+height-4, u+15, v, 4, 4)
-    }
-
-    def drawLine(x:Double, y:Double, x2:Double, y2:Double)
-    {
-        val count = FMLClientHandler.instance.getClient.thePlayer.ticksExisted
-        val red = 0.7F+MathHelper.sin(((count+x)/10.0D).asInstanceOf[Float])*0.15F+0.15F
-        val green = 0.0F+MathHelper.sin(((count+x+y)/11.0D).asInstanceOf[Float])*0.15F+0.15F
-        val blue = 0.0F+MathHelper.sin(((count+y)/12.0D).asInstanceOf[Float])*0.15F+0.15F
-        drawLine(x, y, x2, y2, new Color(red, green*0, blue*0).getRGB)
-    }
-
-    def drawLine(x:Double, y:Double, x2:Double, y2:Double, color:Int)
-    {
-        import GL11._
-        import Tessellator.{instance => t}
-
-        val c = new Color(color)
-        val red = c.getRed/255.0F
-        val green = c.getGreen/255.0F
-        val blue = c.getBlue/255.0F
-        val alpha = c.getAlpha/255.0F
-
-        glPushMatrix()
-        glLineWidth(3.0F)
-        glDisable(GL_TEXTURE_2D)
-        glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glColor4f(red, green, blue, alpha)
-
-        t.startDrawing(3)
-        t.addVertex(x, y, 0.0D)
-        t.addVertex(x2, y2, 0.0D)
-        t.draw()
-
-        glDisable(GL_BLEND)
-        glEnable(GL_TEXTURE_2D)
-        glPopMatrix()
     }
 
     def drawVerticalTank(x:Int, y:Int, u:Int, v:Int, w:Int, h:Int, prog:Int)

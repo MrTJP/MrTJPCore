@@ -5,12 +5,12 @@
  */
 package mrtjp.core.inventory
 
-import codechicken.lib.vec.BlockCoord
 import mrtjp.core.item.{ItemEquality, ItemKey}
-import mrtjp.core.world.WorldLib
 import net.minecraft.inventory.{IInventory, ISidedInventory, InventoryLargeChest}
 import net.minecraft.item.ItemStack
 import net.minecraft.tileentity.TileEntityChest
+import net.minecraft.util.EnumFacing
+import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
 
 object InvWrapper
@@ -40,43 +40,35 @@ object InvWrapper
         stack1.getItem == stack2.getItem && stack2.getItemDamage == stack1.getItemDamage && ItemStack.areItemStackTagsEqual(stack2, stack1)
     }
 
-    def getInventory(world:World, wc:BlockCoord):IInventory =
-    {
-        val inv = WorldLib.getTileEntity(world, wc, classOf[IInventory])
-        if (inv.isInstanceOf[TileEntityChest])
-        {
-            val chest = inv.asInstanceOf[TileEntityChest]
-
-            var lower:TileEntityChest = null
-            var upper:TileEntityChest = null
-            if (chest.adjacentChestXNeg != null)
-            {
-                upper = chest.adjacentChestXNeg
-                lower = chest
-            }
-            if (chest.adjacentChestXPos != null)
-            {
-                upper = chest
-                lower = chest.adjacentChestXPos
-            }
-            if (chest.adjacentChestZNeg != null)
-            {
-                upper = chest.adjacentChestZNeg
-                lower = chest
-            }
-            if (chest.adjacentChestZPos != null)
-            {
-                upper = chest
-                lower = chest.adjacentChestZPos
-            }
-            if (lower != null && upper != null) return new HashableLargeChest("Large Chest", upper, lower)
-            return inv
+    def getInventory(world:World, pos:BlockPos):IInventory =
+        world.getTileEntity(pos) match {
+            case chest:TileEntityChest =>
+                var lower:TileEntityChest = null
+                var upper:TileEntityChest = null
+                if (chest.adjacentChestXNeg != null) {
+                    upper = chest.adjacentChestXNeg
+                    lower = chest
+                }
+                else if (chest.adjacentChestXPos != null) {
+                    upper = chest
+                    lower = chest.adjacentChestXPos
+                }
+                else if (chest.adjacentChestZNeg != null) {
+                    upper = chest.adjacentChestZNeg
+                    lower = chest
+                }
+                else if (chest.adjacentChestZPos != null) {
+                    upper = chest
+                    lower = chest.adjacentChestZPos
+                }
+                if (lower != null && upper != null) new HashableLargeChest("Large Chest", upper, lower)
+                else chest
+            case inv:IInventory => inv
+            case _ => null
         }
-        inv
-    }
 }
 
-class HashableLargeChest(name:String, val inv1:IInventory, val inv2:IInventory) extends InventoryLargeChest(name, inv1, inv2)
+class HashableLargeChest(name:String, val inv1:TileEntityChest, val inv2:TileEntityChest) extends InventoryLargeChest(name, inv1, inv2)
 {
     override def hashCode = inv1.hashCode^inv2.hashCode
 
@@ -112,9 +104,9 @@ abstract class InvWrapper(val inv:IInventory)
         case inv2:ISidedInventory => inv2
         case _ => null
     }
-    var side = -1
+    var side:EnumFacing = null
 
-    var slots:Seq[Int] = (0 until inv.getSizeInventory).toSeq
+    var slots:Seq[Int] = (0 until inv.getSizeInventory)
 
     var hidePerSlot = false
     var hidePerType = false
@@ -127,8 +119,8 @@ abstract class InvWrapper(val inv:IInventory)
     {
         if (sidedInv != null)
         {
-            side = s
-            slots = sidedInv.getAccessibleSlotsFromSide(s)
+            side = EnumFacing.values()(s)
+            slots = sidedInv.getSlotsForFace(side)
         }
         else setSlotsAll()
         this
@@ -136,21 +128,21 @@ abstract class InvWrapper(val inv:IInventory)
 
     def setSlotsFromRange(r:Range) =
     {
-        side = -1
+        side = null
         slots = r
         this
     }
 
     def setSlotsAll() =
     {
-        side = -1
-        slots = (0 until inv.getSizeInventory).toSeq
+        side = null
+        slots = (0 until inv.getSizeInventory)
         this
     }
 
     def setSlotSingle(s:Int) =
     {
-        side = -1
+        side = null
         slots = Seq(s)
         this
     }
@@ -253,13 +245,13 @@ abstract class InvWrapper(val inv:IInventory)
     protected def canInsertItem(slot:Int, item:ItemStack):Boolean =
     {
         if (internalMode) return true
-        if (side < 0) inv.isItemValidForSlot(slot, item) else sidedInv.canInsertItem(slot, item, side)
+        if (side != null) inv.isItemValidForSlot(slot, item) else sidedInv.canInsertItem(slot, item, side)
     }
 
     protected def canExtractItem(slot:Int, item:ItemStack):Boolean =
     {
         if (internalMode) return true
-        if (side < 0) inv.isItemValidForSlot(slot, item) else sidedInv.canExtractItem(slot, item, side)
+        if (side != null) inv.isItemValidForSlot(slot, item) else sidedInv.canExtractItem(slot, item, side)
     }
 }
 

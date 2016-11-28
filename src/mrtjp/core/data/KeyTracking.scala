@@ -6,15 +6,15 @@
 package mrtjp.core.data
 
 import codechicken.lib.packet.PacketCustom
-import cpw.mods.fml.client.registry.ClientRegistry
-import cpw.mods.fml.common.FMLCommonHandler
-import cpw.mods.fml.common.eventhandler.SubscribeEvent
-import cpw.mods.fml.common.gameevent.TickEvent.ClientTickEvent
-import cpw.mods.fml.relauncher.{Side, SideOnly}
 import mrtjp.core.handler.MrTJPCoreSPH
 import net.minecraft.client.Minecraft
 import net.minecraft.client.settings.KeyBinding
 import net.minecraft.entity.player.EntityPlayer
+import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.fml.client.registry.ClientRegistry
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent
+import net.minecraftforge.fml.relauncher.{Side, SideOnly}
 
 import scala.collection.mutable.{HashMap => MHashMap, Map => MMap}
 
@@ -67,7 +67,7 @@ trait TClientKeyTracker
         if(pressed != wasPressed)
         {
             wasPressed = pressed
-            if (Minecraft.getMinecraft.getNetHandler != null)
+            if (Minecraft.getMinecraft.getConnection != null)
             {
                 KeyTracking.updatePlayerKey(getTracker.id, Minecraft.getMinecraft.thePlayer, pressed)
                 val packet = new PacketCustom(MrTJPCoreSPH.channel, MrTJPCoreSPH.keyBindPacket)
@@ -81,7 +81,7 @@ trait TClientKeyTracker
     @SideOnly(Side.CLIENT)
     def register()
     {
-        FMLCommonHandler.instance().bus().register(this)
+        MinecraftForge.EVENT_BUS.register(this)
         this match
         {
             case kb:KeyBinding => ClientRegistry.registerKeyBinding(kb)

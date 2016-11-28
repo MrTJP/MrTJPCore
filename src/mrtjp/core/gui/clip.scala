@@ -57,7 +57,7 @@ class ClipNode extends TNode
 
     private def onChildPredraw()
     {
-        val scaleRes = new ScaledResolution(mcInst, mcInst.displayWidth, mcInst.displayHeight)
+        val scaleRes = new ScaledResolution(mcInst)
         val scale = scaleRes.getScaleFactor
 
         val absPos = parent.convertPointToScreen(position)
