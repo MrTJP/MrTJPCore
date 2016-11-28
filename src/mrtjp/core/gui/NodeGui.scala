@@ -10,9 +10,9 @@ import codechicken.lib.gui.GuiDraw
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.inventory.GuiContainer
+import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.inventory.Container
 import org.lwjgl.input.Mouse
-import org.lwjgl.opengl.GL11._
 
 class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
 {
@@ -101,25 +101,25 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
         lastFrame = f
         val mouse = new Point(mx, my)
         frameUpdate(mouse, f)
-        glDisable(GL_DEPTH_TEST)
-        glColor4d(1, 1, 1, 1)
+        disableDepth()
+        color(1, 1, 1, 1)
         rootDrawBack(mouse, f)
-        glColor4d(1, 1, 1, 1)
-        glEnable(GL_DEPTH_TEST)
+        color(1, 1, 1, 1)
+        enableDepth()
     }
 
     final override def drawGuiContainerForegroundLayer(mx:Int, my:Int)
     {
         val mouse = new Point(mx, my)
-        glDisable(GL_DEPTH_TEST)
-        glColor4d(1, 1, 1, 1)
+        disableDepth()
+        color(1, 1, 1, 1)
         rootDrawFront(mouse, lastFrame)
-        glColor4d(1, 1, 1, 1)
-        glEnable(GL_DEPTH_TEST)
+        color(1, 1, 1, 1)
+        enableDepth()
 
         if (debugDrawFrames)
         {
-            glTranslated(-position.x, -position.y, 0)
+            translate(-position.x, -position.y, 0)
             def render(node:TNode)
             {
                 if (!node.hidden)
@@ -134,7 +134,7 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
                 for (c <- node.children) render(c)
             }
             for (c <- children) render(c)
-            glTranslated(position.x, position.y, 0)
+            translate(position.x, position.y, 0)
         }
     }
 }

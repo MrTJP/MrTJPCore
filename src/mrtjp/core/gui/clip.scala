@@ -8,7 +8,6 @@ package mrtjp.core.gui
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.gui.ScaledResolution
 import org.lwjgl.opengl.GL11
-import org.lwjgl.opengl.GL11._
 
 class ClipNode extends TNode
 {
@@ -64,13 +63,13 @@ class ClipNode extends TNode
         val sFrame = new Rect(absPos.x*scale, mcInst.displayHeight-(absPos.y*scale)-size.height*scale,
             size.width*scale, size.height*scale)
 
-        glEnable(GL_SCISSOR_TEST)
-        glScissor(sFrame.x, sFrame.y, sFrame.width, sFrame.height)
+        GL11.glEnable(GL11.GL_SCISSOR_TEST)
+        GL11.glScissor(sFrame.x, sFrame.y, sFrame.width, sFrame.height)
     }
 
     private def onChildPostdraw()
     {
-        glDisable(GL_SCISSOR_TEST)
+        GL11.glDisable(GL11.GL_SCISSOR_TEST)
     }
 
     override def traceHit(absPoint:Point) = !super.traceHit(absPoint)//only let hits within frame pass through
@@ -83,12 +82,12 @@ object ClipNode
 {
     def tempDisableScissoring()
     {
-        glPushAttrib(GL_SCISSOR_BIT)
-        glDisable(GL_SCISSOR_TEST)
+        GL11.glPushAttrib(GL11.GL_SCISSOR_BIT)
+        GL11.glDisable(GL11.GL_SCISSOR_TEST)
     }
 
     def tempEnableScissoring()
     {
-        glPopAttrib()
+        GL11.glPopAttrib()
     }
 }

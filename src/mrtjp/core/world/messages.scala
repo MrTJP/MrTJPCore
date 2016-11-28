@@ -7,11 +7,7 @@ package mrtjp.core.world
 
 import codechicken.lib.packet.PacketCustom
 import mrtjp.core.handler.MrTJPCoreSPH
-import net.minecraft.client.Minecraft
 import net.minecraft.util.math.BlockPos
-import net.minecraftforge.client.event.RenderWorldLastEvent
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import org.lwjgl.opengl.GL11
 
 import scala.collection.mutable
 
@@ -47,7 +43,7 @@ object Messenger
         messages += mess
     }
 
-    @SubscribeEvent
+    /*@SubscribeEvent
     def renderMessages(event:RenderWorldLastEvent)
     {
         val w = Minecraft.getMinecraft.theWorld
@@ -79,7 +75,7 @@ object Messenger
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F)
         GL11.glPopMatrix()
         GL11.glPopAttrib()
-    }
+    }*/
 
     private def readMessage(m:Message)
     {

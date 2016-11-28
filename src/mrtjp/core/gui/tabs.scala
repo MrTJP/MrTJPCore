@@ -9,10 +9,10 @@ import codechicken.lib.colour.EnumColour
 import codechicken.lib.gui.GuiDraw
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.RenderHelper
+import net.minecraft.client.renderer.GlStateManager._
+import net.minecraft.client.renderer.{GlStateManager, RenderHelper}
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.item.ItemStack
-import org.lwjgl.opengl.{GL11, GL12}
 
 import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
@@ -74,7 +74,7 @@ class TabNode(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TNo
         val r = (color>>16&255)/255.0F
         val g = (color>>8&255)/255.0F
         val b = (color&255)/255.0F
-        GL11.glColor4f(r, g, b, 1)
+        GlStateManager.color(r, g, b, 1)
 
         GuiLib.drawGuiBox(position.x, position.y, size.width, size.height, 0)
     }
@@ -98,13 +98,13 @@ trait TStackTab extends TabNode
     abstract override def drawIcon()
     {
         super.drawIcon()
-        GL11.glColor4f(1, 1, 1, 1)
+        GlStateManager.color(1, 1, 1, 1)
         RenderHelper.enableGUIStandardItemLighting()
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL)
+        enableRescaleNormal()
         TStackTab.itemRender.zLevel = (zPosition+25).toFloat
         TStackTab.itemRender.renderItemAndEffectIntoGUI(iconStack, position.x+3, position.y+3)
-        GL11.glDisable(GL12.GL_RESCALE_NORMAL)
-        GL11.glDisable(GL11.GL_LIGHTING)
+        disableRescaleNormal()
+        disableLighting()
         RenderHelper.disableStandardItemLighting()
     }
 }

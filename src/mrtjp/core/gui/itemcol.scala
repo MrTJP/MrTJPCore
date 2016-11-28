@@ -12,11 +12,10 @@ import codechicken.lib.vec.{Scale, Vector3}
 import mrtjp.core.item.ItemKeyStack
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
+import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.{OpenGlHelper, RenderHelper}
 import net.minecraft.item.ItemStack
 import net.minecraft.util.text.TextFormatting
-import org.lwjgl.opengl.GL11._
-import org.lwjgl.opengl.GL12
 
 class ItemListNode extends TNode
 {
@@ -132,17 +131,17 @@ object ItemDisplayNode
         font.setUnicodeFlag(true)
 
         glItemPre()
-        glPushMatrix()
+        pushMatrix()
         new Scale(size.width/16.0, size.height/16.0, 1)
                 .at(new Vector3(position.x, position.y, 0)).glApply()
 
         renderItem.zLevel = (zPosition+10.0).toFloat
-        glEnable(GL_DEPTH_TEST)
-        glEnable(GL_LIGHTING)
+        enableDepth()
+        enableLighting()
         renderItem.renderItemAndEffectIntoGUI(stack, position.x, position.y)
         renderItem.renderItemOverlayIntoGUI(font, stack, position.x, position.y, "")
-        glDisable(GL_LIGHTING)
-        glDisable(GL_DEPTH_TEST)
+        disableLighting()
+        disableDepth()
         renderItem.zLevel = zPosition.toFloat
 
         if (drawNumber)
@@ -155,8 +154,7 @@ object ItemDisplayNode
                 else stack.stackSize/1000000+"M"
             font.drawStringWithShadow(s, position.x+19-2-font.getStringWidth(s), position.y+6+3, 16777215)
         }
-
-        glPopMatrix()
+        popMatrix()
         glItemPost()
 
         font.setUnicodeFlag(f)
@@ -164,19 +162,19 @@ object ItemDisplayNode
 
     def glItemPre()
     {
-        glPushMatrix()
-        glColor4f(1.0F, 1.0F, 1.0F, 1.0F)
+        pushMatrix()
+        color(1.0F, 1.0F, 1.0F, 1.0F)
         RenderHelper.enableGUIStandardItemLighting()
-        glEnable(GL12.GL_RESCALE_NORMAL)
+        enableRescaleNormal()
         OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240/1.0F, 240/1.0F)
-        glDisable(GL_DEPTH_TEST)
-        glDisable(GL_LIGHTING)
+        disableDepth()
+        disableLighting()
     }
 
     def glItemPost()
     {
-        glEnable(GL_DEPTH_TEST)
-        glPopMatrix()
+        enableDepth()
+        popMatrix()
     }
 
 }

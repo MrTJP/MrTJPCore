@@ -8,8 +8,8 @@ package mrtjp.core.gui
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.{FontRenderer, Gui}
+import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.texture.TextureManager
-import org.lwjgl.opengl.GL11
 
 trait TNode extends Gui
 {
@@ -272,18 +272,18 @@ trait TNode extends Gui
         }
     }
 
-    protected[gui] def translateTo(){GL11.glTranslated(position.x, position.y, 0)}//zPosition-(if (parent == null) 0 else parent.zPosition))}
-    protected[gui] def translateFrom(){GL11.glTranslated(-position.x, -position.y, 0)}// -(zPosition-(if (parent == null) 0 else parent.zPosition)))}
+    protected[gui] def translateTo(){translate(position.x, position.y, 0)}//zPosition-(if (parent == null) 0 else parent.zPosition))}
+    protected[gui] def translateFrom(){translate(-position.x, -position.y, 0)}// -(zPosition-(if (parent == null) 0 else parent.zPosition)))}
 
     protected[gui] def translateToScreen()
     {
         val Point(sx, sy) = parent.convertPointToScreen(Point.zeroPoint)
-        GL11.glTranslated(-sx, -sy, 0)
+        translate(-sx, -sy, 0)
     }
     protected[gui] def translateFromScreen()
     {
         val Point(sx, sy) = parent.convertPointToScreen(Point.zeroPoint)
-        GL11.glTranslated(sx, sy, 0)
+        translate(sx, sy, 0)
     }
 
     @deprecated(message = "deprecated. Use delegation")

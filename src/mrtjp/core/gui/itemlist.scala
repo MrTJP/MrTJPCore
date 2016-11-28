@@ -14,9 +14,9 @@ import mrtjp.core.item.ItemKeyStack
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Gui
+import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.{OpenGlHelper, RenderHelper}
 import net.minecraft.item.ItemStack
-import org.lwjgl.opengl.{GL11, GL12}
 
 class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
 {
@@ -199,19 +199,19 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
 
     private def glItemPre()
     {
-        GL11.glPushMatrix()
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F)
+        pushMatrix()
+        color(1.0F, 1.0F, 1.0F, 1.0F)
         RenderHelper.enableGUIStandardItemLighting()
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL)
+        enableRescaleNormal()
         OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240/1.0F, 240/1.0F)
-        GL11.glDisable(GL11.GL_DEPTH_TEST)
-        GL11.glDisable(GL11.GL_LIGHTING)
+        disableDepth()
+        disableLighting()
     }
 
     private def glItemPost()
     {
-        GL11.glEnable(GL11.GL_DEPTH_TEST)
-        GL11.glPopMatrix()
+        enableDepth()
+        popMatrix()
     }
 
     protected var renderItem = Minecraft.getMinecraft.getRenderItem
@@ -223,12 +223,12 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
         }
 
         renderItem.zLevel = 100.0F
-        GL11.glEnable(GL11.GL_DEPTH_TEST)
-        GL11.glEnable(GL11.GL_LIGHTING)
+        enableDepth()
+        enableLighting()
         renderItem.renderItemAndEffectIntoGUI(stack, xPos, yPos)
         renderItem.renderItemOverlayIntoGUI(font, stack, xPos, yPos, "")
-        GL11.glDisable(GL11.GL_LIGHTING)
-        GL11.glDisable(GL11.GL_DEPTH_TEST)
+        disableLighting()
+        disableDepth()
         renderItem.zLevel = 0.0F
 
         var s:String = null
