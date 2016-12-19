@@ -2,31 +2,22 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 buildscript {
     repositories {
-        mavenCentral()
+        jcenter()
         maven {
             name = "forge"
             url = "http://files.minecraftforge.net/maven"
         }
-        maven {
-            name = "sonatype"
-            url = "https://oss.sonatype.org/content/repositories/snapshots/"
-        }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
     }
 }
 
-repositories {
-    maven {
-        name "chickenbones"
-        url "http://chickenbones.net/maven/"
-    }
-}
-
+apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'maven'
 apply plugin: 'scala'
-apply plugin: 'forge'
-apply plugin: 'curseforge'
+//apply plugin: 'curseforge'
+
 
 group = "mrtjp"
 archivesBaseName = "MrTJPCore"
@@ -43,22 +34,27 @@ configurations {
     deployerJars
 }
 
+repositories {
+    maven {
+        name "chickenbones"
+        url "http://chickenbones.net/maven/"
+    }
+}
+
 dependencies {
     deployerJars "org.apache.maven.wagon:wagon-ftp:2.2"
-    compile "codechicken:CodeChickenLib:${config.mc.version}-${config.ccl.version}:dev"
+    compile "codechicken:CodeChickenLib:${config.mc_version}-${config.ccl_version}:deobf"
 }
 
 def build_number = project.hasProperty("manualbuildnum") ? project.manualbuildnum : (System.getenv("BUILD_NUMBER") ?: "1")
-version = "${project.config.mod.version}."+build_number
-println "Starting build for $archivesBaseName $version for MC $config.mc.version-$config.forge.version"
+version = "${project.config.mod_version}." + build_number
+println "Starting build for $archivesBaseName $version for MC $config.mc_version-$config.forge_version"
 
 minecraft {
-    version = config.mc.version+"-"+config.forge.version
-    if (file('../run').exists()) {
-        runDir = "../run"
-    } else {
-        runDir = "run"
-    }
+    version = config.mc_version + "-" + config.forge_version
+    mappings = config.mappings
+    runDir = "run"
+    makeObfSourceJar = false
 }
 
 sourceSets {
@@ -78,28 +74,28 @@ task updateVersion(type: Copy) {
     from(sourceSets.main.scala.srcDirs)
     into 'build/sources/scala'
     filter(ReplaceTokens, tokens: [
-            'VERSION'      : config.mod.version,
+            'VERSION'      : config.mod_version,
             'BUILD_NUMBER' : build_number,
-            'MC_VERSION'   : config.mc.version,
-            'FORGE_VERSION': config.forge.version,
-            'CCL_VERSION'  : config.ccl.version
+            'MC_VERSION'   : config.mc_version,
+            'FORGE_VERSION': config.forge_version,
+            'CCL_VERSION'  : config.ccl_version
     ])
 }
 
 processResources {
     //redo task if any of these properties change
     inputs.property "version", project.version
-    inputs.property "mc.version", config.mc.version
+    inputs.property "mc.version", config.mc_version
 
     // Replace properties in all files
     from(sourceSets.main.resources.srcDirs) {
         include '**.info'
         filter(ReplaceTokens, tokens: [
-                'VERSION'      : config.mod.version,
+                'VERSION'      : config.mod_version,
                 'BUILD_NUMBER' : build_number,
-                'MC_VERSION'   : config.mc.version,
-                'FORGE_VERSION': config.forge.version,
-                'CCL_VERSION'  : config.ccl.version
+                'MC_VERSION'   : config.mc_version,
+                'FORGE_VERSION': config.forge_version,
+                'CCL_VERSION'  : config.ccl_version
         ])
     }
     // Copy everything else
@@ -112,10 +108,10 @@ compileScala.dependsOn updateVersion
 
 task deobfJar(type: Jar) {
     from sourceSets.main.output
-    classifier = 'dev'
+    classifier = 'deobf'
 }
 
-task sourceJar(type: Jar) {
+task srcJar(type: Jar) {
     from sourceSets.main.allSource
     classifier = 'sources'
 }
@@ -130,56 +126,48 @@ jar {
 
 artifacts {
     archives deobfJar
-    archives sourceJar
+    archives srcJar
 }
 
 uploadArchives {
     dependsOn 'reobf'
     repositories {
-        if (project.hasProperty("mavenurl"))
-        {
-            mavenDeployer {
-                configuration = configurations.deployerJars
+        if (project.hasProperty("local_maven")) {
+            repository(url: "file://${local_maven}")
+            pom {
+                groupId = project.group
+                version = "${project.minecraft.version}-${project.version}"
+                artifactId = project.archivesBaseName
+                project {
+                    name project.archivesBaseName
+                    packaging 'jar'
+                    description project.archivesBaseName
+                    url 'https://github.com/MrTJP/' + project.archivesBaseName
 
-                repository(url: project.mavenurl) {
-                    authentication(userName: project.mavenusername, password: project.mavenpassword)
-                }
+                    scm {
+                        url 'https://github.com/MrTJP/' + project.archivesBaseName
+                        connection 'scm:git:git://github.com/MrTJP/' + project.archivesBaseName + '.git'
+                        developerConnection 'scm:git:git@github.com:MrTJP/' + project.archivesBaseName + '.git'
+                    }
 
-                pom {
-                    groupId = project.group
-                    version = "${project.minecraft.version}-${project.version}"
-                    artifactId = project.archivesBaseName
-                    project {
-                        name project.archivesBaseName
-                        packaging 'jar'
-                        description project.archivesBaseName
-                        url 'https://github.com/MrTJP/'+project.archivesBaseName
+                    issueManagement {
+                        system 'github'
+                        url 'https://github.com/MrTJP/' + project.archivesBaseName + '/issues'
+                    }
 
-                        scm {
-                            url 'https://github.com/MrTJP/'+project.archivesBaseName
-                            connection 'scm:git:git://github.com/MrTJP/'+project.archivesBaseName+'.git'
-                            developerConnection 'scm:git:git@github.com:MrTJP/'+project.archivesBaseName+'.git'
+                    licenses {
+                        license {
+                            name 'GNU Lesser Public License (GPL), Version 2.1'
+                            url 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt'
+                            distribution 'repo'
                         }
+                    }
 
-                        issueManagement {
-                            system 'github'
-                            url 'https://github.com/MrTJP/'+project.archivesBaseName+'/issues'
-                        }
-
-                        licenses {
-                            license {
-                                name 'GNU Lesser Public License (GPL), Version 2.1'
-                                url 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt'
-                                distribution 'repo'
-                            }
-                        }
-
-                        developers {
-                            developer {
-                                id 'mrtjp'
-                                name 'mrtjp'
-                                roles { role 'developer' }
-                            }
+                    developers {
+                        developer {
+                            id 'mrtjp'
+                            name 'mrtjp'
+                            roles { role 'developer' }
                         }
                     }
                 }
@@ -188,7 +176,7 @@ uploadArchives {
     }
 }
 
-if (project.hasProperty('curseapi')) {
+/*if (project.hasProperty('curseapi')) {
     curse {
         projectId = '229002'
         apiKey = project.curseapi
@@ -197,4 +185,4 @@ if (project.hasProperty('curseapi')) {
         additionalArtifact deobfJar
         additionalArtifact sourceJar
     }
-}
+}*/
