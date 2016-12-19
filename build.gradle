@@ -130,44 +130,45 @@ artifacts {
 }
 
 uploadArchives {
-    dependsOn 'reobf'
     repositories {
-        if (project.hasProperty("local_maven")) {
-            repository(url: "file://${local_maven}")
-            pom {
-                groupId = project.group
-                version = "${project.minecraft.version}-${project.version}"
-                artifactId = project.archivesBaseName
-                project {
-                    name project.archivesBaseName
-                    packaging 'jar'
-                    description project.archivesBaseName
-                    url 'https://github.com/MrTJP/' + project.archivesBaseName
-
-                    scm {
+        mavenDeployer {
+            if (project.hasProperty("local_maven")) {
+                repository(url: "file://${local_maven}")
+                pom {
+                    groupId = project.group
+                    version = "${project.minecraft.version}-${project.version}"
+                    artifactId = project.archivesBaseName
+                    project {
+                        name project.archivesBaseName
+                        packaging 'jar'
+                        description project.archivesBaseName
                         url 'https://github.com/MrTJP/' + project.archivesBaseName
-                        connection 'scm:git:git://github.com/MrTJP/' + project.archivesBaseName + '.git'
-                        developerConnection 'scm:git:git@github.com:MrTJP/' + project.archivesBaseName + '.git'
-                    }
 
-                    issueManagement {
-                        system 'github'
-                        url 'https://github.com/MrTJP/' + project.archivesBaseName + '/issues'
-                    }
-
-                    licenses {
-                        license {
-                            name 'GNU Lesser Public License (GPL), Version 2.1'
-                            url 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt'
-                            distribution 'repo'
+                        scm {
+                            url 'https://github.com/MrTJP/' + project.archivesBaseName
+                            connection 'scm:git:git://github.com/MrTJP/' + project.archivesBaseName + '.git'
+                            developerConnection 'scm:git:git@github.com:MrTJP/' + project.archivesBaseName + '.git'
                         }
-                    }
 
-                    developers {
-                        developer {
-                            id 'mrtjp'
-                            name 'mrtjp'
-                            roles { role 'developer' }
+                        issueManagement {
+                            system 'github'
+                            url 'https://github.com/MrTJP/' + project.archivesBaseName + '/issues'
+                        }
+
+                        licenses {
+                            license {
+                                name 'GNU Lesser Public License (GPL), Version 2.1'
+                                url 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt'
+                                distribution 'repo'
+                            }
+                        }
+
+                        developers {
+                            developer {
+                                id 'mrtjp'
+                                name 'mrtjp'
+                                roles { role 'developer' }
+                            }
                         }
                     }
                 }
