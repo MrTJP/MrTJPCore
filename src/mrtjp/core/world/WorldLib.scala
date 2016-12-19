@@ -9,13 +9,14 @@ import mrtjp.core.math.PerlinNoiseGenerator
 import net.minecraft.block.state.IBlockState
 import net.minecraft.block.{Block, BlockGrass, IGrowable}
 import net.minecraft.entity.item.EntityItem
-import net.minecraft.item.ItemStack
+import net.minecraft.item.{Item, ItemStack}
 import net.minecraft.tileentity.TileEntity
 import net.minecraft.util.EnumFacing
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world._
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage
 import net.minecraftforge.common.IPlantable
+import net.minecraftforge.fml.common.FMLLog
 import net.minecraftforge.oredict.OreDictionary
 
 object WorldLib
@@ -107,9 +108,14 @@ object WorldLib
         ch.getTileEntityMap.get(pos)
     }
 
+    def hasItem(state: IBlockState) : Boolean = {
+        Item.getItemFromBlock(state.getBlock) != null
+    }
+
     def isLeafType(world:World, pos:BlockPos, state:IBlockState) =
-        state.getBlock.isLeaves(state, world, pos) ||
-            OreDictionary.getOreIDs(new ItemStack(state.getBlock)).contains(OreDictionary.getOreID("treeLeaves"))
+        state.getBlock.isLeaves(state, world, pos) || (hasItem(state) && OreDictionary.getOreIDs(new ItemStack(state.getBlock)).contains(OreDictionary.getOreID("treeLeaves")))
+    def isWoodType(world: World, pos:BlockPos, state:IBlockState) =
+        state.getBlock.isWood(world, pos) || (hasItem(state) && OreDictionary.getOreIDs(new ItemStack(state.getBlock)).contains(OreDictionary.getOreID("logWood")))
 
     def isPlantType(world:World, pos:BlockPos, state:IBlockState) = state.getBlock match
     {
@@ -126,8 +132,7 @@ object WorldLib
     def isAssociatedTreeBlock(world:World, pos:BlockPos, state:IBlockState) =
     {
         import net.minecraft.init.Blocks._
-        Seq(LOG, LOG2, LEAVES, LEAVES2, VINE, COCOA).contains(state.getBlock) || isLeafType(world, pos, state) ||
-                OreDictionary.getOreIDs(new ItemStack(state.getBlock)).contains(OreDictionary.getOreID("logWood"))
+        Seq(LOG, LOG2, LEAVES, LEAVES2, VINE, COCOA).contains(state.getBlock) || isLeafType(world, pos, state) || isWoodType(world, pos, state)
     }
 
     def findSurfaceHeight(world:World, pos:BlockPos) =

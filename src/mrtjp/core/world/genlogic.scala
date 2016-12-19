@@ -9,6 +9,8 @@ import java.util.Random
 
 import mrtjp.core.math.MathLib
 import net.minecraft.block.Block
+import net.minecraft.block.state.pattern.BlockMatcher
+import net.minecraft.util.math.BlockPos
 import net.minecraft.world.gen.feature.WorldGenerator
 import net.minecraft.world.{World, WorldType}
 import net.minecraftforge.common.BiomeDictionary
@@ -34,18 +36,21 @@ trait TGenerationLogic extends ISimpleStructureGen
     def preFiltCheck(w:World, chunkX:Int, chunkZ:Int, rand:Random, isRetro:Boolean):Boolean =
     {
         if (isRetro && !allowRetroGen) return false
-        if (dimensionBlacklist == dimensions.contains(w.provider.dimensionId)) return false
-        if (typeBlacklist == types.contains(w.provider.terrainType)) return false
+        if (dimensionBlacklist == dimensions.contains(w.provider.getDimension)) return false
+        if (typeBlacklist == types.contains(w.getWorldInfo.getTerrainType)) return false
         if (resistance > 1 && rand.nextInt(resistance) != 0) return false
         true
     }
 
-    def postFiltCheck(w:World, x:Int, z:Int, rand:Random):Boolean =
+    def postFiltCheck(w:World, pos:BlockPos, rand:Random):Boolean =
     {
-        val types = BiomeDictionary.getTypesForBiome(w.getBiomeGenForCoords(x, z)).toSet
+        val types = BiomeDictionary.getTypesForBiome(w.getBiomeGenForCoords(pos)).toSet
         if (biomeBlacklist == biomes.contains(types)) return false
         true
     }
+
+    @Deprecated
+    def postFiltCheck(w:World, x:Int, z:Int, rand:Random):Boolean = postFiltCheck(w, new BlockPos(x, 0, z), rand)
 
     override def generate(w:World, chunkX:Int, chunkZ:Int, rand:Random, isRetro:Boolean):Boolean =
     {
@@ -58,32 +63,34 @@ trait TGenerationLogic extends ISimpleStructureGen
 
 trait TWorldGenerator extends WorldGenerator
 {
-    override def generate(w:World, rand:Random, x:Int, y:Int, z:Int):Boolean
+    override def generate(w:World, rand:Random, pos:BlockPos):Boolean
 
-    protected def canSetBlock(w:World, x:Int, y:Int, z:Int, material:Set[(Block, Int)]):Boolean =
+    protected def canSetBlock(w:World, pos:BlockPos, material:Set[(Block, Int)]):Boolean =
     {
         if (material.isEmpty) return true
-        val block = w.getBlock(x, y, z)
-        material.exists(pair => (pair._2 == -1 || pair._2 == w.getBlockMetadata(x, y, z)) &&
-                (block.isReplaceableOreGen(w, x, y, z, pair._1) || block.isAssociatedBlock(pair._1)))
+        val state = w.getBlockState(pos)
+        val block = state.getBlock
+        material.exists(pair => (pair._2 == -1 || pair._2 == block.getMetaFromState(state)) &&
+                (block.isReplaceableOreGen(state, w, pos, BlockMatcher.forBlock(pair._1)) || block.isAssociatedBlock(pair._1)))
     }
 
-    protected def setBlock(w:World, x:Int, y:Int, z:Int, cluster:Set[((Block, Int), Int)], material:Set[(Block, Int)]):Boolean =
+    protected def setBlock(w:World, pos:BlockPos, cluster:Set[((Block, Int), Int)], material:Set[(Block, Int)]):Boolean =
     {
-        if (canSetBlock(w, x, y, z, material))
+        if (canSetBlock(w, pos, material))
         {
             val genBlock = MathLib.weightedRandom(cluster, w.rand)
-            w.setBlock(x, y, z, genBlock._1, genBlock._2, 2)
+            val state = genBlock._1.getStateFromMeta(genBlock._2);
+            w.setBlockState(pos, state, 2)
             true
         }
         else false
     }
 
-    protected def setBlock(w:World, x:Int, y:Int, z:Int, cluster:(Block, Int), material:Set[(Block, Int)]) =
+    protected def setBlock(w:World, pos:BlockPos, cluster:(Block, Int), material:Set[(Block, Int)]) =
     {
-        if (canSetBlock(w, x, y, z, material))
+        if (canSetBlock(w, pos, material))
         {
-            w.setBlock(x, y, z, cluster._1, cluster._2, 2)
+            w.setBlockState(pos, cluster._1.getStateFromMeta(cluster._2), 2)
             true
         }
         else false
@@ -106,7 +113,8 @@ class GenLogicUniform extends TGenerationLogic
             val x = chunkX*16+rand.nextInt(16)
             val y = minY+rand.nextInt(maxY-minY)
             val z = chunkZ*16+rand.nextInt(16)
-            if (postFiltCheck(w, x, z, rand)) generated |= gen.generate(w, rand, x, y, z)
+            val pos = new BlockPos(x,y,z)
+            if (postFiltCheck(w, pos, rand)) generated |= gen.generate(w, rand, pos)
         }
         generated
     }
@@ -125,10 +133,11 @@ class GenLogicSurface extends TGenerationLogic
         {
             val x = chunkX*16+rand.nextInt(16)
             val z = chunkZ*16+rand.nextInt(16)
-            if (postFiltCheck(w, x, z, rand))
+            var pos = new BlockPos(x, 0, z)
+            if (postFiltCheck(w, pos, rand))
             {
-                val y = WorldLib.findSurfaceHeight(w, x, z)
-                if (y > 0) generated |= gen.generate(w, rand, x, y, z)
+                pos = WorldLib.findSurfaceHeight(w, pos)
+                if (pos.getY > 0) generated |= gen.generate(w, rand, pos)
             }
         }
         generated

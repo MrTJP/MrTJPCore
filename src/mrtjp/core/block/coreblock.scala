@@ -5,6 +5,7 @@
  */
 package mrtjp.core.block
 
+import codechicken.lib.block.property.PropertyString
 import codechicken.lib.vec.Vector3
 import mrtjp.core.item.ItemDefinition
 import net.minecraft.block.Block
@@ -60,5 +61,13 @@ abstract class BlockDefinition extends ItemDefinition
     override def getItem = Item.getItemFromBlock(getBlock)
     def getBlock:Block
 
-    class BlockDef extends ItemDef
+    class BlockDef(variantName:String) extends ItemDef(variantName)
+}
+
+trait TSimplePropertyString extends Block {
+    def getTypeProperty:PropertyString
+
+    override def getMetaFromState(state: IBlockState): Int = getTypeProperty.values.indexOf(state.getValue(getTypeProperty))
+
+    override def getStateFromMeta(meta: Int): IBlockState = getBlockState.getBaseState.withProperty(getTypeProperty, getTypeProperty.values.get(meta))
 }

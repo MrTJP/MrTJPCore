@@ -5,37 +5,38 @@
  */
 package mrtjp.core.world
 
-import java.util.{HashSet => JHSet, Random, Set => JSet}
+import java.util.{Random, HashSet => JHSet, Set => JSet}
 
-import cpw.mods.fml.common.FMLCommonHandler
-import cpw.mods.fml.common.eventhandler.SubscribeEvent
-import cpw.mods.fml.common.gameevent.TickEvent.{Phase, WorldTickEvent}
-import cpw.mods.fml.relauncher.Side
-import net.minecraft.block.Block
+import codechicken.lib.math.MathHelper
+import codechicken.lib.util.ServerUtils
+import net.minecraft.block.state.IBlockState
 import net.minecraft.entity.player.EntityPlayer
-import net.minecraft.server.MinecraftServer
-import net.minecraft.util.MathHelper
+import net.minecraft.util.math.{BlockPos, ChunkPos}
 import net.minecraft.world._
+import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import net.minecraftforge.fml.common.gameevent.TickEvent.{Phase, WorldTickEvent}
+import net.minecraftforge.fml.relauncher.Side
 
 object BlockUpdateHandler
 {
     private var updateLCG = new Random().nextInt
     private var handlers = Array.empty[IBlockEventHandler]
     private var registered = false
-    private var chunkSet = new JHSet[ChunkCoordIntPair]()
+    private var chunkSet = new JHSet[ChunkPos]()
 
     def register(handler:IBlockEventHandler)
     {
         if (!registered)
         {
-            FMLCommonHandler.instance().bus().register(this)
+            MinecraftForge.EVENT_BUS.register(this)
             registered = true
         }
 
         handlers :+= handler
     }
 
-    def getActiveChunkSet(w:World):JSet[ChunkCoordIntPair] =
+    def getActiveChunkSet(w:World):JSet[ChunkPos] =
     {
         chunkSet.clear()
         chunkSet.addAll(w.getPersistentChunks.keySet)
@@ -44,9 +45,9 @@ object BlockUpdateHandler
         while (i < w.playerEntities.size)
         {
             val entityplayer = w.playerEntities.get(i).asInstanceOf[EntityPlayer]
-            val j = MathHelper.floor_double(entityplayer.posX/16.0D)
-            val k = MathHelper.floor_double(entityplayer.posZ/16.0D)
-            val l = MinecraftServer.getServer.getConfigurationManager.getViewDistance
+            val j = MathHelper.floor(entityplayer.posX/16.0D)
+            val k = MathHelper.floor(entityplayer.posZ/16.0D)
+            val l = ServerUtils.mc().getPlayerList.getViewDistance
 
             var i1 = -l
             while (i1 <= l)
@@ -54,7 +55,7 @@ object BlockUpdateHandler
                 var j1 = -l
                 while (j1 <= l)
                 {
-                    chunkSet.add(new ChunkCoordIntPair(i1+j, j1+k))
+                    chunkSet.add(new ChunkPos(i1+j, j1+k))
                     j1 += 1
                 }
                 i1 += 1
@@ -93,13 +94,13 @@ object BlockUpdateHandler
                         val j2 = i2&15
                         val k2 = i2>>8&15
                         val l2 = i2>>16&15
-                        val block = ebs.getBlockByExtId(j2, l2, k2)
+                        val block = ebs.get(j2, l2, k2)
 
                         var j = 0
                         while(j < handlers.length)
                         {
-                            handlers(j).onBlockUpdate(world, j2+chunk.xPosition*16, l2+ebs.getYLocation,
-                                k2+chunk.zPosition*16, block)
+                            val p = new BlockPos(j2+chunk.xPosition*16, l2+ebs.getYLocation, k2+chunk.zPosition*16)
+                            handlers(j).onBlockUpdate(world, p, block)
                             j += 1
                         }
                         i += 1
@@ -113,5 +114,5 @@ object BlockUpdateHandler
 
 trait IBlockEventHandler
 {
-    def onBlockUpdate(w:World, x:Int, y:Int, z:Int, b:Block)
+    def onBlockUpdate(w:World, p:BlockPos, b:IBlockState)
 }
