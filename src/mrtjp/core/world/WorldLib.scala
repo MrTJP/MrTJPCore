@@ -176,7 +176,7 @@ object WorldLib
 
         nv = math.max(0.0D, 1.6D*(nv-0.006D)+0.06D)*math.sqrt(pos.getY)/16.0D
 
-        val bgb = world.getBiomeGenForCoords(pos)
+        val bgb = world.getBiome(pos)
         if (bgb.canRain)
             if (world.isThundering) return 2.5D*nv
             else if (world.isRaining) return 0.5D+0.5D*nv

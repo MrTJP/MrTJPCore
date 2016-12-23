@@ -44,7 +44,7 @@ trait TGenerationLogic extends ISimpleStructureGen
 
     def postFiltCheck(w:World, pos:BlockPos, rand:Random):Boolean =
     {
-        val types = BiomeDictionary.getTypesForBiome(w.getBiomeGenForCoords(pos)).toSet
+        val types = BiomeDictionary.getTypesForBiome(w.getBiome(pos)).toSet
         if (biomeBlacklist == biomes.contains(types)) return false
         true
     }

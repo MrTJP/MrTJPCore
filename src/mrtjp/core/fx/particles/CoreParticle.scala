@@ -19,7 +19,7 @@ class CoreParticle(w:World) extends Particle(w, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.
     motionY = 0.0D
     motionZ = 0.0D
 
-    field_190017_n = false
+    canCollide = false
     var hasVelocity = false
     var isImmortal = false
 

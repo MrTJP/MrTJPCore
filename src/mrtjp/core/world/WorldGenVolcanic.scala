@@ -74,7 +74,7 @@ class WorldGenVolcanic extends TWorldGenerator
             if (w.isBlockLoaded(new BlockPos(i, 64, k)) && test.contains((i, k)))
             {
                 var pow = test((i, k))
-                var hm = w.func_189649_b(i, k)+1
+                var hm = w.getHeightmapHeight(i, k)+1
                 while (hm > 0 && isUnimportant(w, i, hm-1, k)) hm -= 1
 
                 if (hm <= j) if (isUnimportant(w, i, hm, k))
