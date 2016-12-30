@@ -5,7 +5,7 @@
  */
 package mrtjp.core.block
 
-import java.util.{ArrayList => JArrayList, List => JList, Random}
+import java.util.{Random, ArrayList => JArrayList, List => JList}
 
 import codechicken.lib.data.{MCDataInput, MCDataOutput}
 import codechicken.lib.packet.{ICustomPacketTile, PacketCustom}
@@ -30,7 +30,7 @@ import net.minecraft.network.NetworkManager
 import net.minecraft.network.play.server.SPacketUpdateTileEntity
 import net.minecraft.tileentity.TileEntity
 import net.minecraft.util.math.{AxisAlignedBB, BlockPos, RayTraceResult}
-import net.minecraft.util.{BlockRenderLayer, EnumFacing, EnumHand, ITickable}
+import net.minecraft.util._
 import net.minecraft.world.{Explosion, IBlockAccess, World}
 import net.minecraftforge.fml.common.registry.GameRegistry
 import net.minecraftforge.fml.relauncher.{Side, SideOnly}
@@ -127,9 +127,9 @@ class MultiTileBlock(mat:Material) extends Block(mat)
 
     override def getStateFromMeta(meta:Int) = getDefaultState.withProperty(TILE_INDEX, (meta%16).asInstanceOf[Integer])
 
-    override def getRenderType(state:IBlockState) = MultiTileRenderRegistry.renderType
+    override def getRenderType(state:IBlockState) = EnumBlockRenderType.MODEL
 
-    override def canRenderInLayer(layer:BlockRenderLayer) = true
+    override def canRenderInLayer(layer:BlockRenderLayer) = super.canRenderInLayer(layer)
 
     def addTile[A <: MTBlockTile](t:Class[A], index:Int)
     {
