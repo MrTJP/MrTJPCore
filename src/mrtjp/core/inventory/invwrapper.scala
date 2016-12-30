@@ -245,13 +245,13 @@ abstract class InvWrapper(val inv:IInventory)
     protected def canInsertItem(slot:Int, item:ItemStack):Boolean =
     {
         if (internalMode) return true
-        if (side != null) inv.isItemValidForSlot(slot, item) else sidedInv.canInsertItem(slot, item, side)
+        if (side == null) inv.isItemValidForSlot(slot, item) else sidedInv.canInsertItem(slot, item, side)
     }
 
     protected def canExtractItem(slot:Int, item:ItemStack):Boolean =
     {
         if (internalMode) return true
-        if (side != null) inv.isItemValidForSlot(slot, item) else sidedInv.canExtractItem(slot, item, side)
+        if (side == null) inv.isItemValidForSlot(slot, item) else sidedInv.canExtractItem(slot, item, side)
     }
 }
 
