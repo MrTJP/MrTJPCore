@@ -14,6 +14,11 @@ import net.minecraft.entity.player.{EntityPlayer, EntityPlayerMP}
 import net.minecraft.inventory.Container
 import net.minecraftforge.fml.relauncher.{Side, SideOnly}
 
+/**
+  * Alternate way to handle GUIs instead of the built in IGuiHandler system.
+  * Advantages include simplicity and being able to send custom data along with the gui open
+  * request.
+  */
 object GuiHandler
 {
     /**
@@ -76,12 +81,12 @@ object GuiHandler
         if (gui != null) openSMPContainer(win, gui)
     }
 
-    private var guiMap = Map[Int, TGuiBuilder]()
+    private var guiMap = Map[Int, TGuiFactory]()
 
-    def register(b:TGuiBuilder, id:Int){guiMap += id -> b}
+    def register(b:TGuiFactory, id:Int){guiMap += id -> b}
 }
 
-trait TGuiBuilder
+trait TGuiFactory
 {
     def getID:Int
 
@@ -89,6 +94,7 @@ trait TGuiBuilder
     def buildGui(player:EntityPlayer, data:MCDataInput):GuiScreen
 
     def open(player:EntityPlayer, cont:Container){open(player, cont, {packet => })}
+
     def open(player:EntityPlayer, cont:Container, dataWrite:MCDataOutput => Unit)
     {
         GuiHandler.openSMPContainer(player, cont, getID, dataWrite)

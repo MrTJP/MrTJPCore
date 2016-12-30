@@ -21,11 +21,8 @@ import java.util.{List => JList}
 
 import scala.collection.JavaConversions._
 
-class ItemCore(registryName:String) extends Item
+class ItemCore extends Item
 {
-    GameRegistry.register(this.setRegistryName(registryName))
-    setUnlocalizedName(getRegistryName.toString)
-
     override def getUnlocalizedName(stack:ItemStack):String =
         if (hasSubtypes) getUnlocalizedName()+"|"+stack.getItemDamage
         else getUnlocalizedName()

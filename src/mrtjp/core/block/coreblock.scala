@@ -19,11 +19,8 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
 import net.minecraftforge.fml.common.registry.GameRegistry
 
-class BlockCore(name:String, registryName:String, mat:Material) extends Block(mat)
+class BlockCore(mat:Material) extends Block(mat)
 {
-    setUnlocalizedName(name)
-    GameRegistry.register(this.setRegistryName(registryName))
-
     def getItemBlockClass:Class[_ <: ItemBlock] = classOf[ItemBlockCore]
 
     def bindTile[A <: TileEntity](c:Class[A])
@@ -36,7 +33,6 @@ class ItemBlockCore(b:Block) extends ItemBlock(b)
 {
     setHasSubtypes(true)
     setMaxDamage(0)
-    GameRegistry.register(this.setRegistryName(b.getRegistryName))
 
     override def getMetadata(meta:Int) = meta
 

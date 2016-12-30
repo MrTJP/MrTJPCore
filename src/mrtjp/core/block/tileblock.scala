@@ -109,12 +109,9 @@ object MultiTileBlock
     val TILE_INDEX:IProperty[Integer] = PropertyInteger.create("tile_idx", 0, 15)
 }
 
-class MultiTileBlock(name:String, registryName:String, mat:Material) extends Block(mat)
+class MultiTileBlock(mat:Material) extends Block(mat)
 {
     import MultiTileBlock._
-
-    setUnlocalizedName(name)
-    GameRegistry.register(this.setRegistryName(registryName))
 
     private val tiles = new Array[Class[_ <: MTBlockTile]](16)
 
