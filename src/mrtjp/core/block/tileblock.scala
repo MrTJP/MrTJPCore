@@ -38,72 +38,6 @@ import net.minecraftforge.fml.relauncher.{Side, SideOnly}
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 
-@SideOnly(Side.CLIENT)
-object MultiTileRenderRegistry extends ICCBlockRenderer
-{
-    val renderType = BlockRenderingRegistry.createRenderType("MrTJPLib_MultiTileBlock")
-
-    BlockRenderingRegistry.registerRenderer(renderType, this)
-
-    var renders = Map[String, Array[TMultiTileBlockRender]]()
-        .withDefaultValue(new Array[TMultiTileBlockRender](16))
-
-    def setRenderer(b:Block, meta:Int, r:TMultiTileBlockRender)
-    {
-        val name = b.getRegistryName.toString
-        val a = renders.get(name) match {
-            case Some(e) => e
-            case None => new Array[TMultiTileBlockRender](16)
-        }
-        a(meta) = r
-        renders += name -> a
-    }
-
-    def getRenderer(b:Block, meta:Int) =
-        renders.get(b.getRegistryName.toString) match {
-            case Some(e) => e(meta)
-            case None => null
-        }
-
-    override def renderBlock(world:IBlockAccess, pos:BlockPos, state:IBlockState, buffer:VertexBuffer) =
-    {
-        val meta = state.getValue(MultiTileBlock.TILE_INDEX)
-        getRenderer(state.getBlock, meta) match {
-            case null => println("No render mapping found for "+state.getBlock.getUnlocalizedName+":"+meta)
-            case r => r.renderBlock(world, pos, buffer)
-        }
-        true
-    }
-
-    override def handleRenderBlockDamage(world:IBlockAccess, pos:BlockPos, state:IBlockState, sprite:TextureAtlasSprite, buffer:VertexBuffer)
-    {
-        val meta = state.getValue(MultiTileBlock.TILE_INDEX)
-        getRenderer(state.getBlock, meta) match {
-            case null => println("No render mapping found for "+state.getBlock.getUnlocalizedName+":"+meta)
-            case r => r.renderBreaking(world, pos, buffer, sprite)
-        }
-    }
-
-    override def renderBrightness(state:IBlockState, brightness:Float){}
-
-    override def registerTextures(map:TextureMap)
-    {
-        for (r <- renders.flatMap(_._2))
-            if (r != null) r.registerTextures(map)
-    }
-}
-
-trait TMultiTileBlockRender
-{
-    def renderBlock(w:IBlockAccess, pos:BlockPos, buffer:VertexBuffer)
-
-    def renderBreaking(w:IBlockAccess, pos:BlockPos, buffer:VertexBuffer, sprite:TextureAtlasSprite)
-
-    def randomDisplayTick(w:IBlockAccess, pos:BlockPos, r:Random)
-
-    def registerTextures(map:TextureMap)
-}
-
 object MultiTileBlock
 {
     val TILE_INDEX:IProperty[Integer] = PropertyInteger.create("tile_idx", 0, 15)
@@ -126,10 +60,6 @@ class MultiTileBlock(mat:Material) extends Block(mat)
     override def getMetaFromState(state:IBlockState) = state.getValue(TILE_INDEX)
 
     override def getStateFromMeta(meta:Int) = getDefaultState.withProperty(TILE_INDEX, (meta%16).asInstanceOf[Integer])
-
-    override def getRenderType(state:IBlockState) = EnumBlockRenderType.MODEL
-
-    override def canRenderInLayer(layer:BlockRenderLayer) = super.canRenderInLayer(layer)
 
     def addTile[A <: MTBlockTile](t:Class[A], index:Int)
     {
