@@ -53,26 +53,24 @@ trait TServerKeyTracker
 
 trait TClientKeyTracker
 {
-    private var wasPressed = false
+    private var wasDown = false
 
     def getTracker:TServerKeyTracker
 
-    def getIsKeyPressed:Boolean
+    def getIsKeyDown:Boolean
 
     @SubscribeEvent
     @SideOnly(Side.CLIENT)
     def tick(event:ClientTickEvent)
     {
-        val pressed = getIsKeyPressed
-        if(pressed != wasPressed)
-        {
-            wasPressed = pressed
-            if (Minecraft.getMinecraft.getConnection != null)
-            {
-                KeyTracking.updatePlayerKey(getTracker.id, Minecraft.getMinecraft.thePlayer, pressed)
+        val down = getIsKeyDown
+        if (down != wasDown) {
+            wasDown = down
+            if (Minecraft.getMinecraft.getConnection != null) {
+                KeyTracking.updatePlayerKey(getTracker.id, Minecraft.getMinecraft.thePlayer, down)
                 val packet = new PacketCustom(MrTJPCoreSPH.channel, MrTJPCoreSPH.keyBindPacket)
                 packet.writeByte(getTracker.id)
-                packet.writeBoolean(pressed)
+                packet.writeBoolean(down)
                 packet.sendToServer()
             }
         }
@@ -82,8 +80,7 @@ trait TClientKeyTracker
     def register()
     {
         MinecraftForge.EVENT_BUS.register(this)
-        this match
-        {
+        this match {
             case kb:KeyBinding => ClientRegistry.registerKeyBinding(kb)
             case _ =>
         }
