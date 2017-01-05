@@ -44,9 +44,9 @@ abstract class ItemDefinition extends Enum
      *
      */
 
-    private var metaToDef = Map[Int, ItemDef]()
+    private var metaToDef = Map[Int, EnumVal]()
 
-    def getEnumFromMeta(meta:Int) = metaToDef.getOrElse(meta, null)
+    def fromMeta(meta:Int):EnumVal = metaToDef.getOrElse(meta, null.asInstanceOf[EnumVal])
 
     def createStringList():JList[String] = {
         val l: JList[String] = new util.ArrayList[String](values.size)
@@ -58,7 +58,7 @@ abstract class ItemDefinition extends Enum
 
     class ItemDef(variantName:String) extends Value with IStringSerializable
     {
-        metaToDef += meta -> this
+        metaToDef += meta -> this.asInstanceOf[EnumVal]
 
         val meta = ordinal
 
