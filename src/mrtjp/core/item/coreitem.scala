@@ -58,9 +58,9 @@ abstract class ItemDefinition extends Enum
 
     class ItemDef(variantName:String) extends Value with IStringSerializable
     {
-        metaToDef += meta -> this.asInstanceOf[EnumVal]
-
         val meta = ordinal
+
+        metaToDef += meta -> this.asInstanceOf[EnumVal]
 
         override def name = getItem.getUnlocalizedName(makeStack)
         def getVariantName:String = variantName
