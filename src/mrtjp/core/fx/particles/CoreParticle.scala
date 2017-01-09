@@ -66,6 +66,8 @@ class CoreParticle(w:World) extends Particle(w, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.
         actions = actions.filterNot(_.isFinished)
     }
 
+    override def isTransparent = true
+
     /**
       * 0 - Particle Texture
       * 1 - Block Texture

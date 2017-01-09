@@ -67,6 +67,7 @@ class BeamMulti(w:World) extends CoreParticle(w) with TAlphaParticle with TColou
         disableLighting()
         enableBlend()
         blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE)
+        alphaFunc(516, 0.003921569F)
         depthMask(false)
         color(1.0F, 1.0F, 1.0F, 1.0F)
 
@@ -108,6 +109,7 @@ class BeamMulti(w:World) extends CoreParticle(w) with TAlphaParticle with TColou
         }
 
         depthMask(true)
+        alphaFunc(516, 0.1F)
         disableBlend()
         blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
         enableLighting()

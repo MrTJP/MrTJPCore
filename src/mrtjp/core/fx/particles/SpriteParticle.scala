@@ -9,6 +9,7 @@ import codechicken.lib.render.CCRenderState
 import codechicken.lib.texture.TextureUtils
 import mrtjp.core.fx._
 import net.minecraft.client.particle.Particle
+import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.VertexBuffer
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
 import net.minecraft.entity.Entity
@@ -49,17 +50,26 @@ class SpriteParticle(w:World) extends CoreParticle(w) with TColourParticle with 
         val b = blue.toFloat
         val a = alpha.toFloat
 
-        val rs = CCRenderState.instance()
+        disableLighting()
+        enableBlend()
+        blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE)
+        alphaFunc(516, 0.003921569F)
+        depthMask(false)
+        color(1.0F, 1.0F, 1.0F, 1.0F)
 
+        val rs = CCRenderState.instance()
         rs.reset()
         rs.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR, buffer)
-
         buffer.pos(f11-cosyaw*scaleX-sinsinpitch*scaleX, f12-cospitch*scaleY, f13-sinyaw*scaleZ-cossinpitch*scaleZ).tex(max_u, max_v).color(r, g, b, a).endVertex()
         buffer.pos(f11-cosyaw*scaleX+sinsinpitch*scaleX, f12+cospitch*scaleY, f13-sinyaw*scaleZ+cossinpitch*scaleZ).tex(max_u, min_v).color(r, g, b, a).endVertex()
         buffer.pos(f11+cosyaw*scaleX+sinsinpitch*scaleX, f12+cospitch*scaleY, f13+sinyaw*scaleZ+cossinpitch*scaleZ).tex(min_u, min_v).color(r, g, b, a).endVertex()
         buffer.pos(f11+cosyaw*scaleX-sinsinpitch*scaleX, f12-cospitch*scaleY, f13+sinyaw*scaleZ-cossinpitch*scaleZ).tex(min_u, max_v).color(r, g, b, a).endVertex()
-
         rs.draw()
+
+        depthMask(true)
+        alphaFunc(516, 0.1F)
+        disableBlend()
+        enableLighting()
     }
 
     override def getFXLayer = 3

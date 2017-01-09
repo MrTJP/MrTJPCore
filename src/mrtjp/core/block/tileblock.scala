@@ -363,7 +363,7 @@ abstract class MTBlockTile extends TileEntity with ICustomPacketTile with ITicka
 
     def getExplosionResistance = 0
 
-    def getHardness = 1F
+    def getHardness = 1/30F
 
     def onBlockActivated(player:EntityPlayer, side:Int) = false
 
