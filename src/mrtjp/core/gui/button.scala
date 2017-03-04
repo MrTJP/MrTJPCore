@@ -8,7 +8,9 @@ package mrtjp.core.gui
 import codechicken.lib.gui.GuiDraw
 import codechicken.lib.texture.TextureUtils
 import mrtjp.core.vec.{Point, Rect, Size}
+import net.minecraft.client.audio.PositionedSoundRecord
 import net.minecraft.client.renderer.GlStateManager
+import net.minecraft.init.SoundEvents
 
 import scala.collection.convert.WrapAsJava
 import scala.collection.mutable.ListBuffer
@@ -32,7 +34,7 @@ class ButtonNode extends TNode
     {
         if (!consumed && rayTest(p))
         {
-            //ResourceLib.soundButton.play()
+            soundHandler.playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1))
             onButtonClicked()
             true
         }

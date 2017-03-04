@@ -23,6 +23,7 @@ trait TNode extends Gui
     var userInteractionEnabled = true
 
     def mcInst:Minecraft = Minecraft.getMinecraft
+    def soundHandler = mcInst.getSoundHandler
     def renderEngine:TextureManager = mcInst.renderEngine
     def fontRenderer:FontRenderer = mcInst.fontRendererObj
 
