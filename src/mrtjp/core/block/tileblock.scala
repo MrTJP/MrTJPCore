@@ -476,31 +476,31 @@ abstract class MTBlockTile extends TileEntity with ICustomPacketTile with ITicka
         load(tag)
     }
 
-
+    /*
+     * Following four methods are vanilla's way of handling initial tile
+     * data. It's inefficient, but since it happens only once lets just use
+     * it instead of hacking it.
+     *
+     * The native writeDesc/readDesc methods will NOT be called unless a
+     * description update is requested later on after the tile is already
+     * loaded (i.e. with #markDescUpdate())
+     */
     override def getUpdateTag =
     {
         val tag = super.getUpdateTag
         writeToNBT(tag)
         tag
     }
-
     override def handleUpdateTag(tag:NBTTagCompound)
     {
         super.handleUpdateTag(tag)
         readFromNBT(tag)
     }
 
-    override def getUpdatePacket =
-    {
-//        val packet = new PacketCustom(MrTJPCoreSPH.channel, MrTJPCoreSPH.tilePacket)
-//        writeToPacket(packet)
-//        packet.toTilePacket(getPos)
-        null
-    }
-
+    override def getUpdatePacket = new SPacketUpdateTileEntity(pos, 0, getUpdateTag)
     override def onDataPacket(net:NetworkManager, pkt:SPacketUpdateTileEntity)
     {
-        //readFromPacket(PacketCustom.fromTilePacket(pkt))
+        handleUpdateTag(pkt.getNbtCompound)
     }
 
     def save(tag:NBTTagCompound){}
