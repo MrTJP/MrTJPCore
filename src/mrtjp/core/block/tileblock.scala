@@ -5,6 +5,7 @@
  */
 package mrtjp.core.block
 
+import java.io.{BufferedOutputStream, ByteArrayOutputStream, OutputStream}
 import java.util.{Random, ArrayList => JArrayList, List => JList}
 
 import codechicken.lib.data.{MCDataInput, MCDataOutput}
@@ -478,25 +479,23 @@ abstract class MTBlockTile extends TileEntity with ICustomPacketTile with ITicka
 
     /*
      * Following four methods are vanilla's way of handling initial tile
-     * data. It's inefficient, but since it happens only once lets just use
-     * it instead of hacking it.
-     *
-     * The native writeDesc/readDesc methods will NOT be called unless a
-     * description update is requested later on after the tile is already
-     * loaded (i.e. with #markDescUpdate())
+     * data. We are using standard writeDesc function then putting that
+     * buffer into a NBT Tag.
      */
     override def getUpdateTag =
     {
         val tag = super.getUpdateTag
-        writeToNBT(tag)
+        val out = new PacketCustom(MrTJPCoreSPH.channel, MrTJPCoreSPH.tilePacket) //channel and type dont matter
+        writeDesc(out)
+        out.toNBTTag(tag)
         tag
     }
     override def handleUpdateTag(tag:NBTTagCompound)
     {
         super.handleUpdateTag(tag)
-        readFromNBT(tag)
+        val in = PacketCustom.fromNBTTag(tag)
+        readDesc(in)
     }
-
     override def getUpdatePacket = new SPacketUpdateTileEntity(pos, 0, getUpdateTag)
     override def onDataPacket(net:NetworkManager, pkt:SPacketUpdateTileEntity)
     {
