@@ -16,18 +16,12 @@ import net.minecraft.world.World
 
 trait TInventory extends IInventory
 {
-    def size:Int
-    def name:String
-    def stackLimit = 64
-
-    private val storage = new Array[ItemStack](size)
+    protected val storage:Array[ItemStack]
 
     override def getSizeInventory = storage.length
-    override def getInventoryStackLimit = stackLimit
 
     override def hasCustomName = true
-    override def getDisplayName = new TextComponentString(name)
-    override def getName = name
+    override def getDisplayName = new TextComponentString(getName)
 
     override def isUseableByPlayer(player:EntityPlayer) = true
     override def isItemValidForSlot(slot:Int, item:ItemStack) = true
@@ -83,7 +77,7 @@ trait TInventory extends IInventory
     override def getField(id:Int) = 0
     override def setField(id:Int, value:Int){}
 
-    def loadInv(tag:NBTTagCompound){ loadInv(tag, name) }
+    def loadInv(tag:NBTTagCompound){ loadInv(tag, getName) }
     def loadInv(tag:NBTTagCompound, prefix:String)
     {
         val tag1 = tag.getTagList(prefix+"items", 10)
@@ -96,7 +90,7 @@ trait TInventory extends IInventory
         }
     }
 
-    def saveInv(tag:NBTTagCompound){ saveInv(tag, name) }
+    def saveInv(tag:NBTTagCompound){ saveInv(tag, getName) }
     def saveInv(tag:NBTTagCompound, prefix:String)
     {
         val itemList = new NBTTagList

@@ -30,8 +30,7 @@ trait TNode extends Gui
     def isRoot = this.isInstanceOf[NodeGui]
     def getRoot:NodeGui =
     {
-        def iterate(node:TNode):NodeGui = node match
-        {
+        def iterate(node:TNode):NodeGui = node match {
             case ng:NodeGui => ng
             case null => throw new Exception("Gui not found")
             case _ => iterate(node.parent)
@@ -42,8 +41,7 @@ trait TNode extends Gui
     def buildParentHierarchy(to:TNode) =
     {
         var hierarchy = Seq[TNode]()
-        def iterate(node:TNode)
-        {
+        def iterate(node:TNode) {
             hierarchy :+= node
             if (node.isRoot || node == to) return
             iterate(node.parent)
@@ -123,8 +121,7 @@ trait TNode extends Gui
     def subTree(activeOnly:Boolean = false) =
     {
         val s = Seq.newBuilder[TNode]
-        def gather(children:Seq[TNode])
-        {
+        def gather(children:Seq[TNode]) {
             val ac = if (activeOnly) children.filter(c => !c.hidden && c.userInteractionEnabled) else children
             s ++= ac
             for (c <- ac) gather(c.children)
@@ -287,18 +284,6 @@ trait TNode extends Gui
         translate(sx, sy, 0)
     }
 
-    @deprecated(message = "deprecated. Use delegation")
-    protected final def startMessageChain(message:String)
-    {
-        if (!isRoot) parent.receiveMessage(message)
-    }
-    @deprecated(message = "deprecated. Use delegation")
-    protected final def receiveMessage(message:String)
-    {
-        receiveMessage_Impl(message)
-        if (!isRoot) parent.receiveMessage(message)
-    }
-
     /** IMPLEMENTATION OVERRIDES **/
 
     /**
@@ -385,14 +370,4 @@ trait TNode extends Gui
      * @param rframe The partial frame until the next frame.
      */
     def drawFront_Impl(mouse:Point, rframe:Float){}
-
-    /**
-     * Called when a subnode sends a message. This message is relayed to all
-     * supernodes one by one and stops at the root node.
-     *
-     * @param message The message that was sent by a subnode using
-     *                startMessageChain
-     */
-    @deprecated(message = "deprecated. Use delegation")
-    def receiveMessage_Impl(message:String){}
 }

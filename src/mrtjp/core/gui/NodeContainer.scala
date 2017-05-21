@@ -186,10 +186,19 @@ class NodeContainer extends Container
         stack
     }
 
-    def doMerge(stack:ItemStack, from:Int) =
+    def doMerge(stack:ItemStack, from:Int):Boolean =
     {
-        if (slots.size-36 until slots.size contains from) tryMergeItemStack(stack, 0, slots.size-36, false)
-        else tryMergeItemStack(stack, slots.size-36, slots.size, false)
+        if (slots.size > 36) { //run standarm impl on containers w/ player inventory
+            if (slots.size-36 until slots.size contains from) { //if item is from player inventory...
+                return tryMergeItemStack(stack, 0, slots.size-36, false) //merge to rest of container
+            }
+            else { //else if item from outside player inventory...
+                if (tryMergeItemStack(stack, slots.size-36, slots.size-27, true)) return true //try merge to hotbar from back
+                if (tryMergeItemStack(stack, slots.size-27, slots.size, true)) return true //then try player inventory from back
+            }
+        }
+
+        false
     }
 
     def tryMergeItemStack(stack:ItemStack, start:Int, end:Int, reverse:Boolean) =

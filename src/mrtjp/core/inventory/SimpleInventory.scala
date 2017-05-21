@@ -5,11 +5,28 @@
  */
 package mrtjp.core.inventory
 
-class SimpleInventory(override val size:Int, override val name:String, override val stackLimit:Int) extends TInventory
+import net.minecraft.item.ItemStack
+
+class SimpleInventory(size:Int, name:String, stackLimit:Int) extends TInventory
 {
     def this(size:Int, lim:Int) = this(size, "", lim)
     def this(size:Int, name:String) = this(size, name, 64)
     def this(size:Int) = this(size, 64)
 
+    override protected val storage  = new Array[ItemStack](size)
+
+    override def getInventoryStackLimit = stackLimit
+
+    override def getName = name
+
     override def markDirty(){}
+}
+
+class ArrayWrapInventory(override protected val storage:Array[ItemStack], name:String, stackLimit:Int) extends TInventory
+{
+    override def getInventoryStackLimit = stackLimit
+
+    override def markDirty(){}
+
+    override def getName = name
 }
