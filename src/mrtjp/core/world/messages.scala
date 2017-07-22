@@ -53,7 +53,7 @@ object Messenger
     @SubscribeEvent
     def renderMessages(event:RenderWorldLastEvent)
     {
-        val w = Minecraft.getMinecraft.theWorld
+        val w = Minecraft.getMinecraft.world
         if (w == null) return
         if (Messenger.messages.isEmpty) return
 
@@ -75,7 +75,7 @@ object Messenger
 
         for (m <- Messenger.messages.clone())
             if (m == null || m.receivedOn < deathTime) Messenger.messages -= m
-            else readMessage(m, Minecraft.getMinecraft.theWorld.getTotalWorldTime+event.getPartialTicks)
+            else readMessage(m, Minecraft.getMinecraft.world.getTotalWorldTime+event.getPartialTicks)
 
         enableLighting()
         disableBlend()
@@ -89,7 +89,7 @@ object Messenger
         var width = 0
         var height = 0
         val lines = m.msg.split("\n")
-        val fr = Minecraft.getMinecraft.fontRendererObj
+        val fr = Minecraft.getMinecraft.fontRenderer
         for (line <- lines) {
             height += fr.FONT_HEIGHT + 4
             width = Math.max(width, fr.getStringWidth(line))

@@ -67,7 +67,7 @@ trait TClientKeyTracker
         if (down != wasDown) {
             wasDown = down
             if (Minecraft.getMinecraft.getConnection != null) {
-                KeyTracking.updatePlayerKey(getTracker.id, Minecraft.getMinecraft.thePlayer, down)
+                KeyTracking.updatePlayerKey(getTracker.id, Minecraft.getMinecraft.player, down)
                 val packet = new PacketCustom(MrTJPCoreSPH.channel, MrTJPCoreSPH.keyBindPacket)
                 packet.writeByte(getTracker.id)
                 packet.writeBoolean(down)

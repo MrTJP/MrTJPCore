@@ -5,7 +5,8 @@
  */
 package mrtjp.core.fx
 
-import codechicken.lib.vec.{BlockCoord, Vector3}
+import codechicken.lib.vec._
+import net.minecraft.util.math.BlockPos
 import mrtjp.core.fx.particles.CoreParticle
 
 trait TPositionedParticle extends CoreParticle
@@ -46,7 +47,7 @@ trait TPositionedParticle extends CoreParticle
         pz = pos.z
     }
 
-    def blockPosition = new BlockCoord(math.floor(x).toInt, math.floor(y).toInt, math.floor(z).toInt)
+    def blockPosition = new BlockPos(math.floor(x).toInt, math.floor(y).toInt, math.floor(z).toInt)
 
     abstract override def onUpdate()
     {

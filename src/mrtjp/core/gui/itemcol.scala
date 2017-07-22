@@ -106,10 +106,10 @@ class ItemDisplayNode extends TNode
         val Point(mx, my) = parent.convertPointToScreen(mouse)
 
         import scala.collection.JavaConversions._
-        val lines = stack.makeStack.getTooltip(mcInst.thePlayer,
+        val lines = stack.makeStack.getTooltip(mcInst.player,
             mcInst.gameSettings.advancedItemTooltips)
         val l2 = Seq(lines.head)++lines.tail.map(TextFormatting.GRAY + _)
-        GuiDraw.drawMultilineTip(mx+12, my-12, l2)
+        GuiDraw.drawMultiLineTip(mx+12, my-12, l2)
 
         translateFromScreen()
         ClipNode.tempEnableScissoring()
@@ -123,7 +123,7 @@ object ItemDisplayNode
     def renderItem(position:Point, size:Size, zPosition:Double, drawNumber:Boolean, stack:ItemStack)
     {
         val font = stack.getItem.getFontRenderer(stack) match {
-            case null => Minecraft.getMinecraft.fontRendererObj
+            case null => Minecraft.getMinecraft.fontRenderer
             case r => r
         }
 
@@ -147,11 +147,11 @@ object ItemDisplayNode
         if (drawNumber)
         {
             val s =
-                if (stack.stackSize == 1) ""
-                else if (stack.stackSize < 1000) stack.stackSize+""
-                else if (stack.stackSize < 100000) stack.stackSize/1000+"K"
-                else if (stack.stackSize < 1000000) "0."+stack.stackSize/100000+"M"
-                else stack.stackSize/1000000+"M"
+                if (stack.getCount() == 1) ""
+                else if (stack.getCount() < 1000) stack.getCount()+""
+                else if (stack.getCount() < 100000) stack.getCount()/1000+"K"
+                else if (stack.getCount() < 1000000) "0."+stack.getCount()/100000+"M"
+                else stack.getCount()/1000000+"M"
             font.drawStringWithShadow(s, position.x+19-2-font.getStringWidth(s), position.y+6+3, 16777215)
         }
         popMatrix()

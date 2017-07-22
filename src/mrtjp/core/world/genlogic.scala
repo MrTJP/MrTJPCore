@@ -11,9 +11,12 @@ import mrtjp.core.math.MathLib
 import net.minecraft.block.Block
 import net.minecraft.block.state.pattern.BlockMatcher
 import net.minecraft.util.math.BlockPos
+import net.minecraft.world.biome.Biome
 import net.minecraft.world.gen.feature.WorldGenerator
 import net.minecraft.world.{World, WorldType}
 import net.minecraftforge.common.BiomeDictionary
+import net.minecraftforge.common.BiomeDictionary.Type
+import net.minecraft.world.biome.Biome
 
 trait TGenerationLogic extends ISimpleStructureGen
 {
@@ -44,7 +47,7 @@ trait TGenerationLogic extends ISimpleStructureGen
 
     def postFiltCheck(w:World, pos:BlockPos, rand:Random):Boolean =
     {
-        val types = BiomeDictionary.getTypesForBiome(w.getBiome(pos)).toSet
+        val types = BiomeDictionary.getTypes(w.getBiome(pos)).toArray(new Array[BiomeDictionary.Type](0)).toSet
         if (biomeBlacklist == biomes.contains(types)) return false
         true
     }

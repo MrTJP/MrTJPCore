@@ -59,7 +59,7 @@ class TabNode(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TNo
         {
             val list = ListBuffer[String]()
             buildToolTip(list)
-            GuiDraw.drawMultilineTip(mouse.x+12, mouse.y-12, JavaConversions.bufferAsJavaList(list))
+            GuiDraw.drawMultiLineTip(mouse.x+12, mouse.y-12, JavaConversions.bufferAsJavaList(list))
         }
     }
 
@@ -92,7 +92,7 @@ class TabNode(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TNo
 
 trait TStackTab extends TabNode
 {
-    var iconStack:ItemStack = null
+    var iconStack:ItemStack = ItemStack.EMPTY
     def setIconStack(stack:ItemStack):this.type = {iconStack = stack; this}
 
     abstract override def drawIcon()

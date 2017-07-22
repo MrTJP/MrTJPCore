@@ -64,7 +64,7 @@ class ButtonNode extends TNode
             //draw tooltip with absolute coords to allow it to force-fit on screen
             translateToScreen()
             val Point(mx, my) = parent.convertPointToScreen(mouse)
-            GuiDraw.drawMultilineTip(mx+12, my-12, WrapAsJava.seqAsJavaList(list))
+            GuiDraw.drawMultiLineTip(mx+12, my-12, WrapAsJava.seqAsJavaList(list))
             translateFromScreen()
         }
     }

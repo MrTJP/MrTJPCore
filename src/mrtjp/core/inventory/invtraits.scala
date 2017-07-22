@@ -23,7 +23,7 @@ trait TInventory extends IInventory
     override def hasCustomName = true
     override def getDisplayName = new TextComponentString(getName)
 
-    override def isUseableByPlayer(player:EntityPlayer) = true
+    override def isUsableByPlayer(player: EntityPlayer): Boolean = true
     override def isItemValidForSlot(slot:Int, item:ItemStack) = true
 
     override def openInventory(player:EntityPlayer){}
@@ -40,8 +40,8 @@ trait TInventory extends IInventory
     override def removeStackFromSlot(slot:Int) =
     {
         val stack = storage(slot)
-        if (stack != null) {
-            storage(slot) = null
+        if (stack != ItemStack.EMPTY) {
+            storage(slot) = ItemStack.EMPTY
             markDirty()
         }
         stack
@@ -50,9 +50,9 @@ trait TInventory extends IInventory
     override def decrStackSize(slot:Int, count:Int):ItemStack =
     {
         val stack = storage(slot)
-        if (stack == null) return null
+        if (stack.isEmpty == true) return ItemStack.EMPTY
 
-        if (stack.stackSize > count)
+        if (stack.getCount() > count)
         {
             val out = stack.splitStack(count)
             markDirty()
@@ -61,7 +61,7 @@ trait TInventory extends IInventory
         else
         {
             val out = stack
-            storage(slot) = null
+            storage(slot) = ItemStack.EMPTY
             markDirty()
             out
         }
@@ -86,7 +86,7 @@ trait TInventory extends IInventory
             val tag2 = tag1.getCompoundTagAt(i)
 
             val index = tag2.getInteger("index")
-            if (storage.isDefinedAt(index)) storage(index) = ItemStack.loadItemStackFromNBT(tag2)
+            if (storage.isDefinedAt(index)) storage(index) = new ItemStack(tag2)
         }
     }
 
@@ -94,7 +94,7 @@ trait TInventory extends IInventory
     def saveInv(tag:NBTTagCompound, prefix:String)
     {
         val itemList = new NBTTagList
-        for (i <- 0 until storage.length) if (storage(i) != null && storage(i).stackSize > 0)
+        for (i <- 0 until storage.length) if (storage(i) != null && storage(i).getCount > 0)
         {
             val tag2 = new NBTTagCompound
             tag2.setInteger("index", i)

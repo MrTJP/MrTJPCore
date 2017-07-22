@@ -90,7 +90,7 @@ class MultiTileBlock(mat:Material) extends Block(mat)
 
     override def getTickRandomly = true
 
-    override def addCollisionBoxToList(state:IBlockState, world:World, pos:BlockPos, entityBox:AxisAlignedBB, collidingBoxes:JList[AxisAlignedBB], entity:Entity)
+    override def addCollisionBoxToList(state:IBlockState, world:World, pos:BlockPos, entityBox:AxisAlignedBB, collidingBoxes:JList[AxisAlignedBB], entity:Entity, p_185477_7_ : Boolean): Unit =
     {
         world.getTileEntity(pos) match {
             case t:MTBlockTile =>
@@ -180,7 +180,7 @@ class MultiTileBlock(mat:Material) extends Block(mat)
             case _ => super.getPickBlock(state, target, world, pos, player)
         }
 
-    override def onBlockActivated(world:World, pos:BlockPos, state:IBlockState, player:EntityPlayer, hand:EnumHand, held:ItemStack, side:EnumFacing, hitX:Float, hitY:Float, hitZ:Float) =
+    def onBlockActivated(world:World, pos:BlockPos, state:IBlockState, player:EntityPlayer, hand:EnumHand, held:ItemStack, side:EnumFacing, hitX:Float, hitY:Float, hitZ:Float) =
         world.getTileEntity(pos) match {
             case t:MTBlockTile => t.onBlockActivated(player, side.ordinal)
             case _ => false
@@ -207,8 +207,7 @@ class MultiTileBlock(mat:Material) extends Block(mat)
             case t:MTBlockTile => t.onEntityWalk(entity)
         }
 
-
-    override def neighborChanged(state:IBlockState, world:World, pos:BlockPos, block:Block)
+    override def neighborChanged(state:IBlockState, world:World, pos:BlockPos, block:Block, fromPos: BlockPos): Unit =
     {
         world.getTileEntity(pos) match {
             case t:MTBlockTile => t.onNeighborBlockChange()
@@ -224,10 +223,10 @@ class MultiTileBlock(mat:Material) extends Block(mat)
         }
     }
 
-    override def onBlockPlaced(world:World, pos:BlockPos, facing:EnumFacing, hitX:Float, hitY:Float, hitZ:Float, meta:Int, placer:EntityLivingBase) =
+    override def getStateForPlacement(world:World, pos:BlockPos, facing:EnumFacing, hitX:Float, hitY:Float, hitZ:Float, meta:Int, placer:EntityLivingBase) =
     {
         if (tiles.isDefinedAt(meta) && tiles(meta) != null)
-            super.onBlockPlaced(world, pos, facing, hitX, hitY, hitZ, meta, placer)
+            super.getStateForPlacement(world, pos, facing, hitX, hitY, hitZ, meta, placer)
         else
             throw new RuntimeException("MultiTileBlock "+this.getRegistryName+" was placed w/ invalid metadata. Most likely an invalid return value on this block's ItemBlock#getMetadata")
     }
@@ -279,7 +278,7 @@ class MultiTileBlock(mat:Material) extends Block(mat)
         }
 
     @SideOnly(Side.CLIENT)
-    override def getSubBlocks(item:Item, tab:CreativeTabs, list:JList[ItemStack])
+    override def getSubBlocks(item:Item, tab:CreativeTabs, list:NonNullList[ItemStack]): Unit =
     {
         for (i <- 0 until tiles.length) if (tiles(i) != null)
             list.add(new ItemStack(item, 1, i))
@@ -398,7 +397,6 @@ abstract class MTBlockTile extends TileEntity with ICustomPacketTile with ITicka
         ist += getPickBlock
     }
 
-    def world = worldObj
     def x = getPos.getX
     def y = getPos.getY
     def z = getPos.getZ
