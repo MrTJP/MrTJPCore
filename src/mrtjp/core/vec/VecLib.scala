@@ -6,7 +6,7 @@
 package mrtjp.core.vec
 
 import codechicken.lib.raytracer.IndexedCuboid6
-import codechicken.lib.render.{CCModel, CCOBJParser}
+import codechicken.lib.render.{CCModel, OBJParser}
 import codechicken.lib.vec._
 import net.minecraft.util.ResourceLocation
 
@@ -43,7 +43,7 @@ object VecLib
 
     def parseCorrectedModel(loc:String) =
     {
-        val models = mapAsScalaMap(CCOBJParser.parseObjModels(new ResourceLocation(loc)))
+        val models = mapAsScalaMap(OBJParser.parseModels(new ResourceLocation(loc)))
         models.map(m => m._1 -> m._2.backfacedCopy())
     }
 

@@ -71,13 +71,13 @@ object ItemKeyStack
 
     def get(stack:ItemStack):ItemKeyStack = //TODO remove sanity check, should be done externally
     {
-        if (stack == null) null
-        else new ItemKeyStack(ItemKey.get(stack), stack.stackSize)
+        if (stack.isEmpty) null
+        else new ItemKeyStack(ItemKey.get(stack), stack.getCount)
     }
 
     def getOrNull(stack:ItemStack):ItemKeyStack =
     {
-        if (stack == null) null
+        if (stack.isEmpty) null
         else get(stack)
     }
 }

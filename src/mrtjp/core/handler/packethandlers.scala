@@ -5,7 +5,7 @@
  */
 package mrtjp.core.handler
 
-import codechicken.lib.packet.PacketCustom.{IClientPacketHandler, IServerPacketHandler}
+import codechicken.lib.packet.ICustomPacketHandler.{IClientPacketHandler, IServerPacketHandler}
 import codechicken.lib.packet.{ICustomPacketTile, PacketCustom}
 import mrtjp.core.data.KeyTracking
 import mrtjp.core.gui.GuiHandler
@@ -43,7 +43,7 @@ object MrTJPCoreCPH extends MrTJPCorePH with IClientPacketHandler
 {
     def handlePacket(packet:PacketCustom, mc:Minecraft, nethandler:INetHandlerPlayClient)
     {
-        val world = mc.theWorld
+        val world = mc.world
         packet.getType match {
             case this.tilePacket => handleTilePacket(world, packet, packet.readPos())
             case this.messagePacket => Messenger.addMessage(packet.readDouble, packet.readDouble, packet.readDouble, packet.readString)

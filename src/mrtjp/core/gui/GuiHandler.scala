@@ -58,7 +58,7 @@ object GuiHandler
     {
         val mc = Minecraft.getMinecraft
         mc.displayGuiScreen(gui)
-        if (windowID != 0) mc.thePlayer.openContainer.windowId = windowID
+        if (windowID != 0) mc.player.openContainer.windowId = windowID
     }
 
     /**
@@ -75,7 +75,7 @@ object GuiHandler
         val id = data.readUShort()
         val gui = guiMap.get(id) match
         {
-            case Some(e) => e.buildGui(Minecraft.getMinecraft.thePlayer, data)
+            case Some(e) => e.buildGui(Minecraft.getMinecraft.player, data)
             case None => null
         }
         if (gui != null) openSMPContainer(win, gui)

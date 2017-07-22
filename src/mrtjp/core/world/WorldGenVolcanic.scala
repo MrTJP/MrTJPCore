@@ -74,7 +74,7 @@ class WorldGenVolcanic extends TWorldGenerator
             if (w.isBlockLoaded(new BlockPos(i, 64, k)) && test.contains((i, k)))
             {
                 var pow = test((i, k))
-                var hm = w.getHeightmapHeight(i, k)+1
+                var hm = w.getHeight(i, k)+1
                 while (hm > 0 && isUnimportant(w, i, hm-1, k)) hm -= 1
 
                 if (hm <= j) if (isUnimportant(w, i, hm, k))
@@ -94,8 +94,8 @@ class WorldGenVolcanic extends TWorldGenerator
         {
             p = new BlockPos(x, n, z)
             BlockUtils.fireBlockUpdate(w, p)
-            w.notifyNeighborsOfStateChange(p, liq._1)
-            w.notifyBlockOfStateChange(p, liq._1)
+            w.notifyNeighborsRespectDebug(p, liq._1, false)
+            w.neighborChanged(p, liq._1, p)
             w.immediateBlockTick(p, w.getBlockState(p), w.rand)
             n -= 1
         }

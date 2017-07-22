@@ -52,7 +52,7 @@ class CoreParticle(w:World) extends Particle(w, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.
 
     override def onUpdate()
     {
-        if (hasVelocity) moveEntity(motionX, motionY, motionZ)
+        if (hasVelocity) move(motionX, motionY, motionZ)
 
         actions.foreach(_.tickLife())
 

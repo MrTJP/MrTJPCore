@@ -15,6 +15,8 @@ import net.minecraft.world.gen.feature.WorldGenerator
 import net.minecraft.world.{World, WorldType}
 import net.minecraftforge.common.BiomeDictionary
 
+import scala.collection.JavaConversions._
+
 trait TGenerationLogic extends ISimpleStructureGen
 {
     var name = ""
@@ -44,7 +46,7 @@ trait TGenerationLogic extends ISimpleStructureGen
 
     def postFiltCheck(w:World, pos:BlockPos, rand:Random):Boolean =
     {
-        val types = BiomeDictionary.getTypesForBiome(w.getBiome(pos)).toSet
+        val types = BiomeDictionary.getTypes(w.getBiome(pos))
         if (biomeBlacklist == biomes.contains(types)) return false
         true
     }

@@ -16,7 +16,6 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.world._
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage
 import net.minecraftforge.common.IPlantable
-import net.minecraftforge.fml.common.FMLLog
 import net.minecraftforge.oredict.OreDictionary
 
 object WorldLib
@@ -51,7 +50,7 @@ object WorldLib
             val dz = world.rand.nextFloat*d+(1.0D-d)*0.5D
             val item = new EntityItem(world, pos.getX+dx, pos.getY+dy, pos.getZ+dz, stack)
             item.setPickupDelay(10)
-            world.spawnEntityInWorld(item)
+            world.spawnEntity(item)
         }
     }
 
@@ -71,7 +70,7 @@ object WorldLib
             case 4 => item.motionX = -vel
             case 5 => item.motionX =  vel
         }
-        w.spawnEntityInWorld(item)
+        w.spawnEntity(item)
     }
 
     def uncheckedSetBlock(world:World, pos:BlockPos, state:IBlockState)
@@ -83,7 +82,7 @@ object WorldLib
         val z = pos.getZ
 
         if (arr(y>>4) == null)
-            arr(y>>4) = new ExtendedBlockStorage(y&(~0xF),!world.provider.getHasNoSky)
+            arr(y>>4) = new ExtendedBlockStorage(y&(~0xF),!world.provider.hasNoSky)
         val oldState = arr(y>>4).get(x, y, z)
         arr(y>>4).set(x, y, z, state)
         world.markBlockRangeForRenderUpdate(pos, pos)

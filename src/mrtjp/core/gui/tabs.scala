@@ -59,7 +59,7 @@ class TabNode(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TNo
         {
             val list = ListBuffer[String]()
             buildToolTip(list)
-            GuiDraw.drawMultilineTip(mouse.x+12, mouse.y-12, JavaConversions.bufferAsJavaList(list))
+            GuiDraw.drawMultiLineTip(mouse.x+12, mouse.y-12, JavaConversions.bufferAsJavaList(list))
         }
     }
 

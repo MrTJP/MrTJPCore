@@ -113,9 +113,9 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
 
     override def drawFront_Impl(mouse:Point, rframe:Float)
     {
-        if (hover != null) GuiDraw.drawMultilineTip(
+        if (hover != null) GuiDraw.drawMultiLineTip(
             mouse.x+12, mouse.y-12,
-            hover.makeStack.getTooltip(mcInst.thePlayer,
+            hover.makeStack.getTooltip(mcInst.player,
                 mcInst.gameSettings.advancedItemTooltips))
         FontUtils.drawCenteredString(
             "Page: "+(currentPage+1)+"/"+(pagesNeeded+1), x+(size.width/2), y+frame.height+6, EnumColour.BLACK.rgb)
@@ -232,11 +232,11 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
         renderItem.zLevel = 0.0F
 
         var s:String = null
-        if (stack.stackSize == 1) s = ""
-        else if (stack.stackSize < 1000) s = stack.stackSize+""
-        else if (stack.stackSize < 100000) s = stack.stackSize/1000+"K"
-        else if (stack.stackSize < 1000000) s = "0M"+stack.stackSize/100000
-        else s = stack.stackSize/1000000+"M"
+        if (stack.getCount == 1) s = ""
+        else if (stack.getCount < 1000) s = stack.getCount+""
+        else if (stack.getCount < 100000) s = stack.getCount/1000+"K"
+        else if (stack.getCount < 1000000) s = "0M"+stack.getCount/100000
+        else s = stack.getCount/1000000+"M"
         font.drawStringWithShadow(s, xPos+19-2-font.getStringWidth(s), yPos+6+3, 16777215)
     }
 }
