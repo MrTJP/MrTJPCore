@@ -20,6 +20,8 @@ trait TInventory extends IInventory
 
     override def getSizeInventory = storage.length
 
+    override def isEmpty = storage.forall(_.isEmpty)
+
     override def hasCustomName = true
     override def getDisplayName = new TextComponentString(getName)
 
