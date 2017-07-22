@@ -7,16 +7,16 @@ package mrtjp.core.gui
 
 import java.util.{List => JList}
 
+import codechicken.lib.colour.EnumColour
 import codechicken.lib.gui.GuiDraw
-import codechicken.lib.render.FontUtils
-import mrtjp.core.color.Colors
+import codechicken.lib.util.FontUtils
 import mrtjp.core.item.ItemKeyStack
 import mrtjp.core.vec.{Point, Rect, Size}
+import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Gui
-import net.minecraft.client.renderer.entity.RenderItem
+import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.{OpenGlHelper, RenderHelper}
 import net.minecraft.item.ItemStack
-import org.lwjgl.opengl.{GL11, GL12}
 
 class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
 {
@@ -116,9 +116,9 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
         if (hover != null) GuiDraw.drawMultilineTip(
             mouse.x+12, mouse.y-12,
             hover.makeStack.getTooltip(mcInst.thePlayer,
-                mcInst.gameSettings.advancedItemTooltips).asInstanceOf[JList[String]])
+                mcInst.gameSettings.advancedItemTooltips))
         FontUtils.drawCenteredString(
-            "Page: "+(currentPage+1)+"/"+(pagesNeeded+1), x+(size.width/2), y+frame.height+6, Colors.BLACK.rgb)
+            "Page: "+(currentPage+1)+"/"+(pagesNeeded+1), x+(size.width/2), y+frame.height+6, EnumColour.BLACK.rgb)
     }
 
     override def mouseClicked_Impl(p:Point, button:Int, consumed:Boolean) =
@@ -199,37 +199,36 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
 
     private def glItemPre()
     {
-        GL11.glPushMatrix()
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F)
+        pushMatrix()
+        color(1.0F, 1.0F, 1.0F, 1.0F)
         RenderHelper.enableGUIStandardItemLighting()
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL)
+        enableRescaleNormal()
         OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240/1.0F, 240/1.0F)
-        GL11.glDisable(GL11.GL_DEPTH_TEST)
-        GL11.glDisable(GL11.GL_LIGHTING)
+        disableDepth()
+        disableLighting()
     }
 
     private def glItemPost()
     {
-        GL11.glEnable(GL11.GL_DEPTH_TEST)
-        GL11.glPopMatrix()
+        enableDepth()
+        popMatrix()
     }
 
-    protected var renderItem = new RenderItem
+    protected var renderItem = Minecraft.getMinecraft.getRenderItem
     private def inscribeItemStack(xPos:Int, yPos:Int, stack:ItemStack)
     {
-        val font = stack.getItem.getFontRenderer(stack) match
-        {
+        val font = stack.getItem.getFontRenderer(stack) match {
             case null => fontRenderer
             case r => r
         }
 
         renderItem.zLevel = 100.0F
-        GL11.glEnable(GL11.GL_DEPTH_TEST)
-        GL11.glEnable(GL11.GL_LIGHTING)
-        renderItem.renderItemAndEffectIntoGUI(font, renderEngine, stack, xPos, yPos)
-        renderItem.renderItemOverlayIntoGUI(font, renderEngine, stack, xPos, yPos, "")
-        GL11.glDisable(GL11.GL_LIGHTING)
-        GL11.glDisable(GL11.GL_DEPTH_TEST)
+        enableDepth()
+        enableLighting()
+        renderItem.renderItemAndEffectIntoGUI(stack, xPos, yPos)
+        renderItem.renderItemOverlayIntoGUI(font, stack, xPos, yPos, "")
+        disableLighting()
+        disableDepth()
         renderItem.zLevel = 0.0F
 
         var s:String = null

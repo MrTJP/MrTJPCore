@@ -11,7 +11,7 @@ class KillAction extends ParticleAction
 {
     override def operate(p:CoreParticle, time:Double)
     {
-        p.setDead()
+        p.setExpired()
         isFinished = true
     }
 

@@ -5,21 +5,21 @@
  */
 package mrtjp.core.gui
 
+import codechicken.lib.colour.EnumColour
 import codechicken.lib.gui.GuiDraw
-import mrtjp.core.color.Colors
 import mrtjp.core.vec.{Point, Rect, Size}
-import net.minecraft.client.renderer.RenderHelper
-import net.minecraft.client.renderer.entity.RenderItem
+import net.minecraft.client.Minecraft
+import net.minecraft.client.renderer.GlStateManager._
+import net.minecraft.client.renderer.{GlStateManager, RenderHelper}
+import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.item.ItemStack
-import net.minecraft.util.IIcon
-import org.lwjgl.opengl.{GL11, GL12}
 
 import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
 
 class TabNode(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TNode
 {
-    def this(wMin:Int, hMin:Int, wMax:Int, hMax:Int) = this(wMin, hMin, wMax, hMax, Colors.LIGHT_GREY.rgb)
+    def this(wMin:Int, hMin:Int, wMax:Int, hMax:Int) = this(wMin, hMin, wMax, hMax, EnumColour.LIGHT_GRAY.rgb)
 
     var currentW = wMin.asInstanceOf[Double]
     var currentH = wMin.asInstanceOf[Double]
@@ -74,7 +74,7 @@ class TabNode(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TNo
         val r = (color>>16&255)/255.0F
         val g = (color>>8&255)/255.0F
         val b = (color&255)/255.0F
-        GL11.glColor4f(r, g, b, 1)
+        GlStateManager.color(r, g, b, 1)
 
         GuiLib.drawGuiBox(position.x, position.y, size.width, size.height, 0)
     }
@@ -98,31 +98,31 @@ trait TStackTab extends TabNode
     abstract override def drawIcon()
     {
         super.drawIcon()
-        GL11.glColor4f(1, 1, 1, 1)
+        GlStateManager.color(1, 1, 1, 1)
         RenderHelper.enableGUIStandardItemLighting()
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL)
+        enableRescaleNormal()
         TStackTab.itemRender.zLevel = (zPosition+25).toFloat
-        TStackTab.itemRender.renderItemAndEffectIntoGUI(fontRenderer, renderEngine, iconStack, position.x+3, position.y+3)
-        GL11.glDisable(GL12.GL_RESCALE_NORMAL)
-        GL11.glDisable(GL11.GL_LIGHTING)
+        TStackTab.itemRender.renderItemAndEffectIntoGUI(iconStack, position.x+3, position.y+3)
+        disableRescaleNormal()
+        disableLighting()
         RenderHelper.disableStandardItemLighting()
     }
 }
 
 object TStackTab
 {
-    val itemRender = new RenderItem
+    val itemRender = Minecraft.getMinecraft.getRenderItem
 }
 
 trait TIconTab extends TabNode
 {
-    var icon:IIcon = null
-    def setIcon(i:IIcon):this.type = {icon = i; this}
+    var icon:TextureAtlasSprite = null
+    def setIcon(i:TextureAtlasSprite):this.type = {icon = i; this}
 
     abstract override def drawIcon()
     {
         super.drawIcon()
-        drawTexturedModelRectFromIcon(position.x+3, position.x+3, icon, 16, 16)
+        drawTexturedModalRect(position.x+3, position.x+3, icon, 16, 16)
     }
 }
 

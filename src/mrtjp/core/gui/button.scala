@@ -6,9 +6,11 @@
 package mrtjp.core.gui
 
 import codechicken.lib.gui.GuiDraw
-import mrtjp.core.resource.ResourceLib
+import codechicken.lib.texture.TextureUtils
 import mrtjp.core.vec.{Point, Rect, Size}
-import org.lwjgl.opengl.GL11
+import net.minecraft.client.audio.PositionedSoundRecord
+import net.minecraft.client.renderer.GlStateManager
+import net.minecraft.init.SoundEvents
 
 import scala.collection.convert.WrapAsJava
 import scala.collection.mutable.ListBuffer
@@ -32,7 +34,7 @@ class ButtonNode extends TNode
     {
         if (!consumed && rayTest(p))
         {
-            ResourceLib.soundButton.play()
+            soundHandler.playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1))
             onButtonClicked()
             true
         }
@@ -46,7 +48,7 @@ class ButtonNode extends TNode
 
     override def drawBack_Impl(mouse:Point, rframe:Float)
     {
-        GL11.glColor4f(1, 1, 1, 1)
+        GlStateManager.color(1, 1, 1, 1)
         val mouseover = mouseoverLock || (frame.contains(mouse) && rayTest(mouse))
         drawButtonBackground(mouseover)
         drawButton(mouseover)
@@ -80,8 +82,9 @@ trait TButtonMC extends ButtonNode
     {
         super.drawButtonBackground(mouseover)
 
-        ResourceLib.guiTex.bind()
-        GL11.glColor4f(1, 1, 1, 1)
+        TextureUtils.changeTexture(GuiLib.guiTex)
+
+        GlStateManager.color(1, 1, 1, 1)
         val state = if (mouseover) 2 else 1
 
         drawTexturedModalRect(position.x, position.y, 0, 46+state*20, size.width/2, size.height/2)
@@ -103,7 +106,7 @@ trait TButtonText extends ButtonNode
     {
         super.drawButton(mouseover)
         GuiDraw.drawStringC(text, position.x+size.width/2, position.y+(size.height-8)/2, if (mouseover) 0xFFFFFFA0 else 0xFFE0E0E0)
-        GL11.glColor4f(1, 1, 1, 1)
+        GlStateManager.color(1, 1, 1, 1)
     }
 }
 
@@ -117,8 +120,8 @@ class DotSelectNode extends ButtonNode
     override def drawButtonBackground(mouseover:Boolean)
     {
         super.drawButtonBackground(mouseover)
-        ResourceLib.guiExtras.bind()
-        GL11.glColor4f(1, 1, 1, 1)
+        TextureUtils.changeTexture(GuiLib.guiExtras)
+        GlStateManager.color(1, 1, 1, 1)
         drawTexturedModalRect(position.x, position.y, if (mouseover) 11 else 1, 1, 8, 8)
     }
 }
@@ -145,7 +148,7 @@ class CheckBoxNode extends ButtonNode with TButtonMC
     override def drawButton(mouseover:Boolean)
     {
         super.drawButton(mouseover)
-        ResourceLib.guiExtras.bind()
+        TextureUtils.changeTexture(GuiLib.guiExtras)
         val u = if (state) 17 else 1
         drawTexturedModalRect(position.x, position.y, u, 134, 14, 14)
     }

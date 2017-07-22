@@ -14,7 +14,7 @@ abstract class ParticleAction
     var life = 0
     var lastTime = 0.0
 
-    def tickLife() { life += 1}
+    def tickLife() {life += 1}
 
     def canOperate(p:CoreParticle) = true
 

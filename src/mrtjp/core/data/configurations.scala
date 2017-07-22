@@ -8,16 +8,16 @@ package mrtjp.core.data
 import java.io.File
 import java.util.{ArrayList => JAList}
 
-import cpw.mods.fml.client.IModGuiFactory
-import cpw.mods.fml.client.IModGuiFactory.RuntimeOptionCategoryElement
-import cpw.mods.fml.client.config.DummyConfigElement.DummyCategoryElement
-import cpw.mods.fml.client.config.{GuiConfig, IConfigElement}
-import cpw.mods.fml.client.event.ConfigChangedEvent
-import cpw.mods.fml.common.eventhandler.SubscribeEvent
-import cpw.mods.fml.common.{FMLCommonHandler, Loader}
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiScreen
 import net.minecraftforge.common.config.{ConfigElement, Configuration, Property}
+import net.minecraftforge.fml.client.IModGuiFactory
+import net.minecraftforge.fml.client.IModGuiFactory.RuntimeOptionCategoryElement
+import net.minecraftforge.fml.client.config.DummyConfigElement.DummyCategoryElement
+import net.minecraftforge.fml.client.config.{GuiConfig, IConfigElement}
+import net.minecraftforge.fml.client.event.ConfigChangedEvent
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import net.minecraftforge.fml.common.{FMLCommonHandler, Loader}
 
 import scala.collection.JavaConversions._
 
@@ -56,7 +56,7 @@ abstract class ModConfig(modID:String)
                 case _ => new Property(key, value.toString, propType)
             }
 
-            prop.comment = comment
+            prop.setComment(comment)
             if (force || !cat.containsKey(key)) cat.put(key, prop)
             prop = cat.get(key)
 
@@ -101,7 +101,7 @@ abstract class ModConfig(modID:String)
     @SubscribeEvent
     def onConfigChanged(event:ConfigChangedEvent.OnConfigChangedEvent)
     {
-        if (event.modID == modID)
+        if (event.getModID == modID)
         {
             initValues()
             config.save()
@@ -113,8 +113,8 @@ abstract class ModConfig(modID:String)
 
 object SpecialConfigGui
 {
-    def buildCategories(config:Configuration) =
-        new JAList[IConfigElement[_]](config.getCategoryNames.map(s =>
+    def buildCategories(config:Configuration):JAList[IConfigElement] =
+        new JAList[IConfigElement](config.getCategoryNames.map(s =>
         {
             new DummyCategoryElement(s, "", new ConfigElement(config.getCategory(s)).getChildElements)
             {

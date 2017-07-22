@@ -9,6 +9,7 @@ import java.util.Random
 
 import mrtjp.core.math.MathLib
 import net.minecraft.block.Block
+import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
 
 class WorldGenDecorator extends TWorldGenerator
@@ -27,8 +28,11 @@ class WorldGenDecorator extends TWorldGenerator
     var dy = 2
     var dz = 4
 
-    override def generate(w:World, rand:Random, xStart:Int, yStart:Int, zStart:Int) =
+    override def generate(w:World, rand:Random, pos:BlockPos) =
     {
+        val xStart = pos.getX
+        val yStart = pos.getY
+        val zStart = pos.getZ
         var generated = false
         for (i <- 0 until cluster.size)
         {
@@ -39,15 +43,16 @@ class WorldGenDecorator extends TWorldGenerator
             if (checkLocation(w, x, y, z))
             {
                 val (b, m) = MathLib.weightedRandom(cluster)
+                val state = b.getStateFromMeta(m)
                 val h = if (stackHeight > 1) rand.nextInt(stackHeight) else 0
 
                 import scala.util.control.Breaks._
                 breakable(for (s <- 0 to h)
                 {
-                    if (!checkStay || b.canBlockStay(w, x, y, z)) generated |= w.setBlock(x, y, z, b, m, 2)
+                    if (!checkStay) generated |= w.setBlockState(new BlockPos(x, y, z), state, 2)
                     else break()
                     y += 1
-                    if (!canSetBlock(w, x, y, z, material)) break()
+                    if (!canSetBlock(w, new BlockPos(x, y, z), material)) break()
                 })
             }
         }
@@ -56,9 +61,10 @@ class WorldGenDecorator extends TWorldGenerator
 
     def checkLocation(w:World, x:Int, y:Int, z:Int):Boolean =
     {
-        if (seeSky && !w.canBlockSeeTheSky(x, y, z)) return false
-        if (!canSetBlock(w, x, y, z, material)) return false
-        if (!canSetBlock(w, x, y-1, z, soil)) return false
+        val pos = new BlockPos(x,y,z)
+        if (seeSky && !w.canSeeSky(pos)) return false
+        if (!canSetBlock(w, pos, material)) return false
+        if (!canSetBlock(w, pos.down(), soil)) return false
         true
     }
 }

@@ -7,12 +7,12 @@ package mrtjp.core.gui
 
 import java.util.{List => JList}
 
-import cpw.mods.fml.relauncher.{Side, SideOnly}
 import mrtjp.core.inventory.InvWrapper
 import net.minecraft.client.Minecraft
 import net.minecraft.entity.player.EntityPlayer
-import net.minecraft.inventory.{Container, ICrafting, IInventory, Slot}
+import net.minecraft.inventory._
 import net.minecraft.item.ItemStack
+import net.minecraftforge.fml.relauncher.{Side, SideOnly}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{Buffer => MBuffer}
@@ -58,20 +58,21 @@ class NodeContainer extends Container
             addSlotToContainer(new Slot3(player.inventory, up(), x, y)) //slots
     }
 
-    override def addCraftingToCrafters(c:ICrafting)
+    override def addListener(listener:IContainerListener)
     {
-        super.addCraftingToCrafters(c)
-        c match {
+        super.addListener(listener)
+        listener match {
             case p:EntityPlayer if !p.worldObj.isRemote =>
                 startWatchDelegate(p)
             case _ =>
         }
     }
 
-    override def removeCraftingFromCrafters(c :ICrafting)
+
+    override def removeListener(listener:IContainerListener)
     {
-        super.removeCraftingFromCrafters(c)
-        c match {
+        super.removeListener(listener)
+        listener match {
             case p:EntityPlayer if !p.worldObj.isRemote =>
                 stopWatchDelegate(p)
             case _ =>
@@ -85,21 +86,50 @@ class NodeContainer extends Container
             stopWatchDelegate(p)
     }
 
-    override def slotClick(id:Int, mouse:Int, shift:Int, player:EntityPlayer):ItemStack =
+    /**
+      * Called when a slot in this container is clicked, or any other event that occurs
+      * that results in a item stack moving such as hotbar swapping w/ numbers 0-8.
+      * @param id The slot ID
+      * @param dragType Changes meaning depending on clickType:
+      *                 PICKUP: The mouse button 0 = left click, 1 = right click
+      *                 QUICK_MOVE: The mouse button
+      *                 SWAP: The keyboard key that was pressed 0 to 8
+      *                 QUICK_CRAFT: Some type of mask. Look at super method.
+      *                 PICKUP_ALL: The mouse button
+      *
+      * @param clickType The type of event that is being performed:
+      *                  PICKUP: the stack is trying to be picked up to or dropped from in the player's cursor.
+      *                          If the ID is -999, the player has clicked outside the window and wants to drop
+      *                          the item in-world.
+      *                  QUICK_MOVE: the stack was shift-clicked.
+      *                  SWAP: a number was pressed to swap a hotbar item.
+      *                  CLONE: Player has cloned item while in creative mode.
+      *                  THROW: Hotkey to throw item into the world was pressed.
+      *                  QUICK_CRAFT: The stack in-hand was dragged across several slots to split them up, or just simply
+      *                               right-clicked to deposit one of the items. Handled in super method. Too convoluted
+      *                               to understand, as Forge's documentation sucks. Best to just let MC handle this...
+      *                  PICKUP_ALL: When a slot with an item is double-clicked to pick up all matching items in the container.
+      *
+      *
+      *
+      * @param player The player that has this container open.
+      * @return
+      */
+    override def slotClick(id:Int, dragType:Int, clickType:ClickType, player:EntityPlayer):ItemStack =
     {
         try { //Ignore exceptions raised from client-side only slots that wont be found here. To be removed.
-            if (slots.isDefinedAt(id))
-            {
+            if (slots.isDefinedAt(id) && (clickType == ClickType.PICKUP || clickType == ClickType.QUICK_MOVE)) {
                 val slot = slots(id)
-                if (slot.phantomSlot) return handleGhostClick(slot, mouse, shift, player)
+                if (slot.phantomSlot)
+                    return handleGhostClick(slot, dragType, clickType, player)
             }
-            super.slotClick(id, mouse, shift, player)
+            super.slotClick(id, dragType, clickType, player)
         } catch {
             case e:Exception => null
         }
     }
 
-    private def handleGhostClick(slot:TSlot3, mouse:Int, shift:Int, player:EntityPlayer):ItemStack =
+    private def handleGhostClick(slot:TSlot3, mouse:Int, clickType:ClickType, player:EntityPlayer):ItemStack =
     {
         val inSlot = slot.getStack
         val inCursor = player.inventory.getItemStack
@@ -117,7 +147,7 @@ class NodeContainer extends Container
             }
             else if (inSlot != null)
             {
-                val toAdd = if (shift == 1) 10 else 1
+                val toAdd = if (clickType == ClickType.QUICK_MOVE) 10 else 1
                 if (mouse == 0) inSlot.stackSize = math.min(slot.getSlotStackLimit, inSlot.stackSize+toAdd)
                 else if (mouse == 1) inSlot.stackSize = math.max(0, inSlot.stackSize-toAdd)
                 if (inSlot.stackSize > 0) slot.putStack(inSlot)
@@ -156,10 +186,19 @@ class NodeContainer extends Container
         stack
     }
 
-    def doMerge(stack:ItemStack, from:Int) =
+    def doMerge(stack:ItemStack, from:Int):Boolean =
     {
-        if (slots.size-36 until slots.size contains from) tryMergeItemStack(stack, 0, slots.size-36, false)
-        else tryMergeItemStack(stack, slots.size-36, slots.size, false)
+        if (slots.size > 36) { //run standarm impl on containers w/ player inventory
+            if (slots.size-36 until slots.size contains from) { //if item is from player inventory...
+                return tryMergeItemStack(stack, 0, slots.size-36, false) //merge to rest of container
+            }
+            else { //else if item from outside player inventory...
+                if (tryMergeItemStack(stack, slots.size-36, slots.size-27, true)) return true //try merge to hotbar from back
+                if (tryMergeItemStack(stack, slots.size-27, slots.size, true)) return true //then try player inventory from back
+            }
+        }
+
+        false
     }
 
     def tryMergeItemStack(stack:ItemStack, start:Int, end:Int, reverse:Boolean) =
@@ -261,7 +300,7 @@ class Slot3(inv:IInventory, i:Int, x:Int, y:Int) extends Slot(inv, i, x, y) with
 trait TSlot3 extends Slot
 {
     var slotChangeDelegate = {() =>}
-    var canRemoveDelegate = {() => true}
+    var canRemoveDelegate = {() => !phantomSlot}
     var canPlaceDelegate = {(stack:ItemStack) => inventory.isItemValidForSlot(getSlotIndex, stack)}
     var slotLimitCalculator = {() => inventory.getInventoryStackLimit}
 

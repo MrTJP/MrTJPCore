@@ -5,26 +5,27 @@
  */
 package mrtjp.core.block
 
+import codechicken.lib.block.property.PropertyString
 import codechicken.lib.vec.Vector3
-import cpw.mods.fml.common.registry.GameRegistry
 import mrtjp.core.item.ItemDefinition
 import net.minecraft.block.Block
 import net.minecraft.block.material.Material
+import net.minecraft.block.state.IBlockState
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.{Item, ItemBlock, ItemStack}
 import net.minecraft.tileentity.TileEntity
+import net.minecraft.util.EnumFacing
+import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
+import net.minecraftforge.fml.common.registry.GameRegistry
 
-class BlockCore(name:String, mat:Material) extends Block(mat)
+class BlockCore(mat:Material) extends Block(mat)
 {
-    setBlockName(name)
-    GameRegistry.registerBlock(this, getItemBlockClass, name)
-
     def getItemBlockClass:Class[_ <: ItemBlock] = classOf[ItemBlockCore]
 
     def bindTile[A <: TileEntity](c:Class[A])
     {
-        GameRegistry.registerTileEntity(c, getUnlocalizedName)
+        GameRegistry.registerTileEntity(c, getRegistryName.toString)
     }
 }
 
@@ -37,12 +38,12 @@ class ItemBlockCore(b:Block) extends ItemBlock(b)
 
     override def getUnlocalizedName(stack:ItemStack) = super.getUnlocalizedName+"|"+stack.getItemDamage
 
-    override def placeBlockAt(stack:ItemStack, player:EntityPlayer, w:World, x:Int, y:Int, z:Int, side:Int, hitX:Float, hitY:Float, hitZ:Float, meta:Int) =
+    override def placeBlockAt(stack:ItemStack, player:EntityPlayer, w:World, pos:BlockPos, side:EnumFacing, hitX:Float, hitY:Float, hitZ:Float, newState:IBlockState) =
     {
-        val a = super.placeBlockAt(stack, player, w, x, y, z, side, hitX, hitY, hitZ, meta)
-        field_150939_a match
-        {
-            case b:InstancedBlock => b.postBlockSetup(w, x, y, z, side, meta, player, stack, new Vector3(hitX, hitY, hitZ))
+        val a = super.placeBlockAt(stack, player, w, pos, side, hitX, hitY, hitZ, newState)
+        block match {
+            case b:MultiTileBlock =>
+                b.postBlockSetup(w, pos, side.ordinal, player, stack, new Vector3(hitX, hitY, hitZ))
             case _ =>
         }
         a
@@ -56,5 +57,13 @@ abstract class BlockDefinition extends ItemDefinition
     override def getItem = Item.getItemFromBlock(getBlock)
     def getBlock:Block
 
-    class BlockDef extends ItemDef
+    class BlockDef(variantName:String) extends ItemDef(variantName)
+}
+
+trait TSimplePropertyString extends Block {
+    def getTypeProperty:PropertyString
+
+    override def getMetaFromState(state: IBlockState): Int = getTypeProperty.values.indexOf(state.getValue(getTypeProperty))
+
+    override def getStateFromMeta(meta: Int): IBlockState = getBlockState.getBaseState.withProperty(getTypeProperty, getTypeProperty.values.get(meta))
 }

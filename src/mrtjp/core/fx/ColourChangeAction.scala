@@ -39,11 +39,17 @@ class ColourChangeToAction extends ParticleAction
     {
         val c = p.asInstanceOf[TColourParticle]
 
-        if (time < duration)
-        {
+        if (time < duration) {
             val drgb = target.copy.subtract(c.rgb)
             val speed = drgb.copy.multiply(1/(duration-time)).multiply(deltaTime(time))
             c.rgb.add(speed)
+
+            if (c.rgb.x > 1) c.rgb.x = 1
+            if (c.rgb.y > 1) c.rgb.y = 1
+            if (c.rgb.z > 1) c.rgb.z = 1
+            if (c.rgb.x < 0) c.rgb.x = 0
+            if (c.rgb.y < 0) c.rgb.y = 0
+            if (c.rgb.z < 0) c.rgb.z = 0
         }
         else isFinished = true
     }
@@ -63,7 +69,15 @@ class ColourChangeForAction extends ParticleAction
     override def operate(p:CoreParticle, time:Double)
     {
         val c = p.asInstanceOf[TColourParticle]
-        if (time < duration) c.rgb.add(delta.copy.multiply(deltaTime(time)))
+        if (time < duration) {
+            c.rgb.add(delta.copy.multiply(deltaTime(time)))
+            if (c.rgb.x > 1) c.rgb.x = 1
+            if (c.rgb.y > 1) c.rgb.y = 1
+            if (c.rgb.z > 1) c.rgb.z = 1
+            if (c.rgb.x < 0) c.rgb.x = 0
+            if (c.rgb.y < 0) c.rgb.y = 0
+            if (c.rgb.z < 0) c.rgb.z = 0
+        }
         else isFinished = true
     }
 

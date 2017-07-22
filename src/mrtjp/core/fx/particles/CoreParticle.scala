@@ -6,28 +6,24 @@
 package mrtjp.core.fx.particles
 
 import mrtjp.core.fx.ParticleAction
-import net.minecraft.client.particle.EntityFX
-import net.minecraft.client.renderer.Tessellator
+import net.minecraft.client.particle.Particle
+import net.minecraft.client.renderer.VertexBuffer
+import net.minecraft.entity.Entity
 import net.minecraft.world.World
 
-import scala.collection.mutable.{ListBuffer, Seq => MSeq}
+import scala.collection.mutable.ListBuffer
 
-class CoreParticle(w:World) extends EntityFX(w, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D)
+class CoreParticle(w:World) extends Particle(w, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D)
 {
     motionX = 0.0D
     motionY = 0.0D
     motionZ = 0.0D
 
-    noClip = true
+    canCollide = false
     var hasVelocity = false
     var isImmortal = false
 
     private var actions = ListBuffer[ParticleAction]()
-
-    def setMaxAge(age:Int)
-    {
-        particleMaxAge = age
-    }
 
     def setAge(age:Int)
     {
@@ -56,25 +52,27 @@ class CoreParticle(w:World) extends EntityFX(w, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.
 
     override def onUpdate()
     {
-        ticksExisted += 1
-        prevDistanceWalkedModified = distanceWalkedModified
-
-        prevRotationPitch = rotationPitch
-        prevRotationYaw = rotationYaw
-
         if (hasVelocity) moveEntity(motionX, motionY, motionZ)
 
         actions.foreach(_.tickLife())
 
         particleAge += 1
-        if (particleAge > particleMaxAge && !isImmortal) setDead()
+        if (particleAge > particleMaxAge && !isImmortal) setExpired()
     }
 
-    override def entityInit(){}
-
-    override def renderParticle(t:Tessellator, frame:Float, cosyaw:Float, cospitch:Float, sinyaw:Float, sinsinpitch:Float, cossinpitch:Float)
+    override def renderParticle(buffer:VertexBuffer, entity:Entity, frame:Float, cosyaw:Float, cospitch:Float, sinyaw:Float, sinsinpitch:Float, cossinpitch:Float)
     {
         actions.foreach(_.runOn(this, frame))
         actions = actions.filterNot(_.isFinished)
     }
+
+    override def isTransparent = true
+
+    /**
+      * 0 - Particle Texture
+      * 1 - Block Texture
+      * 2 - ?
+      * 3 - Bind texture and draw yourself
+      */
+    override def getFXLayer = 0
 }

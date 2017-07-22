@@ -8,8 +8,8 @@ package mrtjp.core.gui
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.{FontRenderer, Gui}
+import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.texture.TextureManager
-import org.lwjgl.opengl.GL11
 
 trait TNode extends Gui
 {
@@ -23,14 +23,14 @@ trait TNode extends Gui
     var userInteractionEnabled = true
 
     def mcInst:Minecraft = Minecraft.getMinecraft
+    def soundHandler = mcInst.getSoundHandler
     def renderEngine:TextureManager = mcInst.renderEngine
-    def fontRenderer:FontRenderer = mcInst.fontRenderer
+    def fontRenderer:FontRenderer = mcInst.fontRendererObj
 
     def isRoot = this.isInstanceOf[NodeGui]
     def getRoot:NodeGui =
     {
-        def iterate(node:TNode):NodeGui = node match
-        {
+        def iterate(node:TNode):NodeGui = node match {
             case ng:NodeGui => ng
             case null => throw new Exception("Gui not found")
             case _ => iterate(node.parent)
@@ -41,8 +41,7 @@ trait TNode extends Gui
     def buildParentHierarchy(to:TNode) =
     {
         var hierarchy = Seq[TNode]()
-        def iterate(node:TNode)
-        {
+        def iterate(node:TNode) {
             hierarchy :+= node
             if (node.isRoot || node == to) return
             iterate(node.parent)
@@ -51,23 +50,30 @@ trait TNode extends Gui
         hierarchy
     }
 
-    def isDecendantOf(someParent:TNode) =
-        someParent != this && buildParentHierarchy(someParent).contains(someParent)
+    def isDecendantOf(someAncestor:TNode) =
+        someAncestor != this && buildParentHierarchy(someAncestor).contains(someAncestor)
+
+    def isRelativeOf(someRelative:TNode) =
+        someRelative != this && someRelative.getRoot == this.getRoot
 
     def convertPointToScreen(p:Point) = getRoot.position+convertPointTo(p, getRoot)
     def convertPointFromScreen(p:Point) = convertPointFrom(p, getRoot)-getRoot.position
 
     def convertPointTo(p:Point, to:TNode):Point =
     {
-        def fold(low:TNode, high:TNode)(op:(Point, TNode) => Point) =
+        def fold(low:TNode, high:TNode, p:Point)(op:(Point, TNode) => Point) =
             low.buildParentHierarchy(high).dropRight(1).foldLeft(p)(op)
 
-        def convertUp(low:TNode, high:TNode) = fold(low, high){_+_.position}
-        def convertDown(low:TNode, high:TNode) = fold(low, high){_-_.position}
+        def convertUp(low:TNode, high:TNode, p:Point) = fold(low, high, p){_+_.position}
+        def convertDown(high:TNode, low:TNode, p:Point) = fold(low, high, p){_-_.position}
 
         if (this == to) p
-        else if (this.isDecendantOf(to)) convertUp(this, to)
-        else if (to.isDecendantOf(this)) convertDown(to, this) //TODO sibling conversion by conv to screen, then conv from screen on other node
+//        else if (this isDecendantOf to) convertUp(this, to, p)
+//        else if (to isDecendantOf this) convertDown(this, to, p)
+        else if (this isRelativeOf to) { //TODO see if this still works...
+            val root = getRoot
+            convertDown(root, to, convertUp(this, root, p))
+        }
         else throw new Exception("Attempted to convert points between unrelated nodes.")
     }
     def convertPointFrom(p:Point, from:TNode):Point = from.convertPointTo(p, this)
@@ -115,8 +121,7 @@ trait TNode extends Gui
     def subTree(activeOnly:Boolean = false) =
     {
         val s = Seq.newBuilder[TNode]
-        def gather(children:Seq[TNode])
-        {
+        def gather(children:Seq[TNode]) {
             val ac = if (activeOnly) children.filter(c => !c.hidden && c.userInteractionEnabled) else children
             s ++= ac
             for (c <- ac) gather(c.children)
@@ -265,30 +270,18 @@ trait TNode extends Gui
         }
     }
 
-    protected[gui] def translateTo(){GL11.glTranslated(position.x, position.y, 0)}//zPosition-(if (parent == null) 0 else parent.zPosition))}
-    protected[gui] def translateFrom(){GL11.glTranslated(-position.x, -position.y, 0)}// -(zPosition-(if (parent == null) 0 else parent.zPosition)))}
+    protected[gui] def translateTo(){translate(position.x, position.y, 0)}//zPosition-(if (parent == null) 0 else parent.zPosition))}
+    protected[gui] def translateFrom(){translate(-position.x, -position.y, 0)}// -(zPosition-(if (parent == null) 0 else parent.zPosition)))}
 
     protected[gui] def translateToScreen()
     {
         val Point(sx, sy) = parent.convertPointToScreen(Point.zeroPoint)
-        GL11.glTranslated(-sx, -sy, 0)
+        translate(-sx, -sy, 0)
     }
     protected[gui] def translateFromScreen()
     {
         val Point(sx, sy) = parent.convertPointToScreen(Point.zeroPoint)
-        GL11.glTranslated(sx, sy, 0)
-    }
-
-    @deprecated(message = "deprecated. Use delegation")
-    protected final def startMessageChain(message:String)
-    {
-        if (!isRoot) parent.receiveMessage(message)
-    }
-    @deprecated(message = "deprecated. Use delegation")
-    protected final def receiveMessage(message:String)
-    {
-        receiveMessage_Impl(message)
-        if (!isRoot) parent.receiveMessage(message)
+        translate(sx, sy, 0)
     }
 
     /** IMPLEMENTATION OVERRIDES **/
@@ -377,14 +370,4 @@ trait TNode extends Gui
      * @param rframe The partial frame until the next frame.
      */
     def drawFront_Impl(mouse:Point, rframe:Float){}
-
-    /**
-     * Called when a subnode sends a message. This message is relayed to all
-     * supernodes one by one and stops at the root node.
-     *
-     * @param message The message that was sent by a subnode using
-     *                startMessageChain
-     */
-    @deprecated(message = "deprecated. Use delegation")
-    def receiveMessage_Impl(message:String){}
 }

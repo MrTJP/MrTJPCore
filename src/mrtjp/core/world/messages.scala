@@ -6,14 +6,14 @@
 package mrtjp.core.world
 
 import codechicken.lib.packet.PacketCustom
-import codechicken.lib.vec.BlockCoord
-import cpw.mods.fml.common.eventhandler.SubscribeEvent
 import mrtjp.core.handler.MrTJPCoreSPH
-import mrtjp.core.render.RenderTicker
 import net.minecraft.client.Minecraft
+import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.Tessellator
-import net.minecraft.client.renderer.entity.RenderManager
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats
+import net.minecraft.util.math.BlockPos
 import net.minecraftforge.client.event.RenderWorldLastEvent
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import org.lwjgl.opengl.GL11
 
 import scala.collection.mutable
@@ -39,7 +39,7 @@ object Messenger
      */
     def addMessage(x: Double, y: Double, z: Double, mail: String)
     {
-        val location = new BlockCoord(Math.floor(x).asInstanceOf[Int], Math.floor(y).asInstanceOf[Int], Math.floor(z).asInstanceOf[Int])
+        val location = new BlockPos(Math.floor(x).asInstanceOf[Int], Math.floor(y).asInstanceOf[Int], Math.floor(z).asInstanceOf[Int])
 
         val mess = new Message().set(location, x, y, z, mail)
 
@@ -51,47 +51,46 @@ object Messenger
     }
 
     @SubscribeEvent
-    def renderMessages(event: RenderWorldLastEvent)
+    def renderMessages(event:RenderWorldLastEvent)
     {
         val w = Minecraft.getMinecraft.theWorld
         if (w == null) return
-        if (Messenger.messages.size == 0) return
+        if (Messenger.messages.isEmpty) return
 
         val deathTime = System.currentTimeMillis-3000L
 
-        val view = Minecraft.getMinecraft.renderViewEntity
-        val cx = view.lastTickPosX+(view.posX-view.lastTickPosX)*event.partialTicks
-        val cy = view.lastTickPosY+(view.posY-view.lastTickPosY)*event.partialTicks
-        val cz = view.lastTickPosZ+(view.posZ-view.lastTickPosZ)*event.partialTicks
+        val view = Minecraft.getMinecraft.getRenderViewEntity
+        val cx = view.lastTickPosX+(view.posX-view.lastTickPosX)*event.getPartialTicks
+        val cy = view.lastTickPosY+(view.posY-view.lastTickPosY)*event.getPartialTicks
+        val cz = view.lastTickPosZ+(view.posZ-view.lastTickPosZ)*event.getPartialTicks
 
-        GL11.glPushMatrix()
-        GL11.glTranslated(-cx, -cy, -cz)
-        GL11.glPushAttrib(GL11.GL_BLEND)
-        GL11.glDisable(GL11.GL_LIGHTING)
-        GL11.glDepthMask(false)
-        GL11.glDisable(GL11.GL_DEPTH_TEST)
-        GL11.glEnable(GL11.GL_BLEND)
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
+        pushMatrix()
+        translate(-cx, -cy, -cz)
+        pushAttrib()
+        disableLighting()
+        depthMask(false)
+        disableDepth()
+        enableBlend()
+        blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
 
         for (m <- Messenger.messages.clone())
             if (m == null || m.receivedOn < deathTime) Messenger.messages -= m
-            else readMessage(m)
+            else readMessage(m, Minecraft.getMinecraft.theWorld.getTotalWorldTime+event.getPartialTicks)
 
-        GL11.glEnable(GL11.GL_LIGHTING)
-        GL11.glDisable(GL11.GL_BLEND)
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F)
-        GL11.glPopMatrix()
-        GL11.glPopAttrib()
+        enableLighting()
+        disableBlend()
+        color(1, 1, 1, 1)
+        popMatrix()
+        popAttrib()
     }
 
-    private def readMessage(m:Message)
+    private def readMessage(m:Message, time:Double)
     {
         var width = 0
         var height = 0
         val lines = m.msg.split("\n")
-        val fr = Minecraft.getMinecraft.fontRenderer
-        for (line <- lines)
-        {
+        val fr = Minecraft.getMinecraft.fontRendererObj
+        for (line <- lines) {
             height += fr.FONT_HEIGHT + 4
             width = Math.max(width, fr.getStringWidth(line))
         }
@@ -99,37 +98,39 @@ object Messenger
         width += 2
         var scaling: Float = 0.02666667F
         scaling *= 0.6666667F
-        val y = (m.y+0.04*Math.sin((m.x.asInstanceOf[Int]^m.z.asInstanceOf[Int])+RenderTicker.getRenderTime/4)+m.yOffset).asInstanceOf[Float]
+        val y = (m.y+0.04*Math.sin((m.x.asInstanceOf[Int]^m.z.asInstanceOf[Int])+time/4)+m.yOffset).asInstanceOf[Float]
 
-        GL11.glPushMatrix()
-        GL11.glTranslated(m.x + 0.5F, y, m.z + 0.5F)
-        GL11.glNormal3f(0.0F, 1.0F, 0.0F)
-        GL11.glRotatef((-RenderManager.instance.playerViewY+8*Math.sin((m.x.asInstanceOf[Int]^m.z.asInstanceOf[Int])+RenderTicker.getRenderTime/6)).asInstanceOf[Float], 0.0F, 1.0F, 0.0F)
-        GL11.glRotatef(RenderManager.instance.playerViewX, 1.0F, 0.0F, 0.0F)
-        GL11.glScalef(-scaling, -scaling, scaling)
-        GL11.glTranslatef(0.0F, -10*lines.length, 0.0F)
+        pushMatrix()
+        translate(m.x + 0.5F, y, m.z + 0.5F)
+        glNormal3f(0.0F, 1.0F, 0.0F)
+        rotate((-Minecraft.getMinecraft.getRenderManager.playerViewY+8*Math.sin((m.x.asInstanceOf[Int]^m.z.asInstanceOf[Int])+time/6)).asInstanceOf[Float], 0.0F, 1.0F, 0.0F)
+        rotate(Minecraft.getMinecraft.getRenderManager.playerViewX, 1.0F, 0.0F, 0.0F)
+        scale(-scaling, -scaling, scaling)
+        translate(0.0F, -10*lines.length, 0.0F)
 
-        val tess = Tessellator.instance
         val var16 = (lines.length-1)*10
         val var17 = width/2
 
-        GL11.glDisable(GL11.GL_TEXTURE_2D)
-        tess.startDrawingQuads()
-        tess.setColorRGBA_F(0.0F, 0.0F, 0.0F, 0.25F)
-        tess.addVertex(-var17-1, -1.0D, 0.0D)
-        tess.addVertex(-var17-1, 8+var16, 0.0D)
-        tess.addVertex(var17+1, 8+var16, 0.0D)
-        tess.addVertex(var17+1, -1.0D, 0.0D)
-        tess.draw
+        disableTexture2D()
+        color(0, 0, 0, 0.25f)
 
-        GL11.glEnable(GL11.GL_TEXTURE_2D)
+        val tess = Tessellator.getInstance()
+        val vb = tess.getBuffer
+        vb.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION)
+        vb.pos(-var17-1, -1.0D, 0.0D).endVertex()
+        vb.pos(-var17-1, 8+var16, 0.0D).endVertex()
+        vb.pos(var17+1, 8+var16, 0.0D).endVertex()
+        vb.pos(var17+1, -1.0D, 0.0D).endVertex()
+        tess.draw()
+
+        enableTexture2D()
+
         var i = 0
-        for (line <- lines)
-        {
+        for (line <- lines) {
             fr.drawString(line, -fr.getStringWidth(line)/2, 10*i, -1)
             i += 1
         }
-        GL11.glPopMatrix()
+        popMatrix()
     }
 }
 
@@ -180,7 +181,7 @@ object Combine extends MailOption
 
 class Message
 {
-    def set(location:BlockCoord, x: Double, y: Double, z: Double, msg: String) =
+    def set(location:BlockPos, x: Double, y: Double, z: Double, msg: String) =
     {
         this.receivedOn = System.currentTimeMillis
         this.msg = msg
@@ -197,7 +198,7 @@ class Message
         this
     }
 
-    var location:BlockCoord = null
+    var location:BlockPos = null
     var x = 0.0D
     var y = 0.0D
     var z = 0.0D

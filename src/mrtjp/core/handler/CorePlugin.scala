@@ -7,8 +7,7 @@ package mrtjp.core.handler
 
 import java.util.{Map => JMap}
 
-import codechicken.core.launch.DepLoader
-import cpw.mods.fml.relauncher.{IFMLCallHook, IFMLLoadingPlugin}
+import net.minecraftforge.fml.relauncher.{IFMLCallHook, IFMLLoadingPlugin}
 
 class CorePlugin extends IFMLLoadingPlugin with IFMLCallHook
 {
@@ -24,7 +23,6 @@ class CorePlugin extends IFMLLoadingPlugin with IFMLCallHook
 
     override def call():Void =
     {
-        DepLoader.load()
         null
     }
 }

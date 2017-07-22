@@ -6,12 +6,16 @@
 package mrtjp.core.fx.particles
 
 import codechicken.lib.render.CCRenderState
+import codechicken.lib.texture.TextureUtils
 import codechicken.lib.vec.Vector3
 import mrtjp.core.fx.{TAlphaParticle, TColourParticle, TTextureParticle}
-import net.minecraft.client.particle.EntityFX
-import net.minecraft.client.renderer.Tessellator
+import net.minecraft.client.particle.Particle
+import net.minecraft.client.renderer.GlStateManager._
+import net.minecraft.client.renderer.VertexBuffer
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats
+import net.minecraft.entity.Entity
 import net.minecraft.world.World
-import org.lwjgl.opengl.GL11._
+import org.lwjgl.opengl.GL11
 
 class BeamMulti(w:World) extends CoreParticle(w) with TAlphaParticle with TColourParticle with TTextureParticle
 {
@@ -20,24 +24,28 @@ class BeamMulti(w:World) extends CoreParticle(w) with TAlphaParticle with TColou
 
     var points = Seq.empty[Vector3]
 
-    override def renderParticle(t:Tessellator, frame:Float, cosyaw:Float, cospitch:Float, sinyaw:Float, sinsinpitch:Float, cossinpitch:Float)
-    {
-        super.renderParticle(t, frame, cosyaw, cospitch, sinyaw, sinsinpitch, cossinpitch)
 
-        if (points.nonEmpty)
+    override def onUpdate()
+    {
+        super.onUpdate()
+//        println("alpha: "+alpha)
+    }
+
+    override def renderParticle(buffer:VertexBuffer, entity:Entity, frame:Float, cosyaw:Float, cospitch:Float, sinyaw:Float, sinsinpitch:Float, cossinpitch:Float)
+    {
+        super.renderParticle(buffer, entity, frame, cosyaw, cospitch, sinyaw, sinsinpitch, cossinpitch)
+        if (points.size > 1)
         {
-            t.draw()
-            CCRenderState.changeTexture(texture)
+            TextureUtils.changeTexture(texture)
             for (i <- 1 until points.size)
-                drawBeam(points(i), points(i-1), frame)
-            t.startDrawingQuads()
+                drawBeam(buffer, points(i-1), points(i), frame)
         }
     }
 
-    def drawBeam(p1:Vector3, p2:Vector3, f:Float)
+    def drawBeam(buffer:VertexBuffer, p1:Vector3, p2:Vector3, f:Float)
     {
         val var9 = 1.0F
-        val slide = ticksExisted
+        val slide = getAge
         val size = 0.7F
         val dp = p1.copy.subtract(p2)
         val dptx = dp.x
@@ -47,22 +55,30 @@ class BeamMulti(w:World) extends CoreParticle(w) with TAlphaParticle with TColou
         val rotationYaw = (math.atan2(dptx, dptz)*180.0D/math.Pi).toFloat
         val rotationPitch = (math.atan2(dpty, math.sqrt(dptx*dptx+dptz*dptz))*180.0D/math.Pi).toFloat
 
-        glPushMatrix()
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 10497.0F)
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 10497.0F)
-        glDisable(GL_CULL_FACE)
+        val r = red.toFloat
+        val g = green.toFloat
+        val b = blue.toFloat
+        val a = alpha.toFloat
 
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE)
-        glDepthMask(false)
+        pushMatrix()
+        glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, 10497.0F)
+        glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, 10497.0F)
+        disableCull()
+        disableLighting()
+        enableBlend()
+        blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE)
+        alphaFunc(516, 0.003921569F)
+        depthMask(false)
+        color(1.0F, 1.0F, 1.0F, 1.0F)
 
-        val xx = p1.x-EntityFX.interpPosX
-        val yy = p1.y-EntityFX.interpPosY
-        val zz = p1.z-EntityFX.interpPosZ
-        glTranslated(xx, yy, zz)
+        val xx = p1.x-Particle.interpPosX
+        val yy = p1.y-Particle.interpPosY
+        val zz = p1.z-Particle.interpPosZ
+        translate(xx, yy, zz)
 
-        glRotatef(90.0F, 1.0F, 0.0F, 0.0F)
-        glRotatef(180.0F+rotationYaw, 0.0F, 0.0F, -1.0F)
-        glRotatef(rotationPitch, 1.0F, 0.0F, 0.0F)
+        rotate(90.0F, 1.0F, 0.0F, 0.0F)
+        rotate(180.0F+rotationYaw, 0.0F, 0.0F, -1.0F)
+        rotate(rotationPitch, 1.0F, 0.0F, 0.0F)
 
         val var11 = slide+f
         val var12 = -var11*0.2F-math.floor(-var11*0.1F)
@@ -77,22 +93,29 @@ class BeamMulti(w:World) extends CoreParticle(w) with TAlphaParticle with TColou
             val var35 = -1.0F+var12+t/3.0F
             val var37 = length*var9+var35
 
-            glRotatef(90.0F, 0.0F, 1.0F, 0.0F)
-            import net.minecraft.client.renderer.Tessellator.{instance => tess}
-            tess.startDrawingQuads()
-            tess.setBrightness(200)
-            tess.setColorRGBA_F(red.toFloat, green.toFloat, blue.toFloat, alpha.toFloat)
-            tess.addVertexWithUV(var44, var29, 0.0D, var33, var37)
-            tess.addVertexWithUV(var44, 0.0D, 0.0D, var33, var35)
-            tess.addVertexWithUV(var17, 0.0D, 0.0D, var31, var35)
-            tess.addVertexWithUV(var17, var29, 0.0D, var31, var37)
-            tess.draw()
+            rotate(90.0F, 0.0F, 1.0F, 0.0F)
+
+            val rs = CCRenderState.instance()
+
+            rs.reset()
+            rs.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR, buffer)
+
+            buffer.pos(var44, var29, 0.0D).tex(var33, var37).color(r, g, b, a).endVertex()
+            buffer.pos(var44, 0.0D, 0.0D).tex(var33, var35).color(r, g, b, a).endVertex()
+            buffer.pos(var17, 0.0D, 0.0D).tex(var31, var35).color(r, g, b, a).endVertex()
+            buffer.pos(var17, var29, 0.0D).tex(var31, var37).color(r, g, b, a).endVertex()
+
+            rs.draw()
         }
 
-        glColor4f(1.0F, 1.0F, 1.0F, 1.0F)
-        glDepthMask(true)
-        glBlendFunc(GL_SRC_ALPHA, 771)
-        glEnable(GL_CULL_FACE)
-        glPopMatrix()
+        depthMask(true)
+        alphaFunc(516, 0.1F)
+        disableBlend()
+        blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
+        enableLighting()
+        enableCull()
+        popMatrix()
     }
+
+    override def getFXLayer = 3
 }

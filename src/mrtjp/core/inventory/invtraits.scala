@@ -10,40 +10,41 @@ import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.inventory.IInventory
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.{NBTTagCompound, NBTTagList}
+import net.minecraft.util.math.BlockPos
+import net.minecraft.util.text.TextComponentString
 import net.minecraft.world.World
 
 trait TInventory extends IInventory
 {
-    def size:Int
-    def name:String
-    def stackLimit = 64
-
-    private val storage = new Array[ItemStack](size)
+    protected val storage:Array[ItemStack]
 
     override def getSizeInventory = storage.length
-    override def getInventoryStackLimit = stackLimit
-    override def hasCustomInventoryName = true
-    override def getInventoryName = name
+
+    override def hasCustomName = true
+    override def getDisplayName = new TextComponentString(getName)
+
     override def isUseableByPlayer(player:EntityPlayer) = true
     override def isItemValidForSlot(slot:Int, item:ItemStack) = true
 
-    override def openInventory(){}
-    override def closeInventory(){}
+    override def openInventory(player:EntityPlayer){}
+    override def closeInventory(player:EntityPlayer){}
 
     override def getStackInSlot(slot:Int) = storage(slot)
-    override def getStackInSlotOnClosing(slot:Int):ItemStack =
-    {
-        val stack = storage(slot)
-        if (stack == null) return null
-        storage(slot) = null
-        markDirty()
-        stack
-    }
 
     override def setInventorySlotContents(slot:Int, item:ItemStack)
     {
         storage(slot) = item
         markDirty()
+    }
+
+    override def removeStackFromSlot(slot:Int) =
+    {
+        val stack = storage(slot)
+        if (stack != null) {
+            storage(slot) = null
+            markDirty()
+        }
+        stack
     }
 
     override def decrStackSize(slot:Int, count:Int):ItemStack =
@@ -66,7 +67,17 @@ trait TInventory extends IInventory
         }
     }
 
-    def loadInv(tag:NBTTagCompound){ loadInv(tag, name) }
+    override def clear()
+    {
+        for (i <- 0 until storage.length)
+            storage(i) = null
+    }
+
+    override def getFieldCount = 0
+    override def getField(id:Int) = 0
+    override def setField(id:Int, value:Int){}
+
+    def loadInv(tag:NBTTagCompound){ loadInv(tag, getName) }
     def loadInv(tag:NBTTagCompound, prefix:String)
     {
         val tag1 = tag.getTagList(prefix+"items", 10)
@@ -79,7 +90,7 @@ trait TInventory extends IInventory
         }
     }
 
-    def saveInv(tag:NBTTagCompound){ saveInv(tag, name) }
+    def saveInv(tag:NBTTagCompound){ saveInv(tag, getName) }
     def saveInv(tag:NBTTagCompound, prefix:String)
     {
         val itemList = new NBTTagList
@@ -95,10 +106,9 @@ trait TInventory extends IInventory
         tag.setInteger(prefix+"itemsCount", storage.length)
     }
 
-    def dropInvContents(w:World, x:Int, y:Int, z:Int)
+    def dropInvContents(w:World, pos:BlockPos)
     {
-        if (w.isRemote) return
-        for (i <- storage) if (i != null) WorldLib.dropItem(w, x, y, z, i)
+        for (i <- storage) if (i != null) WorldLib.dropItem(w, pos, i)
         for (i <- 0 until storage.length) storage(i) = null
         markDirty()
     }

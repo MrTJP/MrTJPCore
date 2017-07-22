@@ -28,6 +28,8 @@ class AlphaChangeToAction extends ParticleAction
             val da = target-p2.alpha
             val speed = da*(1/(duration-time))*deltaTime(time)
             p2.alpha = p2.alpha+speed
+            if (p2.alpha > 1.0) p2.alpha = 1.0
+            if (p2.alpha < 0.0) p2.alpha = 0
         }
         else isFinished = true
     }
@@ -50,7 +52,11 @@ class AlphaChangeForAction extends ParticleAction
     {
         val p2 = p.asInstanceOf[TAlphaParticle]
 
-        if (time < duration) p2.alpha = p2.alpha+delta*deltaTime(time)
+        if (time < duration) {
+            p2.alpha = p2.alpha+delta*deltaTime(time)
+            if (p2.alpha > 1.0) p2.alpha = 1.0
+            if (p2.alpha < 0.0) p2.alpha = 0
+        }
         else isFinished = true
     }
 

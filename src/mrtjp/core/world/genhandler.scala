@@ -7,19 +7,19 @@ package mrtjp.core.world
 
 import java.util.Random
 
-import cpw.mods.fml.common.eventhandler.SubscribeEvent
-import cpw.mods.fml.common.gameevent.TickEvent.{Phase, WorldTickEvent}
-import cpw.mods.fml.common.registry.GameRegistry
-import cpw.mods.fml.common.{FMLCommonHandler, IWorldGenerator}
-import cpw.mods.fml.relauncher.Side
 import mrtjp.core.handler.MrTJPConfig
 import mrtjp.core.handler.MrTJPCoreMod.log
 import net.minecraft.nbt.{NBTTagCompound, NBTTagList, NBTTagString}
 import net.minecraft.world.World
-import net.minecraft.world.chunk.IChunkProvider
+import net.minecraft.world.chunk.{IChunkGenerator, IChunkProvider}
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.common.util.Constants
 import net.minecraftforge.event.world.ChunkDataEvent
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import net.minecraftforge.fml.common.gameevent.TickEvent.{Phase, WorldTickEvent}
+import net.minecraftforge.fml.common.{FMLCommonHandler, IWorldGenerator}
+import net.minecraftforge.fml.common.registry.GameRegistry
+import net.minecraftforge.fml.relauncher.Side
 
 import scala.collection.mutable.{Queue => MQueue}
 
@@ -46,7 +46,7 @@ object SimpleGenHandler extends IWorldGenerator
         MinecraftForge.EVENT_BUS.register(this)
         MinecraftForge.ORE_GEN_BUS.register(this)
 
-        if (retroGen) FMLCommonHandler.instance.bus.register(this)
+        if (retroGen) MinecraftForge.EVENT_BUS.register(this)
     }
 
     def registerStructure(struct:ISimpleStructureGen)
@@ -78,7 +78,7 @@ object SimpleGenHandler extends IWorldGenerator
     {
         if (retroGen)
         {
-            val dim = event.world.provider.dimensionId
+            val dim = event.getWorld.provider.getDimension
             val tag = event.getData.getTag(tagDB).asInstanceOf[NBTTagCompound]
             val list = if (tag == null) new NBTTagList else tag.getTagList("StructList", Constants.NBT.TAG_STRING)
 
@@ -92,7 +92,7 @@ object SimpleGenHandler extends IWorldGenerator
         }
     }
 
-    override def generate(rand:Random, chunkX:Int, chunkZ:Int, world:World, g:IChunkProvider, p:IChunkProvider)
+    override def generate(rand:Random, chunkX:Int, chunkZ:Int, world:World, g:IChunkGenerator, p:IChunkProvider)
     {
         subGenerate(world, chunkX, chunkZ, rand, false)
     }
@@ -112,7 +112,7 @@ object SimpleGenHandler extends IWorldGenerator
         if (event.side != Side.SERVER || event.phase != Phase.END) return
 
         val world = event.world
-        val dim = world.provider.dimensionId
+        val dim = world.provider.getDimension
 
         if (world.getWorldTime%10 != 0) return //Don't gen too quickly
         if (!genQueue.contains(dim)) return

@@ -7,9 +7,11 @@ package mrtjp.core.world
 
 import java.util.Random
 
+import codechicken.lib.util.BlockUtils
 import mrtjp.core.math.MathLib
 import net.minecraft.block.Block
 import net.minecraft.init.Blocks
+import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
 
 import scala.collection.mutable.{HashMap => MHashMap, Queue => MQueue}
@@ -28,22 +30,26 @@ class WorldGenVolcanic extends TWorldGenerator
     private val stack = MQueue[(Int, Int, Int)]()
     private val test = MHashMap[(Int, Int), Int]()
 
-    override def generate(w:World, rand:Random, x:Int, y:Int, z:Int):Boolean =
+    override def generate(w:World, rand:Random, pos:BlockPos):Boolean =
     {
-        if (!canSetBlock(w, x, y, z, materialStart)) return false
+        if (!canSetBlock(w, pos, materialStart)) return false
         stack.clear()
         test.clear()
 
-        val swh = WorldLib.findSurfaceHeight(w, x, z)
+        val x = pos.getX
+        val z = pos.getZ
+
+        val swh = WorldLib.findSurfaceHeight(w, pos).getY
         var n = swh
 
-        for (i <- y until swh)
+        for (i <- pos.getY until swh)
         {
-            setBlock(w, x, i, z, liq, material)
-            setBlock(w, x-1, i, z, conduitCluster, material)
-            setBlock(w, x+1, i, z, conduitCluster, material)
-            setBlock(w, x, i, z-1, conduitCluster, material)
-            setBlock(w, x, i, z+1, conduitCluster, material)
+            val p = new BlockPos(x, i, z)
+            setBlock(w, p, liq, material)
+            setBlock(w, p.north, conduitCluster, material)
+            setBlock(w, p.south, conduitCluster, material)
+            setBlock(w, p.east, conduitCluster, material)
+            setBlock(w, p.west, conduitCluster, material)
         }
 
         val head = 3+rand.nextInt(4)
@@ -56,7 +62,7 @@ class WorldGenVolcanic extends TWorldGenerator
         {
             while (stack.size == 0)
             {
-                setBlock(w, x, n, z, liq, material)
+                setBlock(w, new BlockPos(x, n, z), liq, material)
                 test.clear()
                 enqueueBlocks(x, n, z, head, rand)
                 n += 1
@@ -64,17 +70,17 @@ class WorldGenVolcanic extends TWorldGenerator
             }
 
             val (i, j, k) = stack.dequeue()
-            w.getBlock(i, 64, k) //force chunk generation
-            if (w.getChunkProvider.chunkExists(i>>4, k>>4) && test.contains((i, k)))
+            w.getBlockState(new BlockPos(i, 64, k)) //force chunk generation
+            if (w.isBlockLoaded(new BlockPos(i, 64, k)) && test.contains((i, k)))
             {
                 var pow = test((i, k))
-                var hm = w.getHeightValue(i, k)+1
+                var hm = w.getHeightmapHeight(i, k)+1
                 while (hm > 0 && isUnimportant(w, i, hm-1, k)) hm -= 1
 
                 if (hm <= j) if (isUnimportant(w, i, hm, k))
                 {
                     purgeArea(w, i, hm, k)
-                    setBlock(w, i, hm, k, ashCluster, material)
+                    setBlock(w, new BlockPos(i, hm, k), ashCluster, material)
                     if (j > hm) pow = math.max(pow, spread)
                     enqueueBlocks(i, hm, k, pow, rand)
                     size -= 1
@@ -82,15 +88,15 @@ class WorldGenVolcanic extends TWorldGenerator
             }
         })
 
-        setBlock(w, x, n, z, liq, material)
-        while (n >= swh && liq._1 == w.getBlock(x, n, z))
+        setBlock(w, new BlockPos(x, n, z), liq, material)
+        var p = new BlockPos(x, n, z)
+        while (n >= swh && liq._1 == w.getBlockState(p).getBlock)
         {
-            w.markBlockForUpdate(x, n, z)
-            w.notifyBlocksOfNeighborChange(x, n, z, liq._1)
-            w.notifyBlockOfNeighborChange(x, n, z, liq._1)
-            w.scheduledUpdatesAreImmediate = true
-            liq._1.updateTick(w, x, n, z, w.rand)
-            w.scheduledUpdatesAreImmediate = false
+            p = new BlockPos(x, n, z)
+            BlockUtils.fireBlockUpdate(w, p)
+            w.notifyNeighborsOfStateChange(p, liq._1)
+            w.notifyBlockOfStateChange(p, liq._1)
+            w.immediateBlockTick(p, w.getBlockState(p), w.rand)
             n -= 1
         }
         true
@@ -98,12 +104,13 @@ class WorldGenVolcanic extends TWorldGenerator
 
     private def purgeArea(w:World, x:Int, y:Int, z:Int)
     {
-        if (w.isAirBlock(x, y, z)) return
+        if (w.isAirBlock(new BlockPos(x, y, z))) return
         for (i <- -1 to 1) for (j <- -1 to 1)
         {
-            val b = w.getBlock(x+i, y, z+j)
-            if ((b == Blocks.snow) || WorldLib.isAssociatedTreeBlock(w, x+i, y, z+j, b))
-                w.setBlockToAir(x+i, y, z+j)
+            val p = new BlockPos(x+i, y, z+j)
+            val b = w.getBlockState(p)
+            if ((b.getBlock == Blocks.SNOW) || WorldLib.isAssociatedTreeBlock(w, p, b))
+                w.setBlockToAir(p)
         }
         purgeArea(w, x, y+1, z)
     }
@@ -132,9 +139,11 @@ class WorldGenVolcanic extends TWorldGenerator
 
     private def isUnimportant(w:World, x:Int, y:Int, z:Int):Boolean =
     {
-        val b = w.getBlock(x, y, z)
-        if (WorldLib.isBlockSoft(w, x, y, z, b) || WorldLib.isAssociatedTreeBlock(w, x, y, z, b)) return true
-        if (b == Blocks.flowing_water || b == Blocks.water ||b == Blocks.snow || b == Blocks.ice) return true
+        val p = new BlockPos(x,y,z)
+        val s = w.getBlockState(p)
+        val b = s.getBlock
+        if (WorldLib.isBlockSoft(w, p, s) || WorldLib.isAssociatedTreeBlock(w, p, s)) return true
+        if (b == Blocks.FLOWING_WATER || b == Blocks.WATER ||b == Blocks.SNOW || b == Blocks.ICE) return true
         false
     }
 }

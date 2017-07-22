@@ -12,12 +12,10 @@ import codechicken.lib.vec.{Scale, Vector3}
 import mrtjp.core.item.ItemKeyStack
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.entity.RenderItem
+import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.{OpenGlHelper, RenderHelper}
 import net.minecraft.item.ItemStack
-import net.minecraft.util.EnumChatFormatting
-import org.lwjgl.opengl.GL11._
-import org.lwjgl.opengl.GL12
+import net.minecraft.util.text.TextFormatting
 
 class ItemListNode extends TNode
 {
@@ -109,8 +107,8 @@ class ItemDisplayNode extends TNode
 
         import scala.collection.JavaConversions._
         val lines = stack.makeStack.getTooltip(mcInst.thePlayer,
-            mcInst.gameSettings.advancedItemTooltips).asInstanceOf[JList[String]]
-        val l2 = Seq(lines.head)++lines.tail.map(EnumChatFormatting.GRAY+_)
+            mcInst.gameSettings.advancedItemTooltips)
+        val l2 = Seq(lines.head)++lines.tail.map(TextFormatting.GRAY + _)
         GuiDraw.drawMultilineTip(mx+12, my-12, l2)
 
         translateFromScreen()
@@ -120,32 +118,30 @@ class ItemDisplayNode extends TNode
 
 object ItemDisplayNode
 {
-    val renderItem = new RenderItem
+    val renderItem = Minecraft.getMinecraft.getRenderItem
 
     def renderItem(position:Point, size:Size, zPosition:Double, drawNumber:Boolean, stack:ItemStack)
     {
-        val font = stack.getItem.getFontRenderer(stack) match
-        {
-            case null => Minecraft.getMinecraft.fontRenderer
+        val font = stack.getItem.getFontRenderer(stack) match {
+            case null => Minecraft.getMinecraft.fontRendererObj
             case r => r
         }
-        val renderEngine = Minecraft.getMinecraft.renderEngine
 
         val f = font.getUnicodeFlag
         font.setUnicodeFlag(true)
 
         glItemPre()
-        glPushMatrix()
+        pushMatrix()
         new Scale(size.width/16.0, size.height/16.0, 1)
                 .at(new Vector3(position.x, position.y, 0)).glApply()
 
         renderItem.zLevel = (zPosition+10.0).toFloat
-        glEnable(GL_DEPTH_TEST)
-        glEnable(GL_LIGHTING)
-        renderItem.renderItemAndEffectIntoGUI(font, renderEngine, stack, position.x, position.y)
-        renderItem.renderItemOverlayIntoGUI(font, renderEngine, stack, position.x, position.y, "")
-        glDisable(GL_LIGHTING)
-        glDisable(GL_DEPTH_TEST)
+        enableDepth()
+        enableLighting()
+        renderItem.renderItemAndEffectIntoGUI(stack, position.x, position.y)
+        renderItem.renderItemOverlayIntoGUI(font, stack, position.x, position.y, "")
+        disableLighting()
+        disableDepth()
         renderItem.zLevel = zPosition.toFloat
 
         if (drawNumber)
@@ -158,8 +154,7 @@ object ItemDisplayNode
                 else stack.stackSize/1000000+"M"
             font.drawStringWithShadow(s, position.x+19-2-font.getStringWidth(s), position.y+6+3, 16777215)
         }
-
-        glPopMatrix()
+        popMatrix()
         glItemPost()
 
         font.setUnicodeFlag(f)
@@ -167,19 +162,19 @@ object ItemDisplayNode
 
     def glItemPre()
     {
-        glPushMatrix()
-        glColor4f(1.0F, 1.0F, 1.0F, 1.0F)
+        pushMatrix()
+        color(1.0F, 1.0F, 1.0F, 1.0F)
         RenderHelper.enableGUIStandardItemLighting()
-        glEnable(GL12.GL_RESCALE_NORMAL)
+        enableRescaleNormal()
         OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240/1.0F, 240/1.0F)
-        glDisable(GL_DEPTH_TEST)
-        glDisable(GL_LIGHTING)
+        disableDepth()
+        disableLighting()
     }
 
     def glItemPost()
     {
-        glEnable(GL_DEPTH_TEST)
-        glPopMatrix()
+        enableDepth()
+        popMatrix()
     }
 
 }
