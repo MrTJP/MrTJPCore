@@ -14,13 +14,13 @@ object ItemKey
 {
     def get(stack:ItemStack):ItemKey = //TODO remove sanity check, should be done externally
     {
-        if (stack == null) null
+        if (stack.isEmpty) null
         else new ItemKey(stack.getItem, stack.getItemDamage, stack.getTagCompound)
     }
 
     def getOrNull(stack:ItemStack):ItemKey =
     {
-        if (stack == null) null
+        if (stack.isEmpty) null
         else get(stack)
     }
 }

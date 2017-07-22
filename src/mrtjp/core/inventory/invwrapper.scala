@@ -31,12 +31,12 @@ object InvWrapper
 
     def areItemsStackable(stack1:ItemStack, stack2:ItemStack):Boolean =
     {
-        stack1 == null || stack2 == null || areItemsSame(stack1, stack2) && stack1.isStackable && stack2.isStackable
+        stack1.isEmpty || stack2.isEmpty || areItemsSame(stack1, stack2) && stack1.isStackable && stack2.isStackable
     }
 
     def areItemsSame(stack1:ItemStack, stack2:ItemStack):Boolean =
     {
-        if (stack1 == null || stack2 == null) return stack1 == stack2
+        if (stack1.isEmpty || stack2.isEmpty) return stack1 == stack2
         stack1.getItem == stack2.getItem && stack2.getItemDamage == stack1.getItemDamage && ItemStack.areItemStackTagsEqual(stack2, stack1)
     }
 
@@ -267,7 +267,7 @@ trait TDefWrapHandler extends InvWrapper
             val s = inv.getStackInSlot(slot)
             if (canInsertItem(slot, item2))
             {
-                if (s == null) space += slotStackLimit
+                if (s.isEmpty) space += slotStackLimit
                 else if (InvWrapper.areItemsStackable(s, item2)) space += slotStackLimit-s.getCount
             }
         }
@@ -283,7 +283,7 @@ trait TDefWrapHandler extends InvWrapper
             val s = inv.getStackInSlot(slot)
             if (canInsertItem(slot, item2))
             {
-                if (s == null) return true
+                if (s.isEmpty) return true
                 else if (InvWrapper.areItemsStackable(s, item2) && slotStackLimit-s.getCount > 0) return true
             }
         }

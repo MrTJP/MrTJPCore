@@ -42,8 +42,8 @@ trait TInventory extends IInventory
     override def removeStackFromSlot(slot:Int) =
     {
         val stack = storage(slot)
-        if (stack != null) {
-            storage(slot) = null
+        if (!stack.isEmpty) {
+            storage(slot) = ItemStack.EMPTY
             markDirty()
         }
         stack
@@ -52,7 +52,7 @@ trait TInventory extends IInventory
     override def decrStackSize(slot:Int, count:Int):ItemStack =
     {
         val stack = storage(slot)
-        if (stack == null) return null
+        if (stack.isEmpty) return ItemStack.EMPTY
 
         if (stack.getCount > count)
         {
@@ -63,7 +63,7 @@ trait TInventory extends IInventory
         else
         {
             val out = stack
-            storage(slot) = null
+            storage(slot) = ItemStack.EMPTY
             markDirty()
             out
         }
@@ -71,8 +71,8 @@ trait TInventory extends IInventory
 
     override def clear()
     {
-        for (i <- 0 until storage.length)
-            storage(i) = null
+        for (i <- storage.indices)
+            storage(i) = ItemStack.EMPTY
     }
 
     override def getFieldCount = 0
@@ -97,7 +97,7 @@ trait TInventory extends IInventory
     def saveInv(tag:NBTTagCompound, prefix:String)
     {
         val itemList = new NBTTagList
-        for (i <- 0 until storage.length) if (storage(i) != null && storage(i).getCount > 0)
+        for (i <- storage.indices) if (!storage(i).isEmpty && storage(i).getCount > 0)
         {
             val tag2 = new NBTTagCompound
             tag2.setInteger("index", i)
@@ -111,8 +111,8 @@ trait TInventory extends IInventory
 
     def dropInvContents(w:World, pos:BlockPos)
     {
-        for (i <- storage) if (i != null) WorldLib.dropItem(w, pos, i)
-        for (i <- 0 until storage.length) storage(i) = null
+        for (i <- storage) if (!i.isEmpty) WorldLib.dropItem(w, pos, i)
+        for (i <- storage.indices) storage(i) = ItemStack.EMPTY
         markDirty()
     }
 }

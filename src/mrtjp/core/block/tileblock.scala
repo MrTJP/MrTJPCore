@@ -278,7 +278,7 @@ class MultiTileBlock(mat:Material) extends Block(mat)
     @SideOnly(Side.CLIENT)
     override def getSubBlocks(item:Item, tab:CreativeTabs, list:NonNullList[ItemStack])
     {
-        for (i <- 0 until tiles.length) if (tiles(i) != null)
+        for (i <- tiles.indices) if (tiles(i) != null)
             list.add(new ItemStack(item, 1, i))
     }
 

@@ -125,7 +125,7 @@ class NodeContainer extends Container
             }
             super.slotClick(id, dragType, clickType, player)
         } catch {
-            case e:Exception => null
+            case e:Exception => ItemStack.EMPTY
         }
     }
 
@@ -145,13 +145,13 @@ class NodeContainer extends Container
                 newStack.setCount(if (mouse == 0) math.min(inCursor.getCount, slot.getSlotStackLimit) else 1)
                 slot.putStack(newStack)
             }
-            else if (inSlot != null)
+            else if (!inSlot.isEmpty)
             {
                 val toAdd = if (clickType == ClickType.QUICK_MOVE) 10 else 1
                 if (mouse == 0) inSlot.setCount(math.min(slot.getSlotStackLimit, inSlot.getCount+toAdd))
                 else if (mouse == 1) inSlot.setCount(math.max(0, inSlot.getCount-toAdd))
                 if (inSlot.getCount > 0) slot.putStack(inSlot)
-                else slot.putStack(null)
+                else slot.putStack(ItemStack.EMPTY)
             }
         }
         else
@@ -166,7 +166,7 @@ class NodeContainer extends Container
 
     override def transferStackInSlot(player:EntityPlayer, i:Int):ItemStack =
     {
-        var stack:ItemStack = null
+        var stack:ItemStack = ItemStack.EMPTY
         if (slots.isDefinedAt(i))
         {
             val slot = slots(i)
@@ -175,9 +175,9 @@ class NodeContainer extends Container
                 stack = slot.getStack
                 val manipStack = stack.copy
 
-                if (!doMerge(manipStack, i) || stack.getCount == manipStack.getCount) return null
+                if (!doMerge(manipStack, i) || stack.getCount == manipStack.getCount) return ItemStack.EMPTY
 
-                if (manipStack.getCount <= 0) slot.putStack(null)
+                if (manipStack.getCount <= 0) slot.putStack(ItemStack.EMPTY)
                 else slot.putStack(manipStack)
 
                 slot.onTake(player, stack)
@@ -207,14 +207,14 @@ class NodeContainer extends Container
         var k = if(reverse) end-1 else start
 
         var slot:TSlot3 = null
-        var inslot:ItemStack = null
+        var inslot:ItemStack = ItemStack.EMPTY
         if(stack.isStackable)
         {
             while(stack.getCount > 0 && (!reverse && k < end || reverse && k >= start))
             {
                 slot = slots(k)
                 inslot = slot.getStack
-                if (!slot.phantomSlot && inslot != null && inslot.getItem == stack.getItem &&
+                if (!slot.phantomSlot && !inslot.isEmpty && inslot.getItem == stack.getItem &&
                         (!stack.getHasSubtypes || stack.getItemDamage == inslot.getItemDamage) &&
                         ItemStack.areItemStackTagsEqual(stack, inslot))
                 {
@@ -249,7 +249,7 @@ class NodeContainer extends Container
                 {
                     slot = slots(k)
                     inslot = slot.getStack
-                    if(!slot.phantomSlot && inslot == null && slot.isItemValid(stack))
+                    if(!slot.phantomSlot && inslot.isEmpty && slot.isItemValid(stack))
                     {
                         val space = math.min(slot.getSlotStackLimit, stack.getMaxStackSize)
                         if (space >= stack.getCount)
