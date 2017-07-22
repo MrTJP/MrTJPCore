@@ -123,7 +123,7 @@ object ItemDisplayNode
     def renderItem(position:Point, size:Size, zPosition:Double, drawNumber:Boolean, stack:ItemStack)
     {
         val font = stack.getItem.getFontRenderer(stack) match {
-            case null => Minecraft.getMinecraft.fontRendererObj
+            case null => Minecraft.getMinecraft.fontRenderer
             case r => r
         }
 
@@ -147,11 +147,11 @@ object ItemDisplayNode
         if (drawNumber)
         {
             val s =
-                if (stack.getCount == 1) ""
-                else if (stack.getCount < 1000) stack.getCount+""
-                else if (stack.getCount < 100000) stack.getCount/1000+"K"
-                else if (stack.getCount < 1000000) "0."+stack.getCount/100000+"M"
-                else stack.getCount/1000000+"M"
+                if (stack.getCount() == 1) ""
+                else if (stack.getCount() < 1000) stack.getCount()+""
+                else if (stack.getCount() < 100000) stack.getCount()/1000+"K"
+                else if (stack.getCount() < 1000000) "0."+stack.getCount()/100000+"M"
+                else stack.getCount()/1000000+"M"
             font.drawStringWithShadow(s, position.x+19-2-font.getStringWidth(s), position.y+6+3, 16777215)
         }
         popMatrix()

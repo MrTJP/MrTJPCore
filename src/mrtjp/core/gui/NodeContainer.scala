@@ -145,13 +145,13 @@ class NodeContainer extends Container
                 newStack.setCount(if (mouse == 0) math.min(inCursor.getCount, slot.getSlotStackLimit) else 1)
                 slot.putStack(newStack)
             }
-            else if (inSlot != null)
+            else if (inSlot != ItemStack.EMPTY)
             {
                 val toAdd = if (clickType == ClickType.QUICK_MOVE) 10 else 1
                 if (mouse == 0) inSlot.setCount(math.min(slot.getSlotStackLimit, inSlot.getCount+toAdd))
                 else if (mouse == 1) inSlot.setCount(math.max(0, inSlot.getCount-toAdd))
                 if (inSlot.getCount > 0) slot.putStack(inSlot)
-                else slot.putStack(null)
+                else slot.putStack(ItemStack.EMPTY)
             }
         }
         else
@@ -166,7 +166,7 @@ class NodeContainer extends Container
 
     override def transferStackInSlot(player:EntityPlayer, i:Int):ItemStack =
     {
-        var stack:ItemStack = null
+        var stack:ItemStack = ItemStack.EMPTY
         if (slots.isDefinedAt(i))
         {
             val slot = slots(i)
@@ -207,7 +207,7 @@ class NodeContainer extends Container
         var k = if(reverse) end-1 else start
 
         var slot:TSlot3 = null
-        var inslot:ItemStack = null
+        var inslot:ItemStack = ItemStack.EMPTY
         if(stack.isStackable)
         {
             while(stack.getCount > 0 && (!reverse && k < end || reverse && k >= start))
@@ -218,7 +218,7 @@ class NodeContainer extends Container
                         (!stack.getHasSubtypes || stack.getItemDamage == inslot.getItemDamage) &&
                         ItemStack.areItemStackTagsEqual(stack, inslot))
                 {
-                    val space = math.min(slot.getSlotStackLimit, stack.getMaxStackSize)-inslot.getCount
+                    val space = math.min(slot.getSlotStackLimit, stack.getMaxStackSize)-inslot.getCount()
                     if (space >= stack.getCount)
                     {
                         inslot.setCount(inslot.getCount + stack.getCount)
@@ -238,7 +238,7 @@ class NodeContainer extends Container
             }
         }
 
-        if(stack.getCount > 0)
+        if(stack.getCount() > 0)
         {
             var k = if(reverse) end-1 else start
 
@@ -252,7 +252,7 @@ class NodeContainer extends Container
                     if(!slot.phantomSlot && inslot == null && slot.isItemValid(stack))
                     {
                         val space = math.min(slot.getSlotStackLimit, stack.getMaxStackSize)
-                        if (space >= stack.getCount)
+                        if (space >= stack.getCount())
                         {
                             slot.putStack(stack.copy)
                             slot.onSlotChanged()

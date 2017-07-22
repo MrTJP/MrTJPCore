@@ -92,7 +92,7 @@ class TabNode(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TNo
 
 trait TStackTab extends TabNode
 {
-    var iconStack:ItemStack = null
+    var iconStack:ItemStack = ItemStack.EMPTY
     def setIconStack(stack:ItemStack):this.type = {iconStack = stack; this}
 
     abstract override def drawIcon()

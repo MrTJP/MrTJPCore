@@ -31,12 +31,12 @@ object InvWrapper
 
     def areItemsStackable(stack1:ItemStack, stack2:ItemStack):Boolean =
     {
-        stack1 == null || stack2 == null || areItemsSame(stack1, stack2) && stack1.isStackable && stack2.isStackable
+        stack1 == ItemStack.EMPTY || stack2 == ItemStack.EMPTY || areItemsSame(stack1, stack2) && stack1.isStackable && stack2.isStackable
     }
 
     def areItemsSame(stack1:ItemStack, stack2:ItemStack):Boolean =
     {
-        if (stack1 == null || stack2 == null) return stack1 == stack2
+        if (stack1 == ItemStack.EMPTY || stack2 == ItemStack.EMPTY) return stack1 == stack2
         stack1.getItem == stack2.getItem && stack2.getItemDamage == stack1.getItemDamage && ItemStack.areItemStackTagsEqual(stack2, stack1)
     }
 
@@ -268,7 +268,7 @@ trait TDefWrapHandler extends InvWrapper
             if (canInsertItem(slot, item2))
             {
                 if (s == null) space += slotStackLimit
-                else if (InvWrapper.areItemsStackable(s, item2)) space += slotStackLimit-s.getCount
+                else if (InvWrapper.areItemsStackable(s, item2)) space += slotStackLimit-s.getCount()
             }
         }
         space
@@ -284,7 +284,7 @@ trait TDefWrapHandler extends InvWrapper
             if (canInsertItem(slot, item2))
             {
                 if (s == null) return true
-                else if (InvWrapper.areItemsStackable(s, item2) && slotStackLimit-s.getCount > 0) return true
+                else if (InvWrapper.areItemsStackable(s, item2) && slotStackLimit-s.getCount() > 0) return true
             }
         }
         false
@@ -301,7 +301,7 @@ trait TDefWrapHandler extends InvWrapper
             val inSlot = inv.getStackInSlot(slot)
             if (!inSlot.isEmpty && eq.matches(item, ItemKey.get(inSlot)))
             {
-                val toAdd = inSlot.getCount-(if (hidePerSlot || hidePerType && first) 1 else 0)
+                val toAdd = inSlot.getCount()-(if (hidePerSlot || hidePerType && first) 1 else 0)
                 first = false
                 count += toAdd
             }
@@ -339,7 +339,7 @@ trait TDefWrapHandler extends InvWrapper
             else if (pass == 1 && inSlot.isEmpty)
             {
                 val toInsert = item.makeStack(math.min(inv.getInventoryStackLimit, itemsLeft))
-                itemsLeft -= toInsert.getCount
+                itemsLeft -= toInsert.getCount()
                 inv.setInventorySlotContents(slot, toInsert)
             }
 
@@ -359,7 +359,7 @@ trait TDefWrapHandler extends InvWrapper
             val inSlot = inv.getStackInSlot(slot)
             if (!inSlot.isEmpty && eq.matches(item, ItemKey.get(inSlot))) //TODO extraction shouldnt rely on eq matches..?
             {
-                left -= inv.decrStackSize(slot, math.min(left, inSlot.getCount-(if (hidePerSlot || hidePerType&&first) 1 else 0))).getCount
+                left -= inv.decrStackSize(slot, math.min(left, inSlot.getCount()-(if (hidePerSlot || hidePerType&&first) 1 else 0))).getCount()
                 first = false
             }
             if (left <= 0) return toExtract
@@ -376,7 +376,7 @@ trait TDefWrapHandler extends InvWrapper
             if (!inSlot.isEmpty)
             {
                 val key = ItemKey.get(inSlot)
-                val stackSize = inSlot.getCount-(if (hidePerSlot) 1 else 0)
+                val stackSize = inSlot.getCount()-(if (hidePerSlot) 1 else 0)
                 val currentSize = items.getOrElse(key, 0)
 
                 if (!items.keySet.contains(key)) items += key -> (stackSize-(if (hidePerType) 1 else 0))

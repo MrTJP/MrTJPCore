@@ -7,7 +7,7 @@ package mrtjp.core.inventory
 
 import net.minecraft.item.ItemStack
 
-class SimpleInventory(size:Int, name:String, stackLimit:Int) extends TInventory
+abstract class SimpleInventory(size:Int, name:String, stackLimit:Int) extends TInventory
 {
     def this(size:Int, lim:Int) = this(size, "", lim)
     def this(size:Int, name:String) = this(size, name, 64)
@@ -24,7 +24,7 @@ class SimpleInventory(size:Int, name:String, stackLimit:Int) extends TInventory
     override def isEmpty = storage.forall(_.isEmpty)
 }
 
-class ArrayWrapInventory(override protected val storage:Array[ItemStack], name:String, stackLimit:Int) extends TInventory
+abstract class ArrayWrapInventory(override protected val storage:Array[ItemStack], name:String, stackLimit:Int) extends TInventory
 {
     override def getInventoryStackLimit = stackLimit
 

@@ -86,7 +86,7 @@ class MultiTileBlock(mat:Material) extends Block(mat)
 
     override def getTickRandomly = true
 
-    override def addCollisionBoxToList(state:IBlockState, world:World, pos:BlockPos, entityBox:AxisAlignedBB, collidingBoxes:JList[AxisAlignedBB], entity:Entity, p_185477_7_ :Boolean)
+    override def addCollisionBoxToList(state:IBlockState, world:World, pos:BlockPos, entityBox:AxisAlignedBB, collidingBoxes:JList[AxisAlignedBB], entity:Entity, p_185477_7_ : Boolean): Unit =
     {
         world.getTileEntity(pos) match {
             case t:MTBlockTile =>
@@ -204,7 +204,7 @@ class MultiTileBlock(mat:Material) extends Block(mat)
             case t:MTBlockTile => t.onEntityWalk(entity)
         }
 
-    override def neighborChanged(state:IBlockState, world:World, pos:BlockPos, blockIn:Block, fromPos:BlockPos)
+    override def neighborChanged(state:IBlockState, world:World, pos:BlockPos, block:Block, fromPos: BlockPos): Unit =
     {
         world.getTileEntity(pos) match {
             case t:MTBlockTile => t.onNeighborBlockChange()
@@ -276,7 +276,7 @@ class MultiTileBlock(mat:Material) extends Block(mat)
         }
 
     @SideOnly(Side.CLIENT)
-    override def getSubBlocks(item:Item, tab:CreativeTabs, list:NonNullList[ItemStack])
+    override def getSubBlocks(item:Item, tab:CreativeTabs, list:NonNullList[ItemStack]): Unit =
     {
         for (i <- 0 until tiles.length) if (tiles(i) != null)
             list.add(new ItemStack(item, 1, i))

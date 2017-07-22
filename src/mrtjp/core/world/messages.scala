@@ -89,7 +89,7 @@ object Messenger
         var width = 0
         var height = 0
         val lines = m.msg.split("\n")
-        val fr = Minecraft.getMinecraft.fontRendererObj
+        val fr = Minecraft.getMinecraft.fontRenderer
         for (line <- lines) {
             height += fr.FONT_HEIGHT + 4
             width = Math.max(width, fr.getStringWidth(line))

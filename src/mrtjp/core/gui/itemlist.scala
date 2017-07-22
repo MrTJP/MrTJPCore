@@ -218,7 +218,7 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
     private def inscribeItemStack(xPos:Int, yPos:Int, stack:ItemStack)
     {
         val font = stack.getItem.getFontRenderer(stack) match {
-            case null => fontRenderer
+            case null => fontRendererL
             case r => r
         }
 
@@ -232,11 +232,11 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
         renderItem.zLevel = 0.0F
 
         var s:String = null
-        if (stack.getCount == 1) s = ""
-        else if (stack.getCount < 1000) s = stack.getCount+""
-        else if (stack.getCount < 100000) s = stack.getCount/1000+"K"
-        else if (stack.getCount < 1000000) s = "0M"+stack.getCount/100000
-        else s = stack.getCount/1000000+"M"
+        if (stack.getCount() == 1) s = ""
+        else if (stack.getCount() < 1000) s = stack.getCount()+""
+        else if (stack.getCount() < 100000) s = stack.getCount()/1000+"K"
+        else if (stack.getCount() < 1000000) s = "0M"+stack.getCount()/100000
+        else s = stack.getCount()/1000000+"M"
         font.drawStringWithShadow(s, xPos+19-2-font.getStringWidth(s), yPos+6+3, 16777215)
     }
 }
