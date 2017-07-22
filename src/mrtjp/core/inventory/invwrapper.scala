@@ -299,7 +299,7 @@ trait TDefWrapHandler extends InvWrapper
         for (slot <- slots)
         {
             val inSlot = inv.getStackInSlot(slot)
-            if (inSlot != null && eq.matches(item, ItemKey.get(inSlot)))
+            if (!inSlot.isEmpty && eq.matches(item, ItemKey.get(inSlot)))
             {
                 val toAdd = inSlot.getCount()-(if (hidePerSlot || hidePerType && first) 1 else 0)
                 first = false
@@ -314,7 +314,7 @@ trait TDefWrapHandler extends InvWrapper
         for (slot <- slots)
         {
             val inSlot = inv.getStackInSlot(slot)
-            if (inSlot != null && eq.matches(item, ItemKey.get(inSlot))) return true
+            if (!inSlot.isEmpty && eq.matches(item, ItemKey.get(inSlot))) return true
         }
 
         false
@@ -329,15 +329,14 @@ trait TDefWrapHandler extends InvWrapper
         {
             val inSlot = inv.getStackInSlot(slot)
 
-            if (inSlot != null && InvWrapper.areItemsStackable(item.testStack, inSlot))
+            if (!inSlot.isEmpty && InvWrapper.areItemsStackable(item.testStack, inSlot))
             {
-                val fit = math.min(slotStackLimit-inSlot.getCount(), itemsLeft)
-                val ls = inSlot.getCount() + fit
-                inSlot.setCount(ls)
+                val fit = math.min(slotStackLimit-inSlot.getCount, itemsLeft)
+                inSlot.grow(fit)
                 itemsLeft -= fit
                 inv.setInventorySlotContents(slot, inSlot)
             }
-            else if (pass == 1 && inSlot == null)
+            else if (pass == 1 && inSlot.isEmpty)
             {
                 val toInsert = item.makeStack(math.min(inv.getInventoryStackLimit, itemsLeft))
                 itemsLeft -= toInsert.getCount()
@@ -358,7 +357,7 @@ trait TDefWrapHandler extends InvWrapper
         for (slot <- slots) if (canExtractItem(slot, item.testStack))
         {
             val inSlot = inv.getStackInSlot(slot)
-            if (inSlot != null && eq.matches(item, ItemKey.get(inSlot))) //TODO extraction shouldnt rely on eq matches..?
+            if (!inSlot.isEmpty && eq.matches(item, ItemKey.get(inSlot))) //TODO extraction shouldnt rely on eq matches..?
             {
                 left -= inv.decrStackSize(slot, math.min(left, inSlot.getCount()-(if (hidePerSlot || hidePerType&&first) 1 else 0))).getCount()
                 first = false
@@ -374,7 +373,7 @@ trait TDefWrapHandler extends InvWrapper
         for (slot <- slots)
         {
             val inSlot = inv.getStackInSlot(slot)
-            if (inSlot != null)
+            if (!inSlot.isEmpty)
             {
                 val key = ItemKey.get(inSlot)
                 val stackSize = inSlot.getCount()-(if (hidePerSlot) 1 else 0)

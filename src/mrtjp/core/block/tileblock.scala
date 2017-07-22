@@ -5,12 +5,10 @@
  */
 package mrtjp.core.block
 
-import java.io.{BufferedOutputStream, ByteArrayOutputStream, OutputStream}
 import java.util.{Random, ArrayList => JArrayList, List => JList}
 
 import codechicken.lib.data.{MCDataInput, MCDataOutput}
 import codechicken.lib.packet.{ICustomPacketTile, PacketCustom}
-import codechicken.lib.render.block.{BlockRenderingRegistry, ICCBlockRenderer}
 import codechicken.lib.vec.{Cuboid6, Rotation, Vector3}
 import mrtjp.core.handler.MrTJPCoreSPH
 import mrtjp.core.world.WorldLib
@@ -18,8 +16,6 @@ import net.minecraft.block.Block
 import net.minecraft.block.material.Material
 import net.minecraft.block.properties.{IProperty, PropertyInteger}
 import net.minecraft.block.state.{BlockStateContainer, IBlockState}
-import net.minecraft.client.renderer.VertexBuffer
-import net.minecraft.client.renderer.texture.{TextureAtlasSprite, TextureMap}
 import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.player.EntityPlayer
@@ -30,8 +26,8 @@ import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.network.NetworkManager
 import net.minecraft.network.play.server.SPacketUpdateTileEntity
 import net.minecraft.tileentity.TileEntity
-import net.minecraft.util.math.{AxisAlignedBB, BlockPos, RayTraceResult}
 import net.minecraft.util._
+import net.minecraft.util.math.{AxisAlignedBB, BlockPos, RayTraceResult}
 import net.minecraft.world.{Explosion, IBlockAccess, World}
 import net.minecraftforge.fml.common.registry.GameRegistry
 import net.minecraftforge.fml.relauncher.{Side, SideOnly}
@@ -180,9 +176,10 @@ class MultiTileBlock(mat:Material) extends Block(mat)
             case _ => super.getPickBlock(state, target, world, pos, player)
         }
 
-    def onBlockActivated(world:World, pos:BlockPos, state:IBlockState, player:EntityPlayer, hand:EnumHand, held:ItemStack, side:EnumFacing, hitX:Float, hitY:Float, hitZ:Float) =
+
+    override def onBlockActivated(world:World, pos:BlockPos, state:IBlockState, player:EntityPlayer, hand:EnumHand, facing:EnumFacing, hitX:Float, hitY:Float, hitZ:Float)  =
         world.getTileEntity(pos) match {
-            case t:MTBlockTile => t.onBlockActivated(player, side.ordinal)
+            case t:MTBlockTile => t.onBlockActivated(player, facing.ordinal)
             case _ => false
         }
 
@@ -223,10 +220,11 @@ class MultiTileBlock(mat:Material) extends Block(mat)
         }
     }
 
-    override def getStateForPlacement(world:World, pos:BlockPos, facing:EnumFacing, hitX:Float, hitY:Float, hitZ:Float, meta:Int, placer:EntityLivingBase) =
+    override def onBlockPlacedBy(world:World, pos:BlockPos, state:IBlockState, placer:EntityLivingBase, stack:ItemStack)
     {
+        val meta = state.getBlock.getMetaFromState(state)
         if (tiles.isDefinedAt(meta) && tiles(meta) != null)
-            super.getStateForPlacement(world, pos, facing, hitX, hitY, hitZ, meta, placer)
+            super.onBlockPlacedBy(world, pos, state, placer, stack)
         else
             throw new RuntimeException("MultiTileBlock "+this.getRegistryName+" was placed w/ invalid metadata. Most likely an invalid return value on this block's ItemBlock#getMetadata")
     }

@@ -5,9 +5,9 @@
  */
 package mrtjp.core.fx
 
-import codechicken.lib.vec._
-import net.minecraft.util.math.BlockPos
+import codechicken.lib.vec.Vector3
 import mrtjp.core.fx.particles.CoreParticle
+import net.minecraft.util.math.BlockPos
 
 trait TPositionedParticle extends CoreParticle
 {

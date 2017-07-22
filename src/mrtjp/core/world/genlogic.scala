@@ -18,6 +18,8 @@ import net.minecraftforge.common.BiomeDictionary
 import net.minecraftforge.common.BiomeDictionary.Type
 import net.minecraft.world.biome.Biome
 
+import scala.collection.JavaConversions._
+
 trait TGenerationLogic extends ISimpleStructureGen
 {
     var name = ""

@@ -94,7 +94,7 @@ class WorldGenVolcanic extends TWorldGenerator
         {
             p = new BlockPos(x, n, z)
             BlockUtils.fireBlockUpdate(w, p)
-            w.notifyNeighborsOfStateChange(p, liq._1, true)
+            w.notifyNeighborsRespectDebug(p, liq._1, false)
             w.neighborChanged(p, liq._1, p)
             w.immediateBlockTick(p, w.getBlockState(p), w.rand)
             n -= 1

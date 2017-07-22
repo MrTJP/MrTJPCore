@@ -133,13 +133,13 @@ class NodeContainer extends Container
     {
         val inSlot = slot.getStack
         val inCursor = player.inventory.getItemStack
-        if (inCursor != ItemStack.EMPTY && !slot.isItemValid(inCursor)) return inCursor
+        if (!inCursor.isEmpty && !slot.isItemValid(inCursor)) return inCursor
 
         val stackable = InvWrapper.areItemsStackable(inSlot, inCursor)
         if (stackable)
         {
-            if (inSlot != ItemStack.EMPTY && inCursor == ItemStack.EMPTY) slot.putStack(ItemStack.EMPTY)
-            else if (inSlot == ItemStack.EMPTY && inCursor != ItemStack.EMPTY)
+            if (!inSlot.isEmpty && inCursor.isEmpty) slot.putStack(ItemStack.EMPTY)
+            else if (inSlot.isEmpty && !inCursor.isEmpty)
             {
                 val newStack = inCursor.copy
                 newStack.setCount(if (mouse == 0) math.min(inCursor.getCount, slot.getSlotStackLimit) else 1)
@@ -207,7 +207,7 @@ class NodeContainer extends Container
         var k = if(reverse) end-1 else start
 
         var slot:TSlot3 = null
-        var inslot:ItemStack = null
+        var inslot:ItemStack = ItemStack.EMPTY
         if(stack.isStackable)
         {
             while(stack.getCount > 0 && (!reverse && k < end || reverse && k >= start))
@@ -221,18 +221,15 @@ class NodeContainer extends Container
                     val space = math.min(slot.getSlotStackLimit, stack.getMaxStackSize)-inslot.getCount()
                     if (space >= stack.getCount)
                     {
-                        val stk:Int = inslot.getCount() + stack.getCount()
-                        inslot.setCount(stk)
+                        inslot.setCount(inslot.getCount + stack.getCount)
                         stack.setCount(0)
                         slot.onSlotChanged()
                         flag1 = true
                     }
                     else if (space > 0)
                     {
-                        val stk1:Int = stack.getCount() - space
-                        stack.setCount(stk1)
-                        val stk2:Int = inslot.getCount() + space
-                        inslot.setCount(stk2)
+                        stack.setCount(stack.getCount - space)
+                        inslot.setCount(inslot.getCount + space)
                         slot.onSlotChanged()
                         flag1 = true
                     }

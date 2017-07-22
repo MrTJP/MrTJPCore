@@ -16,7 +16,6 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.world._
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage
 import net.minecraftforge.common.IPlantable
-import net.minecraftforge.fml.common.FMLLog
 import net.minecraftforge.oredict.OreDictionary
 
 object WorldLib

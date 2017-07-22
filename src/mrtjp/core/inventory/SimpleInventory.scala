@@ -20,6 +20,8 @@ abstract class SimpleInventory(size:Int, name:String, stackLimit:Int) extends TI
     override def getName = name
 
     override def markDirty(){}
+
+    override def isEmpty = storage.forall(_.isEmpty)
 }
 
 abstract class ArrayWrapInventory(override protected val storage:Array[ItemStack], name:String, stackLimit:Int) extends TInventory
@@ -29,4 +31,6 @@ abstract class ArrayWrapInventory(override protected val storage:Array[ItemStack
     override def markDirty(){}
 
     override def getName = name
+
+    override def isEmpty = storage.forall(_.isEmpty)
 }
