@@ -1,6 +1,6 @@
 [
 {
-  "modid": "MrTJPCoreMod",
+  "modid": "mrtjpcore",
   "name": "MrTJPCore",
   "description":"Core libs and utilities",
   "version": "@VERSION@.@BUILD_NUMBER@",
@@ -10,7 +10,7 @@
   "credits": "",
   "logoFile": "",
   "screenshots": [],
-  "requiredMods": [ "Forge" ],
+  "requiredMods": [ "forge" ],
   "dependencies": [],
   "dependants" : [],
   "useDependencyInformation": true

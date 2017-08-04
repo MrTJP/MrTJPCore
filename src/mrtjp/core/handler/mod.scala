@@ -11,13 +11,13 @@ import net.minecraftforge.fml.common.Mod
 import net.minecraftforge.fml.common.event.{FMLInitializationEvent, FMLPostInitializationEvent, FMLPreInitializationEvent}
 import org.apache.logging.log4j.LogManager
 
-@Mod(modid = "MrTJPCoreMod", useMetadata = true, modLanguage = "scala", guiFactory = "mrtjp.core.handler.GuiConfigFactory")
+@Mod(modid = "mrtjpcore", useMetadata = true, modLanguage = "scala", guiFactory = "mrtjp.core.handler.GuiConfigFactory")
 object MrTJPCoreMod
 {
     final val version = "@VERSION@"
     final val build = "@BUILD_NUMBER@"
 
-    val log = LogManager.getFormatterLogger("MrTJPCoreMod")
+    val log = LogManager.getFormatterLogger("MrTJPCore")
 
     @Mod.EventHandler
     def preInit(event:FMLPreInitializationEvent)
@@ -39,7 +39,7 @@ object MrTJPCoreMod
     }
 }
 
-object MrTJPConfig extends ModConfig("MrTJPCoreMod")
+object MrTJPConfig extends ModConfig("mrtjpcore")
 {
     var retro_gen = false
     var retro_gen_id = "mrtjp_gen"
@@ -61,7 +61,7 @@ object MrTJPConfig extends ModConfig("MrTJPCoreMod")
     }
 }
 
-class MrTJPConfigGui(parent:GuiScreen) extends SpecialConfigGui(parent, "MrTJPCoreMod", MrTJPConfig.config)
+class MrTJPConfigGui(parent:GuiScreen) extends SpecialConfigGui(parent, "mrtjpcore", MrTJPConfig.config)
 class GuiConfigFactory extends TModGuiFactory
 {
     override def mainConfigGuiClass() = classOf[MrTJPConfigGui]
