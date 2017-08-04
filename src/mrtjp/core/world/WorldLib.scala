@@ -108,7 +108,8 @@ object WorldLib
     }
 
     def hasItem(state: IBlockState) : Boolean = {
-        Item.getItemFromBlock(state.getBlock) != null
+        val s = new ItemStack(state.getBlock)
+        !s.isEmpty
     }
 
     def isLeafType(world:World, pos:BlockPos, state:IBlockState) =
