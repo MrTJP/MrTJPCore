@@ -5,13 +5,15 @@
  */
 package mrtjp.core.inventory
 
-import mrtjp.core.item.{ItemEquality, ItemKey}
+import mrtjp.core.item.{ItemEquality, ItemKey, ItemKeyStack}
 import net.minecraft.inventory.{IInventory, ISidedInventory, InventoryLargeChest}
 import net.minecraft.item.ItemStack
 import net.minecraft.tileentity.TileEntityChest
 import net.minecraft.util.EnumFacing
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
+import net.minecraftforge.items.CapabilityItemHandler._
+import net.minecraftforge.items.IItemHandler
 
 object InvWrapper
 {
@@ -23,10 +25,41 @@ object InvWrapper
         wrappers :+= w
     }
 
+    @deprecated
     def wrap(inv:IInventory):InvWrapper =
     {
         for (w <- wrappers) if (w.matches(inv)) return w.create(inv)
-        new VanillaWrapper(inv)
+        new VanillaWrapper(inv, false)
+    }
+
+    //Used for wrapping inventory tiles
+    def wrap(world:World, pos:BlockPos, side:EnumFacing):InvWrapper =
+    {
+        val tile = world.getTileEntity(pos)
+        if (tile.hasCapability(ITEM_HANDLER_CAPABILITY, side)) {
+            val cap = tile.getCapability(ITEM_HANDLER_CAPABILITY, side)
+            return new CapWrapper(cap)
+        }
+        tile match {
+            case inv:IInventory =>
+                val wr = new VanillaWrapper(inv, false)
+                if (side != null)
+                    wr.setSlotsFromSide(side.getIndex)
+                else
+                    wr.setSlotsAll()
+                wr
+            case _ => null
+        }
+    }
+
+    //Used for wrapping raw inventories for help with internal inventory manipulation
+    def wrapInternal(inv:IInventory):InvWrapper = wrapInternal(inv, 0 until inv.getSizeInventory)
+
+    def wrapInternal(inv:IInventory, slots:Range):InvWrapper =
+    {
+        val wr = new VanillaWrapper(inv, true)
+        wr.setSlotsFromRange(slots)
+        wr
     }
 
     def areItemsStackable(stack1:ItemStack, stack2:ItemStack):Boolean =
@@ -97,55 +130,11 @@ trait IInvWrapperRegister
     def create(inv:IInventory):InvWrapper
 }
 
-abstract class InvWrapper(val inv:IInventory)
+abstract class InvWrapper
 {
-    val sidedInv = inv match
-    {
-        case inv2:ISidedInventory => inv2
-        case _ => null
-    }
-    var side:EnumFacing = null
-
-    var slots:Seq[Int] = (0 until inv.getSizeInventory)
-
-    var hidePerSlot = false
-    var hidePerType = false
-
-    var eq = new ItemEquality
-
-    var internalMode = false
-
-    def setSlotsFromSide(s:Int) =
-    {
-        if (sidedInv != null)
-        {
-            side = EnumFacing.values()(s)
-            slots = sidedInv.getSlotsForFace(side)
-        }
-        else setSlotsAll()
-        this
-    }
-
-    def setSlotsFromRange(r:Range) =
-    {
-        side = null
-        slots = r
-        this
-    }
-
-    def setSlotsAll() =
-    {
-        side = null
-        slots = (0 until inv.getSizeInventory)
-        this
-    }
-
-    def setSlotSingle(s:Int) =
-    {
-        side = null
-        slots = Seq(s)
-        this
-    }
+    protected var hidePerSlot = false
+    protected var hidePerType = false
+    protected var eq = new ItemEquality
 
     def setMatchOptions(meta:Boolean, nbt:Boolean, ore:Boolean) =
     {
@@ -172,12 +161,6 @@ abstract class InvWrapper(val inv:IInventory)
     {
         hidePerType = flag
         if (flag) hidePerSlot = false
-        this
-    }
-
-    def setInternalMode(flag:Boolean) =
-    {
-        internalMode = flag
         this
     }
 
@@ -241,22 +224,141 @@ abstract class InvWrapper(val inv:IInventory)
      * @return
      */
     def getAllItemStacks:Map[ItemKey, Int]
+}
 
-    protected def canInsertItem(slot:Int, item:ItemStack):Boolean =
+/**
+  * TODO make these wrapper methods take into account hidePerType and hidePerSlot
+  */
+class CapWrapper(cap:IItemHandler) extends InvWrapper
+{
+    override def getSpaceForItem(item:ItemKey) =
     {
-        if (internalMode) return true
-        if (side == null) inv.isItemValidForSlot(slot, item) else sidedInv.canInsertItem(slot, item, side)
+        var space = 0
+        for (s <- 0 until cap.getSlots) {
+            val stack = item.makeStack(math.min(item.getMaxStackSize, cap.getSlotLimit(s)))
+            val remaining = cap.insertItem(s, stack, true)
+            val inserted = stack.getCount-remaining.getCount
+            space += inserted
+        }
+        space
     }
 
-    protected def canExtractItem(slot:Int, item:ItemStack):Boolean =
+    override def hasSpaceForItem(item:ItemKey):Boolean =
     {
-        if (internalMode) return true
-        if (side == null) inv.isItemValidForSlot(slot, item) else sidedInv.canExtractItem(slot, item, side)
+        for (s <- 0 until cap.getSlots) {
+            val stack = item.makeStack(item.getMaxStackSize)
+            val remaining = cap.insertItem(s, stack, true)
+            val inserted = stack.getCount-remaining.getCount
+            if (inserted > 0)
+                return true
+        }
+        false
+    }
+
+    override def getItemCount(item:ItemKey) =
+    {
+        var count = 0
+        for (s <- 0 until cap.getSlots) {
+            val slotItem = ItemKeyStack.get(cap.getStackInSlot(s))
+            if (eq.matches(item, slotItem.key))
+                count += slotItem.stackSize
+        }
+        count
+    }
+
+    override def hasItem(item:ItemKey):Boolean =
+    {
+        for (s <- 0 until cap.getSlots) {
+            val slotItem = ItemKeyStack.get(cap.getStackInSlot(s))
+            if (eq.matches(item, slotItem.key))
+                return true
+        }
+        false
+    }
+
+    override def injectItem(item:ItemKey, toAdd:Int):Int =
+    {
+        var itemsLeft = toAdd
+        for (s <- 0 until cap.getSlots) {
+            val stack = item.makeStack(math.min(item.getMaxStackSize, cap.getSlotLimit(s)))
+            val remaining = cap.insertItem(s, stack, false)
+            val inserted = stack.getCount-remaining.getCount
+            itemsLeft -= inserted
+            if (itemsLeft <= 0)
+                return toAdd
+        }
+        toAdd-itemsLeft
+    }
+
+    override def extractItem(item:ItemKey, toExtract:Int):Int =
+    {
+        var itemsLeft = toExtract
+        for (s <- 0 until cap.getSlots) {
+            val itemInSlot = ItemKey.get(cap.getStackInSlot(s))
+            if (eq.matches(item, itemInSlot)) {
+                val stack = cap.extractItem(s, itemsLeft, false)
+                itemsLeft -= stack.getCount
+                if (itemsLeft <= 0)
+                    return toExtract
+            }
+        }
+        toExtract-itemsLeft
+    }
+
+    override def getAllItemStacks =
+    {
+        var items = Map[ItemKey, Int]()
+        for (s <- 0 until cap.getSlots) {
+            val inSlot = cap.getStackInSlot(s)
+            if (!inSlot.isEmpty) {
+                val key = ItemKey.get(inSlot)
+                val stackSize = inSlot.getCount-(if (hidePerSlot) 1 else 0)
+                val currentSize = items.getOrElse(key, 0)
+
+                if (!items.keySet.contains(key)) items += key -> (stackSize-(if (hidePerType) 1 else 0))
+                else items += key -> (currentSize+stackSize)
+            }
+        }
+        items
     }
 }
 
-trait TDefWrapHandler extends InvWrapper
+class VanillaWrapper(inv:IInventory, internalMode:Boolean) extends InvWrapper
 {
+    protected val sidedInv = inv match
+    {
+        case inv2:ISidedInventory => inv2
+        case _ => null
+    }
+    protected var side:EnumFacing = null
+
+    var slots:Seq[Int] = 0 until inv.getSizeInventory
+
+    def setSlotsFromSide(s:Int) =
+    {
+        if (sidedInv != null)
+        {
+            side = EnumFacing.values()(s)
+            slots = sidedInv.getSlotsForFace(side)
+        }
+        else setSlotsAll()
+        this
+    }
+
+    def setSlotsFromRange(r:Range) =
+    {
+        side = null
+        slots = r
+        this
+    }
+
+    def setSlotsAll() =
+    {
+        side = null
+        slots = (0 until inv.getSizeInventory)
+        this
+    }
+
     override def getSpaceForItem(item:ItemKey):Int =
     {
         var space = 0
@@ -385,6 +487,16 @@ trait TDefWrapHandler extends InvWrapper
         }
         items
     }
-}
 
-class VanillaWrapper(inv:IInventory) extends InvWrapper(inv) with TDefWrapHandler
+    protected def canInsertItem(slot:Int, item:ItemStack):Boolean =
+    {
+        if (internalMode) return true
+        if (side == null) inv.isItemValidForSlot(slot, item) else sidedInv.canInsertItem(slot, item, side)
+    }
+
+    protected def canExtractItem(slot:Int, item:ItemStack):Boolean =
+    {
+        if (internalMode) return true
+        if (side == null) inv.isItemValidForSlot(slot, item) else sidedInv.canExtractItem(slot, item, side)
+    }
+}
