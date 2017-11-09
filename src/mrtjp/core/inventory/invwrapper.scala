@@ -53,9 +53,9 @@ object InvWrapper
     }
 
     //Used for wrapping raw inventories for help with internal inventory manipulation
-    def wrapInternal(inv:IInventory):InvWrapper = wrapInternal(inv, 0 until inv.getSizeInventory)
+    def wrapInternal(inv:IInventory):VanillaWrapper = wrapInternal(inv, 0 until inv.getSizeInventory)
 
-    def wrapInternal(inv:IInventory, slots:Range):InvWrapper =
+    def wrapInternal(inv:IInventory, slots:Range):VanillaWrapper =
     {
         val wr = new VanillaWrapper(inv, true)
         wr.setSlotsFromRange(slots)
@@ -142,6 +142,12 @@ abstract class InvWrapper
         eq.matchNBT = nbt
         eq.matchOre = ore
         this
+    }
+
+    def setMatchOptions(other:ItemEquality)
+    {
+        setMatchOptions(other.matchMeta, other.matchNBT, other.matchOre)
+        setDamageGroup(other.damageGroup)
     }
 
     def setDamageGroup(percent:Int) =

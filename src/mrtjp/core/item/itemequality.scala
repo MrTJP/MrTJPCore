@@ -32,7 +32,7 @@ class ItemEquality
 
     def matches(key1:ItemKey, key2:ItemKey):Boolean =
     {
-        if (key1 == null || key1 == null) return key1 == key1
+        if (key1 == null || key2 == null) return key1 == key2
 
         val stack1 = key1.makeStack(0)
         val stack2 = key2.makeStack(0)
