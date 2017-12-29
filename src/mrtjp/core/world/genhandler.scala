@@ -11,7 +11,8 @@ import mrtjp.core.handler.MrTJPConfig
 import mrtjp.core.handler.MrTJPCoreMod.log
 import net.minecraft.nbt.{NBTTagCompound, NBTTagList, NBTTagString}
 import net.minecraft.world.World
-import net.minecraft.world.chunk.{IChunkGenerator, IChunkProvider}
+import net.minecraft.world.chunk.IChunkProvider
+import net.minecraft.world.gen.IChunkGenerator
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.common.util.Constants
 import net.minecraftforge.event.world.ChunkDataEvent
@@ -84,7 +85,7 @@ object SimpleGenHandler extends IWorldGenerator
 
             if (tag == null || tag.getLong("StructHash") != structHash || list.tagCount != structures.size)
             {
-                val chunk = ChunkCoord(event.getChunk.xPosition, event.getChunk.zPosition, list)
+                val chunk = ChunkCoord(event.getChunk.x, event.getChunk.z, list)
                 val chunks = genQueue.getOrElse(dim, MQueue[ChunkCoord]())
                 chunks.enqueue(chunk)
                 genQueue += dim -> chunks
@@ -103,7 +104,7 @@ object SimpleGenHandler extends IWorldGenerator
         for (s <- structures) if (!existingStructs.contains(s.genID))
             gen |= s.generate(w, chunkX, chunkZ, rand, isRetro)
 
-        if (isRetro && gen) w.getChunkFromChunkCoords(chunkX, chunkZ).setChunkModified()
+        if (isRetro && gen) w.getChunkFromChunkCoords(chunkX, chunkZ).setModified(true)
     }
 
     @SubscribeEvent

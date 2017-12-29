@@ -82,7 +82,7 @@ object WorldLib
         val z = pos.getZ
 
         if (arr(y>>4) == null)
-            arr(y>>4) = new ExtendedBlockStorage(y&(~0xF),!world.provider.hasNoSky)
+            arr(y>>4) = new ExtendedBlockStorage(y&(~0xF),!world.provider.isNether)
         val oldState = arr(y>>4).get(x, y, z)
         arr(y>>4).set(x, y, z, state)
         world.markBlockRangeForRenderUpdate(pos, pos)

@@ -77,7 +77,7 @@ object BlockUpdateHandler
         while (cIt.hasNext)
         {
             val chunkPos = cIt.next()
-            val chunk = world.getChunkFromChunkCoords(chunkPos.chunkXPos, chunkPos.chunkZPos)
+            val chunk = world.getChunkFromChunkCoords(chunkPos.x, chunkPos.z)
             val ebstorage = chunk.getBlockStorageArray
 
             var k = 0
@@ -99,7 +99,7 @@ object BlockUpdateHandler
                         var j = 0
                         while(j < handlers.length)
                         {
-                            val p = new BlockPos(j2+chunk.xPosition*16, l2+ebs.getYLocation, k2+chunk.zPosition*16)
+                            val p = new BlockPos(j2+chunk.x*16, l2+ebs.getYLocation, k2+chunk.z*16)
                             handlers(j).onBlockUpdate(world, p, block)
                             j += 1
                         }

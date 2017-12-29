@@ -129,6 +129,5 @@ trait TModGuiFactory extends IModGuiFactory
 {
     override def initialize(minecraftInstance: Minecraft){}
     override def runtimeGuiCategories() = null
-    override def getHandlerFor(element:RuntimeOptionCategoryElement) = null
     override def hasConfigGui = true
 }

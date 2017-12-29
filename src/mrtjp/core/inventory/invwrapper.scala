@@ -286,7 +286,7 @@ class CapWrapper(cap:IItemHandler) extends InvWrapper
     {
         var itemsLeft = toAdd
         for (s <- 0 until cap.getSlots) {
-            val stack = item.makeStack(math.min(item.getMaxStackSize, cap.getSlotLimit(s)))
+            val stack = item.makeStack(math.min(toAdd, math.min(item.getMaxStackSize, cap.getSlotLimit(s))))
             val remaining = cap.insertItem(s, stack, false)
             val inserted = stack.getCount-remaining.getCount
             itemsLeft -= inserted

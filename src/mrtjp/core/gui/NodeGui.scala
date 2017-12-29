@@ -45,6 +45,13 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
         update()
     }
 
+    final override def drawScreen(mouseX: Int, mouseY: Int, partialTicks: Float)
+    {
+        drawDefaultBackground()
+        super.drawScreen(mouseX, mouseY, partialTicks)
+        renderHoveredToolTip(mouseX, mouseY)
+    }
+
     final override def setWorldAndResolution(mc:Minecraft, i:Int, j:Int)
     {
         val init = this.mc == null

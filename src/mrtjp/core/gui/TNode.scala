@@ -25,7 +25,7 @@ trait TNode extends Gui
     def mcInst:Minecraft = Minecraft.getMinecraft
     def soundHandler = mcInst.getSoundHandler
     def renderEngine:TextureManager = mcInst.renderEngine
-    def fontRenderer:FontRenderer = mcInst.fontRendererObj
+    def getFontRenderer:FontRenderer = mcInst.fontRenderer
 
     def isRoot = this.isInstanceOf[NodeGui]
     def getRoot:NodeGui =

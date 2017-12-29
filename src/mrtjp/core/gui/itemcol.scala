@@ -14,6 +14,8 @@ import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.{OpenGlHelper, RenderHelper}
+import net.minecraft.client.util.ITooltipFlag.TooltipFlags
+import net.minecraft.client.util.ITooltipFlag.TooltipFlags._
 import net.minecraft.item.ItemStack
 import net.minecraft.util.text.TextFormatting
 
@@ -107,7 +109,7 @@ class ItemDisplayNode extends TNode
 
         import scala.collection.JavaConversions._
         val lines = stack.makeStack.getTooltip(mcInst.player,
-            mcInst.gameSettings.advancedItemTooltips)
+            if(mcInst.gameSettings.advancedItemTooltips) ADVANCED else NORMAL)
         val l2 = Seq(lines.head)++lines.tail.map(TextFormatting.GRAY + _)
         GuiDraw.drawMultiLineTip(mx+12, my-12, l2)
 
@@ -123,7 +125,7 @@ object ItemDisplayNode
     def renderItem(position:Point, size:Size, zPosition:Double, drawNumber:Boolean, stack:ItemStack)
     {
         val font = stack.getItem.getFontRenderer(stack) match {
-            case null => Minecraft.getMinecraft.fontRendererObj
+            case null => Minecraft.getMinecraft.fontRenderer
             case r => r
         }
 

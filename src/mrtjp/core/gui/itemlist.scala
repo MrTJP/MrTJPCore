@@ -15,6 +15,7 @@ import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.Gui
 import net.minecraft.client.renderer.GlStateManager._
+import net.minecraft.client.util.ITooltipFlag.TooltipFlags._
 import net.minecraft.client.renderer.{OpenGlHelper, RenderHelper}
 import net.minecraft.item.ItemStack
 
@@ -116,7 +117,7 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
         if (hover != null) GuiDraw.drawMultiLineTip(
             mouse.x+12, mouse.y-12,
             hover.makeStack.getTooltip(mcInst.player,
-                mcInst.gameSettings.advancedItemTooltips))
+                if(mcInst.gameSettings.advancedItemTooltips) ADVANCED else NORMAL))
         FontUtils.drawCenteredString(
             "Page: "+(currentPage+1)+"/"+(pagesNeeded+1), x+(size.width/2), y+frame.height+6, EnumColour.BLACK.rgb)
     }
@@ -218,7 +219,7 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
     private def inscribeItemStack(xPos:Int, yPos:Int, stack:ItemStack)
     {
         val font = stack.getItem.getFontRenderer(stack) match {
-            case null => fontRenderer
+            case null => getFontRenderer
             case r => r
         }
 

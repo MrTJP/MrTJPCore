@@ -11,7 +11,7 @@ import codechicken.lib.vec.Vector3
 import mrtjp.core.fx.{TAlphaParticle, TColourParticle, TTextureParticle}
 import net.minecraft.client.particle.Particle
 import net.minecraft.client.renderer.GlStateManager._
-import net.minecraft.client.renderer.VertexBuffer
+import net.minecraft.client.renderer.BufferBuilder
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
 import net.minecraft.entity.Entity
 import net.minecraft.world.World
@@ -31,7 +31,7 @@ class BeamMulti(w:World) extends CoreParticle(w) with TAlphaParticle with TColou
 //        println("alpha: "+alpha)
     }
 
-    override def renderParticle(buffer:VertexBuffer, entity:Entity, frame:Float, cosyaw:Float, cospitch:Float, sinyaw:Float, sinsinpitch:Float, cossinpitch:Float)
+    override def renderParticle(buffer:BufferBuilder, entity:Entity, frame:Float, cosyaw:Float, cospitch:Float, sinyaw:Float, sinsinpitch:Float, cossinpitch:Float)
     {
         super.renderParticle(buffer, entity, frame, cosyaw, cospitch, sinyaw, sinsinpitch, cossinpitch)
         if (points.size > 1)
@@ -42,7 +42,7 @@ class BeamMulti(w:World) extends CoreParticle(w) with TAlphaParticle with TColou
         }
     }
 
-    def drawBeam(buffer:VertexBuffer, p1:Vector3, p2:Vector3, f:Float)
+    def drawBeam(buffer:BufferBuilder, p1:Vector3, p2:Vector3, f:Float)
     {
         val var9 = 1.0F
         val slide = getAge

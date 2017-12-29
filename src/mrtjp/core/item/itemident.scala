@@ -27,7 +27,7 @@ object ItemKey
 
 class ItemKey(val item:Item, val itemDamage:Int, val tag:NBTTagCompound) extends Ordered[ItemKey]
 {
-    lazy val testStack = makeStack(0)
+    lazy val testStack = makeStack(1)
     lazy val itemID = Item.getIdFromItem(item)
 
     private val hash = itemID*1000001*itemDamage+(if (tag != null) tag.hashCode else 0)

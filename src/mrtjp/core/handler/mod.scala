@@ -64,7 +64,5 @@ object MrTJPConfig extends ModConfig("mrtjpcore")
 class MrTJPConfigGui(parent:GuiScreen) extends SpecialConfigGui(parent, "mrtjpcore", MrTJPConfig.config)
 class GuiConfigFactory extends TModGuiFactory
 {
-    override def mainConfigGuiClass() = classOf[MrTJPConfigGui]
-
     override def createConfigGui(parentScreen:GuiScreen) = new MrTJPConfigGui(parentScreen)
 }

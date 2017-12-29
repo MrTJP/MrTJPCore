@@ -7,7 +7,7 @@ package mrtjp.core.fx.particles
 
 import mrtjp.core.fx.ParticleAction
 import net.minecraft.client.particle.Particle
-import net.minecraft.client.renderer.VertexBuffer
+import net.minecraft.client.renderer.BufferBuilder
 import net.minecraft.entity.Entity
 import net.minecraft.world.World
 
@@ -60,13 +60,13 @@ class CoreParticle(w:World) extends Particle(w, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.
         if (particleAge > particleMaxAge && !isImmortal) setExpired()
     }
 
-    override def renderParticle(buffer:VertexBuffer, entity:Entity, frame:Float, cosyaw:Float, cospitch:Float, sinyaw:Float, sinsinpitch:Float, cossinpitch:Float)
+    override def renderParticle(buffer:BufferBuilder, entity:Entity, frame:Float, cosyaw:Float, cospitch:Float, sinyaw:Float, sinsinpitch:Float, cossinpitch:Float)
     {
         actions.foreach(_.runOn(this, frame))
         actions = actions.filterNot(_.isFinished)
     }
 
-    override def isTransparent = true
+    override def shouldDisableDepth = true
 
     /**
       * 0 - Particle Texture

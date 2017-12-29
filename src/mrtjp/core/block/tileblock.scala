@@ -15,7 +15,7 @@ import mrtjp.core.world.WorldLib
 import net.minecraft.block.Block
 import net.minecraft.block.material.Material
 import net.minecraft.block.properties.{IProperty, PropertyInteger}
-import net.minecraft.block.state.{BlockStateContainer, IBlockState}
+import net.minecraft.block.state.{BlockFaceShape, BlockStateContainer, IBlockState}
 import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.player.EntityPlayer
@@ -92,7 +92,7 @@ class MultiTileBlock(mat:Material) extends Block(mat)
             case t:MTBlockTile =>
                 val bounds = t.getCollisionBounds.aabb()
                 val mask = entityBox.offset(-pos.getX, -pos.getY, -pos.getZ)
-                if (bounds.intersectsWith(mask))
+                if (bounds.intersects(mask))
                     collidingBoxes.add(bounds.offset(pos))
             case _ =>
         }
@@ -104,13 +104,17 @@ class MultiTileBlock(mat:Material) extends Block(mat)
             case _ => super.getBoundingBox(state, world, pos)
         }
 
-    override def isBlockSolid(world:IBlockAccess, pos:BlockPos, side:EnumFacing) =
+    override def getBlockFaceShape(world: IBlockAccess, state: IBlockState, pos: BlockPos, face: EnumFacing) = {
         world.getTileEntity(pos) match {
-            case t:MTBlockTile => t.isSolid(side.ordinal())
-            case _ => false
+            case t:MTBlockTile => t.getBlockFaceShape(face.ordinal)
+            case _=> BlockFaceShape.UNDEFINED
         }
+    }
 
-    override def isSideSolid(state:IBlockState, world:IBlockAccess, pos:BlockPos, side:EnumFacing) = isBlockSolid(world, pos, side)
+    @Deprecated//Forge has deprecated this, getBlockFaceShape is the thing to use now.
+    override final def isSideSolid(state:IBlockState, world:IBlockAccess, pos:BlockPos, side:EnumFacing) = {
+        getBlockFaceShape(world, state, pos, side) == BlockFaceShape.SOLID
+    }
 
     override def canPlaceTorchOnTop(state:IBlockState, world:IBlockAccess, pos:BlockPos) =
         world.getTileEntity(pos) match {
@@ -276,10 +280,10 @@ class MultiTileBlock(mat:Material) extends Block(mat)
         }
 
     @SideOnly(Side.CLIENT)
-    override def getSubBlocks(item:Item, tab:CreativeTabs, list:NonNullList[ItemStack])
+    override def getSubBlocks(tab:CreativeTabs, list:NonNullList[ItemStack])
     {
         for (i <- tiles.indices) if (tiles(i) != null)
-            list.add(new ItemStack(item, 1, i))
+            list.add(new ItemStack(this, 1, i))
     }
 
     @SideOnly(Side.CLIENT)
@@ -355,7 +359,7 @@ abstract class MTBlockTile extends TileEntity with ICustomPacketTile with ITicka
 
     def isFireSource(side:Int) = false
 
-    def isSolid(side:Int) = true
+    def getBlockFaceShape(side:Int) = BlockFaceShape.SOLID
 
     def canPlaceTorchOnTop = true
 
