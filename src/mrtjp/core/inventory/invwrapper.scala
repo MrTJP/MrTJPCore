@@ -36,7 +36,7 @@ object InvWrapper
     def wrap(world:World, pos:BlockPos, side:EnumFacing):InvWrapper =
     {
         val tile = world.getTileEntity(pos)
-        if (tile.hasCapability(ITEM_HANDLER_CAPABILITY, side)) {
+        if (tile != null && tile.hasCapability(ITEM_HANDLER_CAPABILITY, side)) {
             val cap = tile.getCapability(ITEM_HANDLER_CAPABILITY, side)
             return new CapWrapper(cap)
         }
