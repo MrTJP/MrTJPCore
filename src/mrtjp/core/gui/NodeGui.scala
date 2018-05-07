@@ -133,10 +133,10 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
                 {
                     val f = node.frame
                     val absF = Rect(node.parent.convertPointToScreen(f.origin), f.size)
-                    //GuiDraw.drawLine(absF.x, absF.y, absF.x, absF.maxY, EnumColour.RED.rgba())
-                    //GuiDraw.drawLine(absF.x, absF.maxY, absF.maxX, absF.maxY, EnumColour.RED.rgba())
-                    //GuiDraw.drawLine(absF.maxX, absF.maxY, absF.maxX, absF.y, EnumColour.RED.rgba())
-                    //GuiDraw.drawLine(absF.maxX, absF.y, absF.x, absF.y, EnumColour.RED.rgba())
+                    GuiDraw.drawLine(absF.x, absF.y, absF.x, absF.maxY, 3, EnumColour.RED.rgba())
+                    GuiDraw.drawLine(absF.x, absF.maxY, absF.maxX, absF.maxY, 3, EnumColour.RED.rgba())
+                    GuiDraw.drawLine(absF.maxX, absF.maxY, absF.maxX, absF.y, 3, EnumColour.RED.rgba())
+                    GuiDraw.drawLine(absF.maxX, absF.y, absF.x, absF.y, 3, EnumColour.RED.rgba())
                 }
                 for (c <- node.children) render(c)
             }
