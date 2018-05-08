@@ -1,18 +1,24 @@
 [
-{
-  "modid": "mrtjpcore",
-  "name": "MrTJPCore",
-  "description":"Core libs and utilities",
-  "version": "@VERSION@.@BUILD_NUMBER@",
-  "mcversion": "@MC_VERSION@",
-  "url": "...",
-  "authors": [ "MrTJP" ],
-  "credits": "",
-  "logoFile": "",
-  "screenshots": [],
-  "requiredMods": [ "forge" ],
-  "dependencies": [],
-  "dependants" : [],
-  "useDependencyInformation": true
-}
+	{
+		"modid": "mrtjpcore",
+		"name": "MrTJPCore",
+		"description": "Core libs and utilities",
+		"version": "${mod_version}",
+		"mcversion": "${mc_version}",
+		"url": "...",
+		"authors": [
+			"MrTJP",
+			"covers1624"
+		],
+		"credits": "",
+		"logoFile": "",
+		"screenshots": [ ],
+		"requiredMods": [
+			"forge@[${forge_version},)",
+			"codechickenlib@[${ccl_version},)"
+		],
+		"dependencies": [ ],
+		"dependants": [ ],
+		"useDependencyInformation": true
+	}
 ]

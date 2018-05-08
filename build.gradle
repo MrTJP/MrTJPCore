@@ -69,19 +69,6 @@ sourceSets {
     }
 }
 
-task updateVersion(type: Copy) {
-    // Replace tokens
-    from(sourceSets.main.scala.srcDirs)
-    into 'build/sources/scala'
-    filter(ReplaceTokens, tokens: [
-            'VERSION'      : config.mod_version,
-            'BUILD_NUMBER' : build_number,
-            'MC_VERSION'   : config.mc_version,
-            'FORGE_VERSION': config.forge_version,
-            'CCL_VERSION'  : config.ccl_version
-    ])
-}
-
 processResources {
     //redo task if any of these properties change
     inputs.property "version", project.version
@@ -90,6 +77,9 @@ processResources {
     // Replace properties in all files
     from(sourceSets.main.resources.srcDirs) {
         include '**.info'
+        expand  'mod_version': version, 'mc_version': config.mc_version,
+                'forge_version': config.forge_version,
+                'ccl_version': config.ccl_version.replace(".+", "")
         filter(ReplaceTokens, tokens: [
                 'VERSION'      : config.mod_version,
                 'BUILD_NUMBER' : build_number,
@@ -104,8 +94,6 @@ processResources {
     }
 }
 
-compileScala.dependsOn updateVersion
-
 task deobfJar(type: Jar) {
     from sourceSets.main.output
     classifier = 'deobf'
@@ -117,10 +105,6 @@ task srcJar(type: Jar) {
 }
 
 jar {
-    manifest {
-        attributes 'FMLCorePlugin': 'mrtjp.core.handler.CorePlugin'
-        attributes 'FMLCorePluginContainsFMLMod': 'true'
-    }
     classifier = 'universal'
 }
 

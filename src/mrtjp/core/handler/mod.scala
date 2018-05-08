@@ -14,9 +14,6 @@ import org.apache.logging.log4j.LogManager
 @Mod(modid = "mrtjpcore", useMetadata = true, modLanguage = "scala", guiFactory = "mrtjp.core.handler.GuiConfigFactory")
 object MrTJPCoreMod
 {
-    final val version = "@VERSION@"
-    final val build = "@BUILD_NUMBER@"
-
     val log = LogManager.getFormatterLogger("MrTJPCore")
 
     @Mod.EventHandler
