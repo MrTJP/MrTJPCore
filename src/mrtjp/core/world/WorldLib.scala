@@ -83,8 +83,8 @@ object WorldLib
 
         if (arr(y>>4) == null)
             arr(y>>4) = new ExtendedBlockStorage(y&(~0xF),!world.provider.isNether)
-        val oldState = arr(y>>4).get(x, y, z)
-        arr(y>>4).set(x, y, z, state)
+        val oldState = arr(y>>4).get(x&15, y&15, z&15)
+        arr(y>>4).set(x&15, y&15, z&15, state)
         world.markBlockRangeForRenderUpdate(pos, pos)
         world.notifyBlockUpdate(pos, oldState, state, 3)
     }
