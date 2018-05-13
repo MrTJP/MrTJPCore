@@ -37,8 +37,18 @@ class ScaleToAction extends ParticleAction
             val dscale = target.copy.subtract(s.scale)
             val speed = dscale.copy.multiply(1/(duration-time)).multiply(deltaTime(time))
             s.scale.add(speed)
+
+            //Check for resoulution errors - if any of the values have surpassed taret, then we are close enough
+            val dscale2 = target.copy.subtract(s.scale)
+            if (dscale2.x.signum == 0 || dscale2.x.signum != dscale.x.signum ||
+                    dscale2.y.signum == 0 || dscale2.y.signum != dscale.y.signum ||
+                    dscale2.z.signum == 0 || dscale2.z.signum != dscale.z.signum)
+                isFinished = true
         }
         else isFinished = true
+
+        if (isFinished)
+            s.scale.set(target)
     }
 
     override def compile(p:CoreParticle){}

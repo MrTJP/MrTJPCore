@@ -10,8 +10,8 @@ import codechicken.lib.texture.TextureUtils
 import codechicken.lib.vec.Vector3
 import mrtjp.core.fx.{TAlphaParticle, TColourParticle, TTextureParticle}
 import net.minecraft.client.particle.Particle
-import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.BufferBuilder
+import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
 import net.minecraft.entity.Entity
 import net.minecraft.world.World
@@ -23,13 +23,6 @@ class BeamMulti(w:World) extends CoreParticle(w) with TAlphaParticle with TColou
     setSize(0.02F, 0.02F)
 
     var points = Seq.empty[Vector3]
-
-
-    override def onUpdate()
-    {
-        super.onUpdate()
-//        println("alpha: "+alpha)
-    }
 
     override def renderParticle(buffer:BufferBuilder, entity:Entity, frame:Float, cosyaw:Float, cospitch:Float, sinyaw:Float, sinsinpitch:Float, cossinpitch:Float)
     {

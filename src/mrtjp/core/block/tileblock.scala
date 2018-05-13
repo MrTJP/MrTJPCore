@@ -155,11 +155,12 @@ class MultiTileBlock(mat:Material) extends Block(mat)
 
     override def breakBlock(world:World, pos:BlockPos, state:IBlockState)
     {
-        world.getTileEntity(pos) match {
+        val tile = world.getTileEntity(pos)
+        super.breakBlock(world, pos, state)
+        tile match {
             case t:MTBlockTile => t.onBlockRemoval()
             case _ =>
         }
-        super.breakBlock(world, pos, state)
     }
 
     override def harvestBlock(worldIn:World, player:EntityPlayer, pos:BlockPos, state:IBlockState, te:TileEntity, stack:ItemStack){}

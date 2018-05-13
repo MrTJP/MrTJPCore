@@ -9,7 +9,7 @@ import mrtjp.core.math.PerlinNoiseGenerator
 import net.minecraft.block.state.IBlockState
 import net.minecraft.block.{Block, BlockGrass, IGrowable}
 import net.minecraft.entity.item.EntityItem
-import net.minecraft.item.{Item, ItemStack}
+import net.minecraft.item.ItemStack
 import net.minecraft.tileentity.TileEntity
 import net.minecraft.util.EnumFacing
 import net.minecraft.util.math.BlockPos
@@ -34,8 +34,7 @@ object WorldLib
             if (md <= 3)
             {
                 val pos2 = new BlockPos(pos.getX+a, pos.getY+b, pos.getZ+c)
-                val state = world.getBlockState(pos2)
-                state.getBlock.onNeighborChange(world, pos2, pos)
+                world.neighborChanged(pos2, bl, pos)
             }
         }
     }
