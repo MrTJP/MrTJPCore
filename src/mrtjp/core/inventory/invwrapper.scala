@@ -266,7 +266,7 @@ class CapWrapper(cap:IItemHandler) extends InvWrapper
         var count = 0
         for (s <- 0 until cap.getSlots) {
             val slotItem = ItemKeyStack.get(cap.getStackInSlot(s))
-            if (eq.matches(item, slotItem.key))
+            if (!slotItem.isEmpty && eq.matches(item, slotItem.key))
                 count += slotItem.stackSize
         }
         count
@@ -276,7 +276,7 @@ class CapWrapper(cap:IItemHandler) extends InvWrapper
     {
         for (s <- 0 until cap.getSlots) {
             val slotItem = ItemKeyStack.get(cap.getStackInSlot(s))
-            if (eq.matches(item, slotItem.key))
+            if (!slotItem.isEmpty && eq.matches(item, slotItem.key))
                 return true
         }
         false

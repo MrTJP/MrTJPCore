@@ -12,12 +12,9 @@ import scala.collection.immutable.HashMap
 
 object ItemKey
 {
-    def get(stack:ItemStack):ItemKey = //TODO remove sanity check, should be done externally
-    {
-        if (stack.isEmpty) null
-        else new ItemKey(stack.getItem, stack.getItemDamage, stack.getTagCompound)
-    }
+    def get(stack:ItemStack):ItemKey = new ItemKey(stack.getItem, stack.getItemDamage, stack.getTagCompound)
 
+    @deprecated("Use nonnull standard")
     def getOrNull(stack:ItemStack):ItemKey =
     {
         if (stack.isEmpty) null
@@ -50,14 +47,19 @@ class ItemKey(val item:Item, val itemDamage:Int, val tag:NBTTagCompound) extends
         else c
     }
 
-    def makeStack(size:Int) =
+    def makeStack(size:Int):ItemStack =
     {
+        if (isEmpty)
+            return ItemStack.EMPTY
+
         val stack = new ItemStack(item, size, itemDamage)
         if (tag != null) stack.setTagCompound(tag.copy())
         stack
     }
 
     def copy = new ItemKey(item, itemDamage, tag)
+
+    def isEmpty = testStack.isEmpty
 
     /** Interactions **/
     def getItem = item
@@ -69,12 +71,9 @@ object ItemKeyStack
 {
     def get(key:ItemKey, size:Int) = new ItemKeyStack(key, size)
 
-    def get(stack:ItemStack):ItemKeyStack = //TODO remove sanity check, should be done externally
-    {
-        if (stack.isEmpty) null
-        else new ItemKeyStack(ItemKey.get(stack), stack.getCount)
-    }
+    def get(stack:ItemStack):ItemKeyStack = new ItemKeyStack(ItemKey.get(stack), stack.getCount)
 
+    @deprecated("Use nonnull standard")
     def getOrNull(stack:ItemStack):ItemKeyStack =
     {
         if (stack.isEmpty) null
@@ -98,6 +97,8 @@ class ItemKeyStack(val key:ItemKey, var stackSize:Int) extends Ordered[ItemKeySt
     def makeStack = key.makeStack(stackSize)
 
     def copy = new ItemKeyStack(key.copy, stackSize)
+
+    def isEmpty = key.isEmpty || stackSize <= 0
 
     def compare(that:ItemKeyStack) =
     {
