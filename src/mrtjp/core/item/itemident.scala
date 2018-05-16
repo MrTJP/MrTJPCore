@@ -49,9 +49,6 @@ class ItemKey(val item:Item, val itemDamage:Int, val tag:NBTTagCompound) extends
 
     def makeStack(size:Int):ItemStack =
     {
-        if (isEmpty)
-            return ItemStack.EMPTY
-
         val stack = new ItemStack(item, size, itemDamage)
         if (tag != null) stack.setTagCompound(tag.copy())
         stack
