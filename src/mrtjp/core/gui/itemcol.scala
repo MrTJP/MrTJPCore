@@ -14,7 +14,6 @@ import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.{OpenGlHelper, RenderHelper}
-import net.minecraft.client.util.ITooltipFlag.TooltipFlags
 import net.minecraft.client.util.ITooltipFlag.TooltipFlags._
 import net.minecraft.item.ItemStack
 import net.minecraft.util.text.TextFormatting
