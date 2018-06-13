@@ -36,20 +36,30 @@ object InvWrapper
     def wrap(world:World, pos:BlockPos, side:EnumFacing):InvWrapper =
     {
         val tile = world.getTileEntity(pos)
-        if (tile != null && tile.hasCapability(ITEM_HANDLER_CAPABILITY, side)) {
+        if (tile == null) return null
+
+        if (tile.hasCapability(ITEM_HANDLER_CAPABILITY, side)) {
             val cap = tile.getCapability(ITEM_HANDLER_CAPABILITY, side)
-            return new CapWrapper(cap)
+            if (cap.getSlots > 0)
+                return new CapWrapper(cap)
         }
-        tile match {
-            case inv:IInventory =>
-                val wr = new VanillaWrapper(inv, false)
-                if (side != null)
-                    wr.setSlotsFromSide(side.getIndex)
-                else
-                    wr.setSlotsAll()
-                wr
-            case _ => null
+        if (tile.hasCapability(ITEM_HANDLER_CAPABILITY, null)) {
+            val cap = tile.getCapability(ITEM_HANDLER_CAPABILITY, null)
+            if (cap.getSlots > 0)
+                return new CapWrapper(cap)
         }
+
+        null
+//        tile match {
+//            case inv:IInventory =>
+//                val wr = new VanillaWrapper(inv, false)
+//                if (side != null)
+//                    wr.setSlotsFromSide(side.getIndex)
+//                else
+//                    wr.setSlotsAll()
+//                wr
+//            case _ => null
+//        }
     }
 
     //Used for wrapping raw inventories for help with internal inventory manipulation
@@ -299,13 +309,26 @@ class CapWrapper(cap:IItemHandler) extends InvWrapper
     override def extractItem(item:ItemKey, toExtract:Int):Int =
     {
         var itemsLeft = toExtract
+        var didMatch = false
+
         for (s <- 0 until cap.getSlots) {
-            val itemInSlot = ItemKey.get(cap.getStackInSlot(s))
-            if (eq.matches(item, itemInSlot)) {
-                val stack = cap.extractItem(s, itemsLeft, false)
+            val stackInSlot = cap.getStackInSlot(s)
+            val keyInSlot = ItemKey.get(stackInSlot)
+            if (eq.matches(item, keyInSlot)) {
+                var amountAvailable = stackInSlot.getCount
+                if (hidePerSlot)
+                    amountAvailable -= 1
+                else if (hidePerType && !didMatch)
+                    amountAvailable -= 1
+
+                val amountToExtract = math.min(itemsLeft, amountAvailable)
+                val stack = cap.extractItem(s, amountToExtract, false)
+
                 itemsLeft -= stack.getCount
                 if (itemsLeft <= 0)
                     return toExtract
+
+                didMatch = true
             }
         }
         toExtract-itemsLeft
