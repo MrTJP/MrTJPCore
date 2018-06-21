@@ -108,6 +108,12 @@ jar {
     classifier = 'universal'
 }
 
+// Enable experimental features for scala compiler
+tasks.withType(ScalaCompile) {
+    scalaCompileOptions.additionalParameters = ["-Xexperimental"]
+    scalaCompileOptions.setDeprecation false
+}
+
 artifacts {
     archives deobfJar
     archives srcJar
