@@ -11,7 +11,7 @@ import net.minecraft.block.{Block, BlockGrass, IGrowable}
 import net.minecraft.entity.item.EntityItem
 import net.minecraft.item.ItemStack
 import net.minecraft.tileentity.TileEntity
-import net.minecraft.util.EnumFacing
+import net.minecraft.util.{EnumFacing, ITickable}
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world._
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage
@@ -91,15 +91,24 @@ object WorldLib
     def uncheckedRemoveTileEntity(world:World, pos:BlockPos)
     {
         val ch = world.getChunkFromBlockCoords(pos)
-        if (ch != null)
-            ch.getTileEntityMap.remove(pos)
+        if (ch != null) {
+            val te = ch.getTileEntityMap.remove(pos)
+            if (te != null) {
+                world.loadedTileEntityList.removeIf {t:TileEntity => t.getPos == pos }
+                world.tickableTileEntities.removeIf {t:TileEntity => t.getPos == pos }
+            }
+        }
     }
 
     def uncheckedSetTileEntity(world:World, pos:BlockPos, tile:TileEntity)
     {
         val ch = world.getChunkFromBlockCoords(pos)
-        if (ch != null)
+        if (ch != null) {
             ch.getTileEntityMap.put(pos, tile)
+            world.loadedTileEntityList.add(tile)
+            if (tile.isInstanceOf[ITickable])
+                world.tickableTileEntities.add(tile)
+        }
     }
 
     def uncheckedGetTileEntity(world:World, pos:BlockPos):TileEntity =
