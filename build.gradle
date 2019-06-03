@@ -94,6 +94,8 @@ processResources {
     }
 }
 
+version = "${project.minecraft.version}-${project.version}"
+
 task deobfJar(type: Jar) {
     from sourceSets.main.output
     classifier = 'deobf'
