@@ -26,7 +26,7 @@ class InventorySlotNode extends TNode
         }
         else
         {
-            val absPos = parent.convertPointTo(position, getRoot)
+            val absPos = parent.convertPointTo(position, root)
             slot.xPos = absPos.x
             slot.yPos = absPos.y
         }

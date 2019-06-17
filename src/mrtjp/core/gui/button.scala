@@ -171,11 +171,11 @@ object CheckBoxNode
 }
 
 /**
- * Default implementation of a button in mc with normal render and text overlay
- */
+  * Default implementation of a button in mc with normal render and text overlay
+  */
 class MCButtonNode extends ButtonNode with TButtonMC with TButtonText
 
 /**
- * Implementation of a button with manual icon rendering via override.
- */
+  * Implementation of a button with manual icon rendering via override.
+  */
 class IconButtonNode extends ButtonNode with TButtonMC

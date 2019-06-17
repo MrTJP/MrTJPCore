@@ -17,6 +17,18 @@ import net.minecraft.item.ItemStack
 import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
 
+/**
+  * Represents an expandable tab that sits on the right edge of a GUI window. Expands when clicked on.
+  * Must be added as a child to a [[TabControlNode]], which handles interactions between all tabs such as
+  * closing one when you click on another.
+  *
+  * @constructor
+  * @param wMin The width of the tab when closed.
+  * @param hMin The height of the tab when closed.
+  * @param wMax The width of the tab when open.
+  * @param hMax The height of the tab when open.
+  * @param color Background render color, in RGB format.
+  */
 class TabNode(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TNode
 {
     def this(wMin:Int, hMin:Int, wMax:Int, hMax:Int) = this(wMin, hMin, wMax, hMax, EnumColour.LIGHT_GRAY.rgb)
@@ -90,10 +102,13 @@ class TabNode(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TNo
     }
 }
 
+/**
+  * A trait that allows a [[TabNode]] to render an ItemStack overlay.
+  */
 trait TStackTab extends TabNode
 {
+    /** The ItemStack to render as the overlay. */
     var iconStack:ItemStack = ItemStack.EMPTY
-    def setIconStack(stack:ItemStack):this.type = {iconStack = stack; this}
 
     abstract override def drawIcon()
     {
@@ -101,23 +116,21 @@ trait TStackTab extends TabNode
         GlStateManager.color(1, 1, 1, 1)
         RenderHelper.enableGUIStandardItemLighting()
         enableRescaleNormal()
-        TStackTab.itemRender.zLevel = (zPosition+25).toFloat
-        TStackTab.itemRender.renderItemAndEffectIntoGUI(iconStack, position.x+3, position.y+3)
+        mcInst.getRenderItem.zLevel = (zPosition+25).toFloat
+        mcInst.getRenderItem.renderItemAndEffectIntoGUI(iconStack, position.x+3, position.y+3)
         disableRescaleNormal()
         disableLighting()
         RenderHelper.disableStandardItemLighting()
     }
 }
 
-object TStackTab
-{
-    val itemRender = Minecraft.getMinecraft.getRenderItem
-}
-
+/**
+  * A trait that allows a [[TabNode]] to render a texture sprite overlay.
+  */
 trait TIconTab extends TabNode
 {
+    /** The sprite to render as the overlay. */
     var icon:TextureAtlasSprite = null
-    def setIcon(i:TextureAtlasSprite):this.type = {icon = i; this}
 
     abstract override def drawIcon()
     {
@@ -127,13 +140,27 @@ trait TIconTab extends TabNode
 }
 
 
+/**
+  * Parent node for a [[TabNode]] class. Negotiates the expanding and contracting of tabs, as well as the closing of
+  * one tab as another one opens. This must be the direct parent to all `TabNode`s in the tree. It is assumed that all
+  * children of this node are of type [[TabNode]].
+  *
+  * @constructor
+  * @param x The top left x coordinate of this node.
+  * @param y The top right y coordinate of this node.
+  */
 class TabControlNode(x:Int, y:Int) extends TNode
 {
     position = Point(x, y)
     override def frame = Rect(position, Size.zeroSize)
 
-    var active:TabNode = null
+    private var active:TabNode = null
 
+    /**
+      * Called by a child [[TabNode]] when it is clicked on.
+      *
+      * @param tab The `TabNode` that was clicked. Must be a direct child to this node.
+      */
     def onTabClicked(tab:TabNode)
     {
         if (tab != active)
@@ -151,11 +178,11 @@ class TabControlNode(x:Int, y:Int) extends TNode
 
     override def frameUpdate_Impl(mouse:Point, rframe:Float)
     {
-        var dx = 0
+        var dy = 0
         for (w <- children)
         {
-            w.position = Point(w.position.x, dx)
-            dx += w.frame.height
+            w.position = Point(w.position.x, dy)
+            dy += w.frame.height
         }
     }
 }

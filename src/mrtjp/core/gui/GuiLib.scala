@@ -13,6 +13,9 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats
 import net.minecraft.util.ResourceLocation
 import org.lwjgl.opengl.GL11
 
+/**
+  * Provides utility functions useful for drawing GUIs.
+  */
 object GuiLib
 {
     val guiSlot = new ResourceLocation("mrtjpcore", "textures/gui/slot.png")
@@ -21,17 +24,29 @@ object GuiLib
 
     /**
      *
-     * @param x x pos of grid
-     * @param y y pos of grid
-     * @param w width of grid
-     * @param h height of grid
-     * @param dx x spacing of slots (0 means touching like in inventories)
-     * @param dy y spacing of slots (0 means touching like in inventories)
-     * @return Sequence of x and
+     * @param x X pos of grid.
+     * @param y Y pos of grid.
+     * @param w Width of grid.
+     * @param h Height of grid.
+     * @param dx X spacing of slots (0 means touching like in inventories).
+     * @param dy Y spacing of slots (0 means touching like in inventories).
+     * @return Sequence of tuples representing (x, y) coordinates.
      */
     def createSlotGrid(x:Int, y:Int, w:Int, h:Int, dx:Int, dy:Int):Seq[(Int, Int)] =
         createGrid(x, y, w, h, dx+18, dy+18)
 
+    /**
+      * Creates a list of Int tuples representing (x, y) coordinates. These points represent the top-left corner of
+      * the boxes of the created grid.
+      *
+      * @param x X pos of grid.
+      * @param y Y pos of grid.
+      * @param w Width of grid.
+      * @param h Height of grid.
+      * @param dx X spacing of slots. If zero, all x coordinates will be the same.
+      * @param dy Y spacing of slots. If zero, all y coordinates will be the same.
+      * @return Sequence of tuples representing (x, y) coordinates.
+      */
     def createGrid(x:Int, y:Int, w:Int, h:Int, dx:Int, dy:Int) =
     {
         var grid = Seq[(Int, Int)]()
@@ -40,6 +55,13 @@ object GuiLib
         grid
     }
 
+    /**
+      * Draws the standard Minecraft player inventory background. This background contains the 9x3 grid of slots
+      * as well as the additional 9x1 grid of hotbar slots underneath.
+      *
+      * @param x The x coordinate of the top-left position of the slots to be rendered.
+      * @param y The y coordinate of the top-left position of the slots to be rendered.
+      */
     def drawPlayerInvBackground(x:Int, y:Int)
     {
         for ((x, y) <- createSlotGrid(x, y, 9, 3, 0, 0))
@@ -48,6 +70,12 @@ object GuiLib
             drawSlotBackground(x-1, y-1)
     }
 
+    /**
+      * Draws the standard Minecraft inventory slot that is found in inventory GUIs.
+      *
+      * @param x The x coordinate of the top-left position of the slot to be rendered.
+      * @param y The y coordinate of the top-left position of the slot to be rendered.
+      */
     def drawSlotBackground(x:Int, y:Int)
     {
         color(1, 1, 1, 1)
@@ -63,11 +91,34 @@ object GuiLib
         rs.draw()
     }
 
+    /**
+      * Draws the standard GUI box typically used as background to a GUI.
+      *
+      * @param x The x position.
+      * @param y The y position.
+      * @param width The width of the box.
+      * @param height The height of the box.
+      * @param zLevel The z-position of the box.
+      */
     def drawGuiBox(x:Int, y:Int, width:Int, height:Int, zLevel:Float)
     {
         drawGuiBox(x, y, width, height, zLevel, true, true, true, true)
     }
 
+    /**
+      * Draws the standard GUI box typically used as background to a GUI.
+      *
+      * @param x The x position.
+      * @param y The y position.
+      * @param width The width of the box.
+      * @param height The height of the box.
+      * @param zLevel The z-position of the box.
+      *
+      * @param top True if should render the top edge.
+      * @param left True if should render the left edge.
+      * @param bottom True if should render the bottom edge.
+      * @param right True if should render the right edge.
+      */
     def drawGuiBox(x:Int, y:Int, width:Int, height:Int, zLevel:Float, top:Boolean, left:Boolean, bottom:Boolean, right:Boolean)
     {
         val u = 1
@@ -121,6 +172,17 @@ object GuiLib
         if (bottom && right) GuiDraw.drawTexturedModalRect(x+width-4, y+height-4, u+15, v, 4, 4)
     }
 
+    /**
+      * Draws a vertical progress bar anchored at the bottom left.
+      *
+      * @param x The x position of the top left.
+      * @param y The y position of the top left.
+      * @param u The texture u coordinate.
+      * @param v The texture v coordinate.
+      * @param w The width of the bar to be rendered.
+      * @param h The height of the bar to be rendered.
+      * @param prog The percentage progress of the bar, 100 being full at the top and 0 being empty at the bottom.
+      */
     def drawVerticalTank(x:Int, y:Int, u:Int, v:Int, w:Int, h:Int, prog:Int)
     {
         GuiDraw.drawTexturedModalRect(x, y+h-prog, u, v+h-prog, w, prog)

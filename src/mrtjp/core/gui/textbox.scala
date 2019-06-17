@@ -11,30 +11,65 @@ import net.minecraft.client.gui.GuiScreen
 import net.minecraft.util.ChatAllowedCharacters
 import org.lwjgl.input.Keyboard
 
+/**
+  * A node representing a simple text box used to type in text.
+  *
+  * @constructor
+  * @param x The top left x coordinate.
+  * @param y The top left y coordinate.
+  * @param w The width.
+  * @param h The height.
+  * @param tq The initial text.
+  */
 class SimpleTextboxNode(x:Int, y:Int, w:Int, h:Int, tq:String) extends TNode
 {
-    def this() = this(0, 0, 0, 0, "")
     def this(x:Int, y:Int, w:Int, h:Int) = this(x, y, w, h, "")
+    def this() = this(0, 0, 0, 0, "")
 
     position = Point(x, y)
     text = tq
 
+    /**
+      * If enabled, the text box will be focus-able and will respond to events. When not enabled, existing text,
+      * if any, will render in a grey colour.
+      */
     var enabled = true
+    /**
+      * True if the text box is currently focused. A focused text box will consume keyboard events to type to
+      * its text field.
+      */
     var focused = false
 
+    /** The current text of the text box. */
     var text = ""
+
+    /** Phantom text that is shown when the text box is empty. */
     var phantom = ""
+    /** A string of allowed characters. If empty, any character will be allowed. */
     var allowedcharacters = ""
 
+    /** A callback function called when the text changes. */
     var textChangedDelegate = {() => }
+    /** A callback function called when the `RETURN` key is pressed while typing in the text box. */
     var textReturnDelegate = {() => }
+
+    /** A callback function called when the focus of the test box changes. */
     var focusChangeDelegate = {() => }
 
+    /** Used internally to render the blinking cursor. */
     private var cursorCounter = 0
 
+    /** Represents the size of the text box. */
     var size = Size(w, h)
     override def frame = Rect(position, size)
 
+
+    /**
+      * Used to set the text of the box.
+      *
+      * @param t The text to set.
+      * @todo Make this private. Externally, [[text]] should be set directly.
+      */
     def setText(t:String)
     {
         val old = text
@@ -42,6 +77,9 @@ class SimpleTextboxNode(x:Int, y:Int, w:Int, h:Int, tq:String) extends TNode
         if (old != text) textChangedDelegate()
     }
 
+    /**
+      * Sets the [[focused]] property of this text box.
+      */
     def setFocused(flag:Boolean)
     {
         if (focused != flag)
@@ -51,10 +89,6 @@ class SimpleTextboxNode(x:Int, y:Int, w:Int, h:Int, tq:String) extends TNode
             focusChangeDelegate()
         }
     }
-
-    def canAddChar(c:Char) =
-        if (allowedcharacters.isEmpty) ChatAllowedCharacters.isAllowedCharacter(c)
-        else allowedcharacters.indexOf(c) >= 0
 
     override def update_Impl(){cursorCounter += 1}
 
@@ -88,6 +122,10 @@ class SimpleTextboxNode(x:Int, y:Int, w:Int, h:Int, tq:String) extends TNode
         }
         else false
     }
+
+    private def canAddChar(c:Char) =
+        if (allowedcharacters.isEmpty) ChatAllowedCharacters.isAllowedCharacter(c)
+        else allowedcharacters.indexOf(c) >= 0
 
     private def tryAddChar(c:Char):Boolean =
     {
@@ -125,7 +163,7 @@ class SimpleTextboxNode(x:Int, y:Int, w:Int, h:Int, tq:String) extends TNode
 
     override def drawBack_Impl(mouse:Point, rframe:Float)
     {
-        GuiDraw.drawRect(position.x-1, position.y-1, size.width+1, size.height+1, 0xFFA0A0A0)
+        GuiDraw.drawRect(position.x-1, position.y-1, size.width+1, size.height+1, 0xFFA0A0A0) //todo make these colors configurable properties
         GuiDraw.drawRect(position.x, position.y, size.width, size.height, 0xFF000000)
 
         if (text.isEmpty && phantom.nonEmpty)
