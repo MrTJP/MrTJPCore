@@ -14,20 +14,81 @@ import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.inventory.Container
 import org.lwjgl.input.Mouse
 
+/**
+  * Represents the root node in a GUI node tree.
+  *
+  * == Overview ==
+  * The GUI rendering system provided in this library is based off of a render tree concept. Elements of the GUI are
+  * implementations of `TNode`. Each node can draw things and be interacted with. It can also have child nodes, also
+  * implementations of `TNode`.
+  *
+  * == Building a GUI ==
+  * You can build a GUI by subclassing `NodeGui` or using it as is. Here is a simple example of creating a 100x100 window
+  * with a text box and button inside. When the button is clicked, a custom function called onMyButtonClicked()
+  * is called.
+  *
+  * {{{
+  *
+  * import mrtjp.core.gui._
+  *
+  * val rootNode = new NodeGui(100, 100) //Create centered window of size 100x100 on screen
+  *
+  * //add text box
+  * val textBox = new SimpleTextBoxNode
+  * textBox.size = Size(50, 16)
+  * textBox.position = Point(25, 42) //Position is relative to parent
+  * rootNode.addChild(textBox)
+  *
+  * //add button
+  * val button = new MCButtonNode
+  * button.position = Point(80, 42)
+  * button.size = Size(16, 16)
+  * button.text = "OK"
+  * button.clickDelegate = {() => onMyButtonClicked()} //Click handler
+  * rootNode.addChild(button)
+  *
+  * //... gui ready to present
+  *
+  * }}}
+  *
+  * == Using Custom Nodes ==
+  * There are several predefined and flexible `TNode` implementations. Custom implementations can also be created
+  * if none suit your needs. See [[TNode]] for more information.
+  *
+  *
+  * @constructor
+  * @param c The inventory container object that this GUI is representing. Typically a subclass of @class NodeContainer.
+  * @param w The width of this GUI window.
+  * @param h The height of this GUI window.
+  */
 class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
 {
+    /**
+      * @constructor Used for creating a default sized GUI window
+      * @param c The inventory container object that this GUI is representing. Typically a subclass of @class NodeContainer.
+      */
     def this(c:Container) = this(c, 176, 166)
-    def this(x:Int, y:Int) = this(new NodeContainer, x, y)
+
+    /**
+      * @constructor Used for creating a GUI with custom sized window that is not backed by an inventory.
+      * @param w The width of this GUI window.
+      * @param h The height of this GUI window.
+      */
+    def this(w:Int, h:Int) = this(new NodeContainer, w, h)
 
     xSize = w
     ySize = h
 
+    /**
+      * Flag used for debugging. Enabling will cause all nodes in tree to render visible outline.
+      */
     var debugDrawFrames = false
 
-    var size = Size.zeroSize
+    /** Represents size of the window. Initially set to width and height */
+    var size = Size.zeroSize //todo initialize this to xSize x ySize
     override def frame = new Rect(position, size)
 
-    override def initGui()
+    final override def initGui()
     {
         super.initGui()
         position = Point(guiLeft, guiTop)
@@ -96,13 +157,18 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
         super.keyTyped(c, keycode)
     }
 
+    /**
+      * Used to check if the `keycode` should close the GUI.
+      *
+      * @param keycode The keycode to check.
+      * @return True if this keycode corresponds to a close gui keybind.
+      */
     def isClosingKey(keycode:Int) =
         keycode == 1 || keycode == mc.gameSettings.keyBindInventory.getKeyCode //esc or inv key
 
-    /**
-     * Front/back rendering overridden, because at root, we dont push the children to our pos, because its zero.
-     */
     private var lastFrame = 0.0F
+
+    // Front/back rendering overridden, because at root, we dont push the children to our pos, because its zero.
     final override def drawGuiContainerBackgroundLayer(f:Float, mx:Int, my:Int)
     {
         lastFrame = f

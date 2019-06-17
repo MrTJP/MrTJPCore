@@ -16,9 +16,9 @@ import net.minecraft.world.gen.IChunkGenerator
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.common.util.Constants
 import net.minecraftforge.event.world.ChunkDataEvent
+import net.minecraftforge.fml.common.IWorldGenerator
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent.{Phase, WorldTickEvent}
-import net.minecraftforge.fml.common.{FMLCommonHandler, IWorldGenerator}
 import net.minecraftforge.fml.common.registry.GameRegistry
 import net.minecraftforge.fml.relauncher.Side
 

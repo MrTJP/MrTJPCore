@@ -188,7 +188,7 @@ class NodeContainer extends Container
 
     def doMerge(stack:ItemStack, from:Int):Boolean =
     {
-        if (slots.size > 36) { //run standarm impl on containers w/ player inventory
+        if (slots.size > 36) { //run standard impl on containers w/ player inventory
             if (slots.size-36 until slots.size contains from) { //if item is from player inventory...
                 return tryMergeItemStack(stack, 0, slots.size-36, false) //merge to rest of container
             }

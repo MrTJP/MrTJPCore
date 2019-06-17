@@ -9,23 +9,36 @@ import codechicken.lib.colour.EnumColour
 import codechicken.lib.gui.GuiDraw
 import mrtjp.core.vec.{Point, Rect, Size, Vec2}
 
+/**
+  * Represents a rectangular area in which all subnodes can be moved around the coordinate plane by clicking and
+  * dragging. Used for creating a window and being able to pan subnodes around in that window. Typically used alongside
+  * a [[ClipNode]] so that things outside the rectangular area are not rendered.
+  */
 class PanNode extends TNode
 {
+    /** The size of this node. Subnodes can be panned by clicking and dragging inside this node. */
     var size = Size.zeroSize
     override def frame = Rect(position, size)
 
-    var clampSlack = 0
-
     var scrollModifier = Vec2(1, 1)
+    /** Thickness of the scrollbars. */
     var scrollBarThickness = 4
+    /** The background color of the scrollbars in ARGB format. */
     var scrollBarBGColour = EnumColour.LIGHT_GRAY.argb(0x66)
+    /** The color of the actual scroll bar/indicator in ARGB format. */
     var scrollBarColour = EnumColour.GRAY.argb(0x99)
+    /** Flag for toggling the rendering of the vertical scroll bar on the right edge. */
     var scrollBarVertical = true
+    /** Flag for toggling the rendering of the horizontal scroll bar on the bottom edge. */
     var scrollBarHorizontal = true
 
+    /** A function that indicates if panning can happen. Typically this will check for a hotkey. */
     var dragTestFunction = {() => false}
+    /** A callback function for when panning occurs. Called every frame when subnodes are translated. */
     var panDelegate = {() => }
 
+    var clampSlack = 0
+    /** A debug flag for rendering an outline showing the clamp box. */
     var debugShowClampBox = false
 
     private var cFrame = Rect.zeroRect
