@@ -175,7 +175,7 @@ class NodeContainer extends Container
                 stack = slot.getStack
                 val manipStack = stack.copy
 
-                if (!doMerge(manipStack, i) || stack.getCount == manipStack.getCount) return ItemStack.EMPTY
+                if (!doMerge(player, manipStack, i) || stack.getCount == manipStack.getCount) return ItemStack.EMPTY
 
                 if (manipStack.getCount <= 0) slot.putStack(ItemStack.EMPTY)
                 else slot.putStack(manipStack)
@@ -186,6 +186,9 @@ class NodeContainer extends Container
         stack
     }
 
+    def doMerge(player:EntityPlayer, stack:ItemStack, from:Int):Boolean = doMerge(stack, from)
+
+    @deprecated("use doMerge(_:EntityPlayer, _:ItemStack, _:Int)")
     def doMerge(stack:ItemStack, from:Int):Boolean =
     {
         if (slots.size > 36) { //run standard impl on containers w/ player inventory
