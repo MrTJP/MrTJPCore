@@ -53,5 +53,5 @@ class SequenceAction extends ParticleAction
         actions.foreach(_.reset())
     }
 
-    override def copy = ParticleAction.sequence(actions.map(_.copy):_*)
+    override def copy = ParticleAction.sequence(actions.map(_.copy).toList:_*)
 }

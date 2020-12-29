@@ -10,7 +10,7 @@ import mrtjp.core.fx.particles.CoreParticle
 
 trait TColourParticle extends CoreParticle
 {
-    var rgb = Vector3.one.copy
+    var rgb = Vector3.ONE.copy
 
     def red = rgb.x
     def green = rgb.y
@@ -30,7 +30,7 @@ trait TColourParticle extends CoreParticle
 
 class ColourChangeToAction extends ParticleAction
 {
-    var target = Vector3.zero
+    var target = Vector3.ZERO
     var duration = 0.0
 
     override def canOperate(p:CoreParticle) = p.isInstanceOf[TColourParticle]
@@ -61,7 +61,7 @@ class ColourChangeToAction extends ParticleAction
 
 class ColourChangeForAction extends ParticleAction
 {
-    var delta = Vector3.zero
+    var delta = Vector3.ZERO
     var duration = 0.0
 
     override def canOperate(p:CoreParticle) = p.isInstanceOf[TColourParticle]

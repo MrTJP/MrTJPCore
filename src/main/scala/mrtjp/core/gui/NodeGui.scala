@@ -5,14 +5,13 @@
  */
 package mrtjp.core.gui
 
-import codechicken.lib.colour.EnumColour
-import codechicken.lib.gui.GuiDraw
+import com.mojang.blaze3d.systems.RenderSystem
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.inventory.GuiContainer
-import net.minecraft.client.renderer.GlStateManager._
-import net.minecraft.inventory.Container
-import org.lwjgl.input.Mouse
+import net.minecraft.client.gui.screen.inventory.ContainerScreen
+import net.minecraft.entity.player.PlayerInventory
+import net.minecraft.inventory.container.Container
+import net.minecraft.util.text.ITextComponent
 
 /**
   * Represents the root node in a GUI node tree.
@@ -61,20 +60,21 @@ import org.lwjgl.input.Mouse
   * @param w The width of this GUI window.
   * @param h The height of this GUI window.
   */
-class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
+//TODO, extract to common trait implementable on a base ContainerNodeGui and a NodeGui as this is not a great setup for non container based guis.
+class NodeGui[T <: NodeContainer](c:T = new NodeContainer(null, -1), w:Int, h:Int, inv:PlayerInventory = null, title:ITextComponent = null) extends ContainerScreen[T](c, inv, title) with TNode
 {
     /**
       * @constructor Used for creating a default sized GUI window
       * @param c The inventory container object that this GUI is representing. Typically a subclass of @class NodeContainer.
       */
-    def this(c:Container) = this(c, 176, 166)
+    def this(c:T, inv:PlayerInventory, title:ITextComponent) = this(c, 176, 166, inv, title)
 
-    /**
-      * @constructor Used for creating a GUI with custom sized window that is not backed by an inventory.
-      * @param w The width of this GUI window.
-      * @param h The height of this GUI window.
-      */
-    def this(w:Int, h:Int) = this(new NodeContainer, w, h)
+//    /**
+//     * @constructor Used for creating a GUI with custom sized window that is not backed by an inventory.
+//     * @param w The width of this GUI window.
+//     * @param h The height of this GUI window.
+//     */
+//    def this(w:Int, h:Int) = this(new NodeContainer(null, -1), w, h, null, null)
 
     xSize = w
     ySize = h
@@ -84,13 +84,15 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
       */
     var debugDrawFrames = false
 
+    private var lastClick: Long = 0L
+
     /** Represents size of the window. Initially set to width and height */
     var size = Size.zeroSize //todo initialize this to xSize x ySize
     override def frame = new Rect(position, size)
 
-    final override def initGui()
+    final override def init()
     {
-        super.initGui()
+        super.init()
         position = Point(guiLeft, guiTop)
         if (size == Size.zeroSize) size = Size(xSize, ySize) //TODO Legacy (size should be set directly)
         else
@@ -100,62 +102,53 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
         }
     }
 
-    final override def updateScreen()
+    final override def tick()
     {
-        super.updateScreen()
+        super.tick()
         update()
     }
 
-    final override def drawScreen(mouseX: Int, mouseY: Int, partialTicks: Float)
+    final override def render(mouseX: Int, mouseY: Int, partialTicks: Float)
     {
-        drawDefaultBackground()
-        super.drawScreen(mouseX, mouseY, partialTicks)
+        renderBackground()
+        super.render(mouseX, mouseY, partialTicks)
         renderHoveredToolTip(mouseX, mouseY)
     }
 
-    final override def setWorldAndResolution(mc:Minecraft, i:Int, j:Int)
-    {
-        val init = this.mc == null
-        super.setWorldAndResolution(mc, i, j)
+    final override def init(mc:Minecraft, i:Int, j:Int) {
+        val init = this.minecraft == null
+        super.init(mc, i, j)
         if (init) onAddedToParent_Impl()
     }
 
-    final override def mouseClicked(x:Int, y:Int, button:Int)
-    {
-        super.mouseClicked(x, y, button)
-        mouseClicked(new Point(x, y), button, false)
+    final override def mouseClicked(x:Double, y:Double, button:Int):Boolean = {
+        lastClick = System.currentTimeMillis
+        mouseClicked(new Point(x.toInt, y.toInt), button, super.mouseClicked(x, y, button))
     }
 
 
-    final override def mouseReleased(x:Int, y:Int, button:Int)
-    {
-        super.mouseReleased(x, y, button)
-        if (button != -1) mouseReleased(new Point(x, y), button, false)
+    final override def mouseReleased(x:Double, y:Double, button:Int):Boolean = {
+        if (super.mouseReleased(x, y, button)) true
+        else if (button != -1) mouseReleased(new Point(x.toInt, y.toInt), button, false)
+        else false
     }
 
-    final override def mouseClickMove(x:Int, y:Int, button:Int, time:Long)
-    {
-        super.mouseClickMove(x, y, button, time)
-        mouseDragged(new Point(x, y), button, time, false)
+    final override def mouseDragged(x: Double, y: Double, button: Int, dragX: Double, dragY: Double): Boolean = {
+        val time = System.currentTimeMillis() - lastClick
+        super.mouseDragged(x, y, button, dragX, dragY)
+        mouseDragged(new Point(x.toInt, y.toInt), button, time, false)
     }
 
-    final override def handleMouseInput()
-    {
-        super.handleMouseInput()
-        val i = Mouse.getEventDWheel
-        if (i != 0)
-        {
-            val p = GuiDraw.getMousePosition
-            mouseScrolled(new Point(p.x, p.y), if (i > 0) 1 else -1, false)
-        }
+    final override def mouseScrolled(x: Double, y: Double, scroll: Double): Boolean = {
+        scroll != 0 &&  mouseScrolled(new Point(x.toInt, y.toInt), if (scroll > 0) 1 else -1, super.mouseScrolled(x, y, scroll))
     }
 
-    final override def keyTyped(c:Char, keycode:Int)
-    {
-        if (keyPressed(c, keycode, false)) return
-
-        super.keyTyped(c, keycode)
-    }
+//    final override def keyTyped(c:Char, keycode:Int)
+//    {
+//        if (keyPressed(c, keycode, false)) return
+//
+//        super.keyTyped(c, keycode)
+//    }
 
     /**
       * Used to check if the `keycode` should close the GUI.
@@ -163,8 +156,8 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
       * @param keycode The keycode to check.
       * @return True if this keycode corresponds to a close gui keybind.
       */
-    def isClosingKey(keycode:Int) =
-        keycode == 1 || keycode == mc.gameSettings.keyBindInventory.getKeyCode //esc or inv key
+//    def isClosingKey(keycode:Int) =
+//        keycode == 1 || keycode == minecraft.gameSettings.keyBindInventory.getKey //esc or inv key
 
     private var lastFrame = 0.0F
 
@@ -174,23 +167,23 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
         lastFrame = f
         val mouse = new Point(mx, my)
         frameUpdate(mouse, f)
-        disableDepth()
-        color(1, 1, 1, 1)
+        RenderSystem.disableDepthTest()
+        RenderSystem.color4f(1, 1, 1, 1)
         rootDrawBack(mouse, f)
-        color(1, 1, 1, 1)
-        enableDepth()
+        RenderSystem.color4f(1, 1, 1, 1)
+        RenderSystem.enableDepthTest()
     }
 
     final override def drawGuiContainerForegroundLayer(mx:Int, my:Int)
     {
         val mouse = new Point(mx, my)
-        disableDepth()
-        color(1, 1, 1, 1)
+        RenderSystem.disableDepthTest()
+        RenderSystem.color4f(1, 1, 1, 1)
         rootDrawFront(mouse, lastFrame)
-        color(1, 1, 1, 1)
-        enableDepth()
+        RenderSystem.color4f(1, 1, 1, 1)
+        RenderSystem.enableDepthTest()
 
-        if (debugDrawFrames)
+/*        if (debugDrawFrames)
         {
             translate(-position.x, -position.y, 0)
             def render(node:TNode)
@@ -208,6 +201,6 @@ class NodeGui(c:Container, w:Int, h:Int) extends GuiContainer(c) with TNode
             }
             for (c <- children) render(c)
             translate(position.x, position.y, 0)
-        }
+        }*/
     }
 }

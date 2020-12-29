@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright (c) 2015.
  * Created by MrTJP.
  * All rights reserved.
@@ -68,3 +69,4 @@ class WorldGenDecorator extends TWorldGenerator
         true
     }
 }
+*/

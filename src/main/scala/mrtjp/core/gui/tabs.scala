@@ -6,15 +6,15 @@
 package mrtjp.core.gui
 
 import codechicken.lib.colour.EnumColour
-import codechicken.lib.gui.GuiDraw
+import com.mojang.blaze3d.systems.RenderSystem
 import mrtjp.core.vec.{Point, Rect, Size}
-import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.GlStateManager._
-import net.minecraft.client.renderer.{GlStateManager, RenderHelper}
+import net.minecraft.client.gui.AbstractGui
+import net.minecraft.client.renderer.RenderHelper
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.item.ItemStack
+import net.minecraftforge.fml.client.gui.GuiUtils
 
-import scala.collection.JavaConversions
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -60,9 +60,9 @@ class TabNode(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TNo
         if (isOpen)
         {
             drawTab()
-            children.foreach(_.hidden = false)
+            ourChildren.foreach(_.hidden = false)
         }
-        else children.foreach(_.hidden = true)
+        else ourChildren.foreach(_.hidden = true)
     }
 
     override def drawFront_Impl(mouse:Point, rframe:Float)
@@ -71,7 +71,8 @@ class TabNode(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TNo
         {
             val list = ListBuffer[String]()
             buildToolTip(list)
-            GuiDraw.drawMultiLineTip(mouse.x+12, mouse.y-12, JavaConversions.bufferAsJavaList(list))
+            val root = getRoot
+            GuiUtils.drawHoveringText(list.asJava, mouse.x+12, mouse.y-12, root.width, root.height, -1, getFontRenderer)
         }
     }
 
@@ -86,7 +87,7 @@ class TabNode(wMin:Int, hMin:Int, wMax:Int, hMax:Int, val color:Int) extends TNo
         val r = (color>>16&255)/255.0F
         val g = (color>>8&255)/255.0F
         val b = (color&255)/255.0F
-        GlStateManager.color(r, g, b, 1)
+        RenderSystem.color4f(r, g, b, 1)
 
         GuiLib.drawGuiBox(position.x, position.y, size.width, size.height, 0)
     }
@@ -113,13 +114,12 @@ trait TStackTab extends TabNode
     abstract override def drawIcon()
     {
         super.drawIcon()
-        GlStateManager.color(1, 1, 1, 1)
-        RenderHelper.enableGUIStandardItemLighting()
-        enableRescaleNormal()
-        mcInst.getRenderItem.zLevel = (zPosition+25).toFloat
-        mcInst.getRenderItem.renderItemAndEffectIntoGUI(iconStack, position.x+3, position.y+3)
-        disableRescaleNormal()
-        disableLighting()
+        RenderSystem.color4f(1, 1, 1, 1)
+        RenderSystem.enableRescaleNormal()
+        mcInst.getItemRenderer.zLevel = (zPosition+25).toFloat
+        mcInst.getItemRenderer.renderItemAndEffectIntoGUI(iconStack, position.x+3, position.y+3)
+        RenderSystem.disableRescaleNormal()
+        RenderSystem.disableLighting()
         RenderHelper.disableStandardItemLighting()
     }
 }
@@ -135,7 +135,7 @@ trait TIconTab extends TabNode
     abstract override def drawIcon()
     {
         super.drawIcon()
-        drawTexturedModalRect(position.x+3, position.x+3, icon, 16, 16)
+        AbstractGui.blit(position.x+3, position.x+3, getBlitOffset, 16, 16, icon)
     }
 }
 
@@ -179,7 +179,7 @@ class TabControlNode(x:Int, y:Int) extends TNode
     override def frameUpdate_Impl(mouse:Point, rframe:Float)
     {
         var dy = 0
-        for (w <- children)
+        for (w <- ourChildren)
         {
             w.position = Point(w.position.x, dy)
             dy += w.frame.height

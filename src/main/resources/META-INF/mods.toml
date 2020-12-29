@@ -1,0 +1,34 @@
+modLoader="scorge"
+loaderVersion="[3.1,)"
+issueTrackerURL="https://github.com/MrTJP/MrTJPCore"
+
+[[mods]]
+    modId="mrtjpcore"
+    displayName="MrTJPCore"
+    entryClass="mrtjp.core.handler.MrTJPCoreMod"
+    version="${version}"
+
+    updateJSONURL="https://version-check.covers1624.net/check/?mod=MrTJPCore&mc=${mc_version}"
+    displayURL="https://github.com/MrTJP/MrTJPCore"
+    authors="MrTJP, covers1624"
+    description='''
+Core libs and utilities
+    '''
+[[dependencies.mrtjpcore]]
+    modId="forge"
+    mandatory=true
+    versionRange="[28,)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.mrtjpcore]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.15.2]"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.mrtjpcore]]
+    modId="codechickenlib"
+    mandatory=true
+    versionRange="[${ccl_version},)"
+    ordering="AFTER"
+    side="BOTH"

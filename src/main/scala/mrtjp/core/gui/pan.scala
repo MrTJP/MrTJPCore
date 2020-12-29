@@ -6,7 +6,6 @@
 package mrtjp.core.gui
 
 import codechicken.lib.colour.EnumColour
-import codechicken.lib.gui.GuiDraw
 import mrtjp.core.vec.{Point, Rect, Size, Vec2}
 
 /**
@@ -92,7 +91,7 @@ class PanNode extends TNode
         val d2 = d
         if (d2 != Vec2.zeroVec)
         {
-            for (c <- children) c.position = Point(c.position.vectorize+d2)
+            for (c <- ourChildren) c.position = Point(c.position.vectorize+d2)
             panDelegate()
         }
     }
@@ -108,15 +107,15 @@ class PanNode extends TNode
     {
         if (scrollBarVertical)
         {
-            GuiDraw.drawRect(position.x+size.width-scrollBarThickness, position.y, scrollBarThickness, size.height, scrollBarBGColour)
+            fillGradient(position.x+size.width-scrollBarThickness, position.y, position.x+size.width, position.y+size.height, scrollBarBGColour, scrollBarBGColour)
             val s = getScrollBarRight
-            GuiDraw.drawRect(s.x, s.y, s.width, s.height, scrollBarColour)
+            fillGradient(s.x, s.y, s.x+s.width, s.y+s.height, scrollBarColour, scrollBarColour)
         }
         if (scrollBarHorizontal)
         {
-            GuiDraw.drawRect(position.x, position.y+size.height-scrollBarThickness, size.width, scrollBarThickness, scrollBarBGColour)
+            fillGradient(position.x, position.y+size.height-scrollBarThickness, position.x+size.width, position.y+size.height, scrollBarBGColour, scrollBarBGColour)
             val s = getScrollBarBelow
-            GuiDraw.drawRect(s.x, s.y, s.width, s.height, scrollBarColour)
+            fillGradient(s.x, s.y, s.x+s.width, s.y+s.height, scrollBarColour, scrollBarColour)
         }
     }
 

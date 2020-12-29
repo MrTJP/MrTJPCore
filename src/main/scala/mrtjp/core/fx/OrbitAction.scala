@@ -10,7 +10,7 @@ import mrtjp.core.fx.particles.CoreParticle
 
 class OrbitAction extends ParticleAction
 {
-    var target = Vector3.zero
+    var target = Vector3.ZERO
     var speed = 0.0
     var duration = 0.0
 

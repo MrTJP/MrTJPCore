@@ -10,8 +10,8 @@ import mrtjp.core.fx.particles.CoreParticle
 
 trait TTargetParticle extends CoreParticle
 {
-    var target = Vector3.zero
-    var prevTarget = Vector3.zero
+    var target = Vector3.ZERO
+    var prevTarget = Vector3.ZERO
 
     def tx = target.x
     def ty = target.y
@@ -38,16 +38,16 @@ trait TTargetParticle extends CoreParticle
         target.set(x, y, z)
     }
 
-    abstract override def onUpdate()
+    abstract override def tick()
     {
-        super.onUpdate()
+        super.tick()
         prevTarget.set(target)
     }
 }
 
 class TargetChangeToAction extends ParticleAction
 {
-    var target = Vector3.zero
+    var target = Vector3.ZERO
     var duration = 0.0
 
     override def canOperate(p:CoreParticle) = p.isInstanceOf[TTargetParticle]
@@ -72,7 +72,7 @@ class TargetChangeToAction extends ParticleAction
 
 class TargetChangeForAction extends ParticleAction
 {
-    var delta = Vector3.zero
+    var delta = Vector3.ZERO
     var duration = 0.0
 
     override def canOperate(p:CoreParticle) = p.isInstanceOf[TTargetParticle]

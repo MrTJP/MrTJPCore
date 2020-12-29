@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright (c) 2014.
  * Created by MrTJP.
  * All rights reserved.
@@ -172,4 +173,4 @@ class SimpleTextboxNode(x:Int, y:Int, w:Int, h:Int, tq:String) extends TNode
         val drawText = text+(if (enabled && focused && cursorCounter/6%2 == 0) "_" else "")
         GuiDraw.drawString(drawText, position.x+4, position.y+size.height/2-4, if (enabled) 0xE0E0E0 else 0x707070)
     }
-}
+}*/

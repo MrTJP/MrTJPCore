@@ -5,14 +5,14 @@
  */
 package mrtjp.core.gui
 
-import codechicken.lib.gui.GuiDraw
 import codechicken.lib.texture.TextureUtils
+import com.mojang.blaze3d.systems.RenderSystem
 import mrtjp.core.vec.{Point, Rect, Size}
-import net.minecraft.client.audio.PositionedSoundRecord
-import net.minecraft.client.renderer.GlStateManager
-import net.minecraft.init.SoundEvents
+import net.minecraft.client.audio.SimpleSound
+import net.minecraft.util.SoundEvents
+import net.minecraftforge.fml.client.gui.GuiUtils
 
-import scala.collection.convert.WrapAsJava
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -34,7 +34,7 @@ class ButtonNode extends TNode
     {
         if (!consumed && rayTest(p))
         {
-            soundHandler.playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1))
+            soundHandler.play(SimpleSound.master(SoundEvents.UI_BUTTON_CLICK, 1))
             onButtonClicked()
             true
         }
@@ -48,7 +48,7 @@ class ButtonNode extends TNode
 
     override def drawBack_Impl(mouse:Point, rframe:Float)
     {
-        GlStateManager.color(1, 1, 1, 1)
+        RenderSystem.color4f(1, 1, 1, 1)
         val mouseover = mouseoverLock || (frame.contains(mouse) && rayTest(mouse))
         drawButtonBackground(mouseover)
         drawButton(mouseover)
@@ -64,7 +64,8 @@ class ButtonNode extends TNode
             //draw tooltip with absolute coords to allow it to force-fit on screen
             translateToScreen()
             val Point(mx, my) = parent.convertPointToScreen(mouse)
-            GuiDraw.drawMultiLineTip(mx+12, my-12, WrapAsJava.seqAsJavaList(list))
+            val root = getRoot
+            GuiUtils.drawHoveringText(list.asJava, mx+12, my-12, root.width, root.height, -1, getFontRenderer)
             translateFromScreen()
         }
     }
@@ -84,13 +85,13 @@ trait TButtonMC extends ButtonNode
 
         TextureUtils.changeTexture(GuiLib.guiTex)
 
-        GlStateManager.color(1, 1, 1, 1)
+        RenderSystem.color4f(1, 1, 1, 1)
         val state = if (mouseover) 2 else 1
 
-        drawTexturedModalRect(position.x, position.y, 0, 46+state*20, size.width/2, size.height/2)
-        drawTexturedModalRect(position.x+size.width/2, position.y, 200-size.width/2, 46+state*20, size.width/2, size.height/2)
-        drawTexturedModalRect(position.x, position.y+size.height/2, 0, 46+state*20+20-size.height/2, size.width/2, size.height/2)
-        drawTexturedModalRect(position.x+size.width/2, position.y+size.height/2, 200-size.width/2, 46+state*20+20-size.height/2, size.width/2, size.height/2)
+        blit(position.x, position.y, 0, 46+state*20, size.width/2, size.height/2)
+        blit(position.x+size.width/2, position.y, 200-size.width/2, 46+state*20, size.width/2, size.height/2)
+        blit(position.x, position.y+size.height/2, 0, 46+state*20+20-size.height/2, size.width/2, size.height/2)
+        blit(position.x+size.width/2, position.y+size.height/2, 200-size.width/2, 46+state*20+20-size.height/2, size.width/2, size.height/2)
     }
 }
 
@@ -105,8 +106,8 @@ trait TButtonText extends ButtonNode
     abstract override def drawButton(mouseover:Boolean)
     {
         super.drawButton(mouseover)
-        GuiDraw.drawStringC(text, position.x+size.width/2, position.y+(size.height-8)/2, if (mouseover) 0xFFFFFFA0 else 0xFFE0E0E0)
-        GlStateManager.color(1, 1, 1, 1)
+        drawCenteredString(getFontRenderer, text, position.x+size.width/2, position.y+(size.height-8)/2, if (mouseover) 0xFFFFFFA0 else 0xFFE0E0E0)
+        RenderSystem.color4f(1, 1, 1, 1)
     }
 }
 
@@ -121,8 +122,8 @@ class DotSelectNode extends ButtonNode
     {
         super.drawButtonBackground(mouseover)
         TextureUtils.changeTexture(GuiLib.guiExtras)
-        GlStateManager.color(1, 1, 1, 1)
-        drawTexturedModalRect(position.x, position.y, if (mouseover) 11 else 1, 1, 8, 8)
+        RenderSystem.color4f(1, 1, 1, 1)
+        blit(position.x, position.y, if (mouseover) 11 else 1, 1, 8, 8)
     }
 }
 
@@ -150,7 +151,7 @@ class CheckBoxNode extends ButtonNode with TButtonMC
         super.drawButton(mouseover)
         TextureUtils.changeTexture(GuiLib.guiExtras)
         val u = if (state) 17 else 1
-        drawTexturedModalRect(position.x, position.y, u, 134, 14, 14)
+        blit(position.x, position.y, u, 134, 14, 14)
     }
 
     override def onButtonClicked()

@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright (c) 2015.
  * Created by MrTJP.
  * All rights reserved.
@@ -145,3 +146,4 @@ class GenLogicSurface extends TGenerationLogic
         generated
     }
 }
+*/

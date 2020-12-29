@@ -5,29 +5,19 @@
  */
 package mrtjp.core.data
 
-import java.io.File
-import java.util.{ArrayList => JAList}
+import codechicken.lib.config.{ConfigTag, StandardConfigFile}
 
-import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiScreen
-import net.minecraftforge.common.config.{ConfigElement, Configuration, Property}
-import net.minecraftforge.fml.client.IModGuiFactory
-import net.minecraftforge.fml.client.IModGuiFactory.RuntimeOptionCategoryElement
-import net.minecraftforge.fml.client.config.DummyConfigElement.DummyCategoryElement
-import net.minecraftforge.fml.client.config.{GuiConfig, IConfigElement}
-import net.minecraftforge.fml.client.event.ConfigChangedEvent
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import net.minecraftforge.fml.common.{FMLCommonHandler, Loader}
-
-import scala.collection.JavaConversions._
+import java.nio.file.Paths
+import scala.jdk.CollectionConverters._
 
 abstract class ModConfig(modID:String)
 {
-    var config:Configuration = null
+    var config:ConfigTag = null
+    private var loaded = false;
 
     protected case class BaseCategory(key:String, comment:String = "")
     {
-        def cat = config.getCategory(key)
+        def cat = config.getTag(key)
         cat.setComment(comment)
 
         def put[T](key:String, value:T, force:Boolean):T =
@@ -38,34 +28,43 @@ abstract class ModConfig(modID:String)
 
         def put[T](key:String, value:T, comment:String, force:Boolean):T =
         {
-            import net.minecraftforge.common.config.Property.Type._
-            def getType(value:Any):Property.Type = value match
+            import codechicken.lib.config.ConfigTag.TagType._
+            def getType(value:Any):ConfigTag.TagType = value match
             {
                 case xs:Array[_] => getType(xs.head)
                 case b:Boolean   => BOOLEAN
-                case i:Int       => INTEGER
+                case i:Int       => INT
                 case s:String    => STRING
                 case d:Double    => DOUBLE
                 case _           => STRING
             }
 
             val propType = getType(value)
-            var prop = value match
-            {
-                case t:Array[_] => new Property(key, t.map(_.toString), propType)
-                case _ => new Property(key, value.toString, propType)
-            }
+            val prop = cat.getTag(key)
 
-            prop.setComment(comment)
-            if (force || !cat.containsKey(key)) cat.put(key, prop)
-            prop = cat.get(key)
+            if (!loaded) {
+                prop.setComment(comment)
+                value match {
+                    case xs: Array[Boolean] => prop.setDefaultBooleanList(xs.map(Boolean.box).toList.asJava)
+                    case xs: Array[Int] => prop.setDefaultIntList(xs.map(Int.box).toList.asJava)
+                    case xs: Array[String] => prop.setDefaultStringList(xs.toList.asJava)
+                    case xs: Array[Double] => prop.setDefaultDoubleList(xs.map(Double.box).toList.asJava)
+                    case xs: Array[_] => prop.setDefaultStringList(xs.map(_.toString).toList.asJava)
+                    case b: Boolean => prop.setDefaultBoolean(b)
+                    case i: Int => prop.setDefaultInt(i)
+                    case s: String => prop.setDefaultString(s)
+                    case d: Double => prop.setDefaultDouble(d)
+                    case s => prop.setDefaultString(s.toString)
+                }
+                if (force) prop.resetToDefault()
+            }
 
             val reslult = value match
             {
                 case xs:Array[_]    => propType match
                 {
                     case BOOLEAN    => prop.getBooleanList
-                    case INTEGER    => prop.getIntList
+                    case INT    => prop.getIntList
                     case STRING     => prop.getStringList
                     case DOUBLE     => prop.getDoubleList
                     case _          => prop.getStringList
@@ -79,55 +78,18 @@ abstract class ModConfig(modID:String)
             reslult.asInstanceOf[T]
         }
 
-        def containsKey(key:Any) = cat.containsKey(key.toString)
+        def containsKey(key:Any) = cat.hasTag(key.toString)
     }
 
     def getFileName = modID
 
-    private var registered = false
     def loadConfig()
     {
-        config = new Configuration(new File(Loader.instance.getConfigDir, getFileName+".cfg"))
+        config = new StandardConfigFile(Paths.get("./config/", getFileName + ".cfg")).load()
         initValues()
-        if (config.hasChanged) config.save()
-
-        if (!registered)
-        {
-            FMLCommonHandler.instance.bus.register(this)
-            registered = true
-        }
-    }
-
-    @SubscribeEvent
-    def onConfigChanged(event:ConfigChangedEvent.OnConfigChangedEvent)
-    {
-        if (event.getModID == modID)
-        {
-            initValues()
-            config.save()
-        }
+        loaded = true
+        config.save()
     }
 
     protected def initValues()
-}
-
-object SpecialConfigGui
-{
-    def buildCategories(config:Configuration):JAList[IConfigElement] =
-        new JAList[IConfigElement](config.getCategoryNames.map(s =>
-        {
-            new DummyCategoryElement(s, "", new ConfigElement(config.getCategory(s)).getChildElements)
-            {
-                override def getComment = config.getCategory(s).getComment
-            }
-        }))
-}
-
-class SpecialConfigGui(parent:GuiScreen, modid:String, config:Configuration) extends GuiConfig(parent, SpecialConfigGui.buildCategories(config), modid, false, false, GuiConfig.getAbridgedConfigPath(config.toString))
-
-trait TModGuiFactory extends IModGuiFactory
-{
-    override def initialize(minecraftInstance: Minecraft){}
-    override def runtimeGuiCategories() = null
-    override def hasConfigGui = true
 }

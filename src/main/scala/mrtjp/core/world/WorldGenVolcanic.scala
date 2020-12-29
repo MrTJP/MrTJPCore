@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright (c) 2015.
  * Created by MrTJP.
  * All rights reserved.
@@ -147,3 +148,4 @@ class WorldGenVolcanic extends TWorldGenerator
         false
     }
 }
+*/

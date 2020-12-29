@@ -10,7 +10,6 @@ import codechicken.lib.texture.TextureUtils
 import mrtjp.core.fx._
 import net.minecraft.client.particle.Particle
 import net.minecraft.client.renderer.BufferBuilder
-import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
 import net.minecraft.entity.Entity
 import net.minecraft.world.World
@@ -30,7 +29,7 @@ class SpriteParticle(w:World) extends CoreParticle(w) with TColourParticle with 
     override def py_=(y:Double){prevPosY = y}
     override def pz_=(z:Double){prevPosZ = z}
 
-    override def renderParticle(buffer:BufferBuilder, entity:Entity, frame:Float, cosyaw:Float, cospitch:Float, sinyaw:Float, sinsinpitch:Float, cossinpitch:Float)
+    /*override def renderParticle(buffer:BufferBuilder, entity:Entity, frame:Float, cosyaw:Float, cospitch:Float, sinyaw:Float, sinsinpitch:Float, cossinpitch:Float)
     {
         super.renderParticle(buffer, entity, frame, cosyaw, cospitch, sinyaw, sinsinpitch, cossinpitch)
 
@@ -72,5 +71,5 @@ class SpriteParticle(w:World) extends CoreParticle(w) with TColourParticle with 
         enableLighting()
     }
 
-    override def getFXLayer = 3
+    override def getFXLayer = 3*/
 }

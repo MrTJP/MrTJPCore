@@ -6,12 +6,11 @@
 package mrtjp.core.inventory
 
 import mrtjp.core.world.WorldLib
-import net.minecraft.entity.player.EntityPlayer
+import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.inventory.IInventory
 import net.minecraft.item.ItemStack
-import net.minecraft.nbt.{NBTTagCompound, NBTTagList}
+import net.minecraft.nbt.{CompoundNBT, ListNBT}
 import net.minecraft.util.math.BlockPos
-import net.minecraft.util.text.TextComponentString
 import net.minecraft.world.World
 
 trait TInventory extends IInventory
@@ -22,14 +21,11 @@ trait TInventory extends IInventory
 
     override def isEmpty = storage.forall(_.isEmpty)
 
-    override def hasCustomName = true
-    override def getDisplayName = new TextComponentString(getName)
-
-    override def isUsableByPlayer(player:EntityPlayer) = true
+    override def isUsableByPlayer(player:PlayerEntity) = true
     override def isItemValidForSlot(slot:Int, item:ItemStack) = true
 
-    override def openInventory(player:EntityPlayer){}
-    override def closeInventory(player:EntityPlayer){}
+    override def openInventory(player:PlayerEntity){}
+    override def closeInventory(player:PlayerEntity){}
 
     override def getStackInSlot(slot:Int) = storage(slot)
 
@@ -56,7 +52,7 @@ trait TInventory extends IInventory
 
         if (stack.getCount > count)
         {
-            val out = stack.splitStack(count)
+            val out = stack.split(count)
             markDirty()
             out
         }
@@ -75,38 +71,37 @@ trait TInventory extends IInventory
             storage(i) = ItemStack.EMPTY
     }
 
-    override def getFieldCount = 0
-    override def getField(id:Int) = 0
-    override def setField(id:Int, value:Int){}
+    def getName:String
 
-    def loadInv(tag:NBTTagCompound){ loadInv(tag, getName) }
-    def loadInv(tag:NBTTagCompound, prefix:String)
+
+    def loadInv(tag:CompoundNBT){ loadInv(tag, getName) }
+    def loadInv(tag:CompoundNBT, prefix:String)
     {
-        val tag1 = tag.getTagList(prefix+"items", 10)
-        for (i <- 0 until tag1.tagCount())
+        val tag1 = tag.getList(prefix+"items", 10)
+        for (i <- 0 until tag1.size())
         {
-            val tag2 = tag1.getCompoundTagAt(i)
+            val tag2 = tag1.getCompound(i)
 
-            val index = tag2.getInteger("index")
+            val index = tag2.getInt("index")
             if (storage.isDefinedAt(index))
-                storage(index) = new ItemStack(tag2)
+                storage(index) = ItemStack.read(tag2)
         }
     }
 
-    def saveInv(tag:NBTTagCompound){ saveInv(tag, getName) }
-    def saveInv(tag:NBTTagCompound, prefix:String)
+    def saveInv(tag:CompoundNBT){ saveInv(tag, getName) }
+    def saveInv(tag:CompoundNBT, prefix:String)
     {
-        val itemList = new NBTTagList
+        val itemList = new ListNBT()
         for (i <- storage.indices) if (!storage(i).isEmpty && storage(i).getCount > 0)
         {
-            val tag2 = new NBTTagCompound
-            tag2.setInteger("index", i)
-            storage(i).writeToNBT(tag2)
-            itemList.appendTag(tag2)
+            val tag2 = new CompoundNBT
+            tag2.putInt("index", i)
+            storage(i).write(tag2)
+            itemList.add(tag2)
         }
 
-        tag.setTag(prefix+"items", itemList)
-        tag.setInteger(prefix+"itemsCount", storage.length)
+        tag.put(prefix+"items", itemList)
+        tag.putInt(prefix+"itemsCount", storage.length)
     }
 
     def dropInvContents(w:World, pos:BlockPos)

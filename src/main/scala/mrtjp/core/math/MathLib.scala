@@ -104,7 +104,7 @@ object MathLib
         31-Integer.numberOfLeadingZeros(mask)
     }
 
-    def weightedRandom[T](xs:Traversable[(T, Int)], rand:Random = random):T =
+    def weightedRandom[T](xs:Iterable[(T, Int)], rand:Random = random):T =
     {
         if (xs.size == 1) return xs.head._1
         var weight = rand.nextInt(xs.map(_._2).sum)

@@ -9,42 +9,39 @@ import mrtjp.core.fx.particles.CoreParticle
 
 import scala.collection.mutable.{Seq => MSeq}
 
-class GroupAction extends ParticleAction
-{
+class GroupAction extends ParticleAction {
     var actions = MSeq[ParticleAction]()
 
-    override def tickLife()
-    {
+    override def tickLife() {
         super.tickLife()
         actions.foreach(_.tickLife())
     }
 
-    override def runOn(p:CoreParticle, frame:Float)
-    {
+    override def runOn(p: CoreParticle, frame: Float) {
         super.runOn(p, frame)
 
         actions.foreach { a =>
-            if (!a.isFinished)
+            if (!a.isFinished) {
                 a.runOn(p, frame)
+            }
         }
 
-        if (actions.forall(_.isFinished))
+        if (actions.forall(_.isFinished)) {
             isFinished = true
+        }
     }
 
-    override def operate(p:CoreParticle, time:Double){}
+    override def operate(p: CoreParticle, time: Double) {}
 
-    override def compile(p:CoreParticle)
-    {
+    override def compile(p: CoreParticle) {
         super.compile(p)
         actions.foreach(_.compile(p))
     }
 
-    override def reset()
-    {
+    override def reset() {
         super.reset()
         actions.foreach(_.reset())
     }
 
-    override def copy = ParticleAction.group(actions.map(_.copy):_*)
+    override def copy = ParticleAction.group(actions.map(_.copy).toList: _*)
 }

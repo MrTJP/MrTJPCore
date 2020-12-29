@@ -6,26 +6,26 @@
 package mrtjp.core.gui
 
 import java.util.{List => JList}
-
 import mrtjp.core.inventory.InvWrapper
 import net.minecraft.client.Minecraft
-import net.minecraft.entity.player.EntityPlayer
+import net.minecraft.entity.player.{PlayerEntity, PlayerInventory}
 import net.minecraft.inventory._
+import net.minecraft.inventory.container.{ClickType, Container, ContainerType, IContainerListener, Slot}
 import net.minecraft.item.ItemStack
-import net.minecraftforge.fml.relauncher.{Side, SideOnly}
+import net.minecraftforge.api.distmarker.{Dist, OnlyIn}
 
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable.{Buffer => MBuffer}
 
-class NodeContainer extends Container
+class NodeContainer(containerType:ContainerType[_], windowId:Int) extends Container(containerType, windowId)
 {
-    var startWatchDelegate = {(p:EntityPlayer) => }
-    var stopWatchDelegate = {(p:EntityPlayer) => }
+    var startWatchDelegate = {(p:PlayerEntity) => }
+    var stopWatchDelegate = {(p:PlayerEntity) => }
     var slotChangeDelegate = {(slot:Int) => }
 
-    def slots:MBuffer[TSlot3] = asScalaBuffer[TSlot3](inventorySlots.asInstanceOf[JList[TSlot3]])
+    def slots:MBuffer[TSlot3] = inventorySlots.asInstanceOf[JList[TSlot3]].asScala
 
-    override def canInteractWith(player:EntityPlayer) = true
+    override def canInteractWith(player:PlayerEntity) = true
 
     override def canDragIntoSlot(slot:Slot) = slot match
     {
@@ -33,36 +33,37 @@ class NodeContainer extends Container
         case _ => super.canDragIntoSlot(slot)
     }
 
-    override def addSlotToContainer(slot:Slot) =
+    override def addSlot(slot:Slot) =
     {
         if (!slot.isInstanceOf[TSlot3])
             throw new IllegalArgumentException("NodeContainers can only except slots of type Slot3")
-        super.addSlotToContainer(slot)
+        super.addSlot(slot)
 
         slot.asInstanceOf[TSlot3].slotChangeDelegate2 =
                 {() => slotChangeDelegate(slot.slotNumber)}
         slot
     }
 
-    @SideOnly(Side.CLIENT)
-    def addPlayerInv(x:Int, y:Int){addPlayerInv(Minecraft.getMinecraft.player, x, y)}
-    def addPlayerInv(player:EntityPlayer, x:Int, y:Int)
+    @OnlyIn(Dist.CLIENT)
+    def addPlayerInv(x:Int, y:Int):Unit = addPlayerInv(Minecraft.getInstance.player.inventory, x, y)
+
+    def addPlayerInv(playerInv:PlayerInventory, x:Int, y:Int)
     {
         var next = 0
         def up() = {next+=1;next-1}
 
         for ((x, y) <- GuiLib.createSlotGrid(x, y+58, 9, 1, 0, 0))
-            addSlotToContainer(new Slot3(player.inventory, up(), x, y)) //hotbar
+            addSlot(new Slot3(playerInv, up(), x, y)) //hotbar
 
         for ((x, y) <- GuiLib.createSlotGrid(x, y, 9, 3, 0, 0))
-            addSlotToContainer(new Slot3(player.inventory, up(), x, y)) //slots
+            addSlot(new Slot3(playerInv, up(), x, y)) //slots
     }
 
     override def addListener(listener:IContainerListener)
     {
         super.addListener(listener)
         listener match {
-            case p:EntityPlayer if !p.world.isRemote =>
+            case p:PlayerEntity if !p.world.isRemote =>
                 startWatchDelegate(p)
             case _ =>
         }
@@ -73,13 +74,13 @@ class NodeContainer extends Container
     {
         super.removeListener(listener)
         listener match {
-            case p:EntityPlayer if !p.world.isRemote =>
+            case p:PlayerEntity if !p.world.isRemote =>
                 stopWatchDelegate(p)
             case _ =>
         }
     }
 
-    override def onContainerClosed(p:EntityPlayer)
+    override def onContainerClosed(p:PlayerEntity)
     {
         super.onContainerClosed(p)
         if (!p.world.isRemote)
@@ -115,7 +116,7 @@ class NodeContainer extends Container
       * @param player The player that has this container open.
       * @return
       */
-    override def slotClick(id:Int, dragType:Int, clickType:ClickType, player:EntityPlayer):ItemStack =
+    override def slotClick(id:Int, dragType:Int, clickType:ClickType, player:PlayerEntity):ItemStack =
     {
         try { //Ignore exceptions raised from client-side only slots that wont be found here. To be removed.
             if (slots.isDefinedAt(id) && (clickType == ClickType.PICKUP || clickType == ClickType.QUICK_MOVE)) {
@@ -129,7 +130,7 @@ class NodeContainer extends Container
         }
     }
 
-    private def handleGhostClick(slot:TSlot3, mouse:Int, clickType:ClickType, player:EntityPlayer):ItemStack =
+    private def handleGhostClick(slot:TSlot3, mouse:Int, clickType:ClickType, player:PlayerEntity):ItemStack =
     {
         val inSlot = slot.getStack
         val inCursor = player.inventory.getItemStack
@@ -164,7 +165,7 @@ class NodeContainer extends Container
         inCursor
     }
 
-    override def transferStackInSlot(player:EntityPlayer, i:Int):ItemStack =
+    override def transferStackInSlot(player:PlayerEntity, i:Int):ItemStack =
     {
         var stack:ItemStack = ItemStack.EMPTY
         if (slots.isDefinedAt(i))
@@ -186,7 +187,7 @@ class NodeContainer extends Container
         stack
     }
 
-    def doMerge(player:EntityPlayer, stack:ItemStack, from:Int):Boolean = doMerge(stack, from)
+    def doMerge(player:PlayerEntity, stack:ItemStack, from:Int):Boolean = doMerge(stack, from)
 
     @deprecated("use doMerge(_:EntityPlayer, _:ItemStack, _:Int)")
     def doMerge(stack:ItemStack, from:Int):Boolean =
@@ -218,7 +219,6 @@ class NodeContainer extends Container
                 slot = slots(k)
                 inslot = slot.getStack
                 if (!slot.phantomSlot && !inslot.isEmpty && inslot.getItem == stack.getItem &&
-                        (!stack.getHasSubtypes || stack.getItemDamage == inslot.getItemDamage) &&
                         ItemStack.areItemStackTagsEqual(stack, inslot))
                 {
                     val space = math.min(slot.getSlotStackLimit, stack.getMaxStackSize)-inslot.getCount
@@ -265,7 +265,7 @@ class NodeContainer extends Container
                         }
                         else
                         {
-                            slot.putStack(stack.splitStack(space))
+                            slot.putStack(stack.split(space))
                             slot.onSlotChanged()
                             flag1 = true
                         }
@@ -289,7 +289,7 @@ class NodeContainer extends Container
 class Slot3(inv:IInventory, i:Int, x:Int, y:Int) extends Slot(inv, i, x, y) with TSlot3
 {
     override def getSlotStackLimit:Int = slotLimitCalculator()
-    override def canTakeStack(player:EntityPlayer):Boolean = canRemoveDelegate()
+    override def canTakeStack(player:PlayerEntity):Boolean = canRemoveDelegate()
     override def isItemValid(stack:ItemStack):Boolean = canPlaceDelegate(stack)
 
     override def onSlotChanged()

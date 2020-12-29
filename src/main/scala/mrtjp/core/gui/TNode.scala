@@ -5,10 +5,10 @@
  */
 package mrtjp.core.gui
 
+import com.mojang.blaze3d.systems.RenderSystem
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.{FontRenderer, Gui}
-import net.minecraft.client.renderer.GlStateManager._
+import net.minecraft.client.gui.{AbstractGui, FontRenderer}
 import net.minecraft.client.renderer.texture.TextureManager
 
 /**
@@ -30,7 +30,7 @@ import net.minecraft.client.renderer.texture.TextureManager
   * as mouse and keyboard events, as well as draw calls.
   *
   */
-trait TNode extends Gui
+trait TNode extends AbstractGui
 {
     /**
       * The parent of this node. This will be null if this node is not added to a
@@ -42,7 +42,8 @@ trait TNode extends Gui
       * All children of this array. Do not manipulate this directly. Children can be added to this node with
       * [[TNode.addChild()]]. A child can be removed from its parent with [[TNode.removeFromParent()]].
       */
-    var children = Seq[TNode]()
+    //Can't be named 'children' due to Screen using the same name.
+    var ourChildren = Seq[TNode]()
 
     /**
       * @return A [[Rect]] object that represents the bounds of this node. This does not account for chlid
@@ -73,23 +74,23 @@ trait TNode extends Gui
       */
     var userInteractionEnabled = true
 
-    def mcInst:Minecraft = Minecraft.getMinecraft
+    def mcInst:Minecraft = Minecraft.getInstance()
     def soundHandler = mcInst.getSoundHandler
-    def renderEngine:TextureManager = mcInst.renderEngine
+    def renderEngine:TextureManager = mcInst.textureManager
     def getFontRenderer:FontRenderer = mcInst.fontRenderer
 
     /** For checking if this is the root node in the tree. */
-    def isRoot = this.isInstanceOf[NodeGui]
+    def isRoot = this.isInstanceOf[NodeGui[_]]
 
     /**
       * Obtains the root node by moving up the tree.
       *
       * @throws IllegalStateException If there there is no root node of type [[NodeGui]].
       */
-    def getRoot:NodeGui =
+    def getRoot:NodeGui[_] =
     {
-        def iterate(node:TNode):NodeGui = node match {
-            case ng:NodeGui => ng
+        def iterate(node:TNode):NodeGui[_] = node match {
+            case ng:NodeGui[_] => ng
             case null => throw new IllegalStateException("Incomplete tree")
             case _ => iterate(node.parent)
         }
@@ -165,8 +166,8 @@ trait TNode extends Gui
       */
     def calculateChildrenFrame:Rect =
     {
-        val rect = if (children.isEmpty) Rect.zeroRect
-            else children.filterNot(_.hidden).map(_.calculateAccumulatedFrame).reduceLeft(_ union _)
+        val rect = if (ourChildren.isEmpty) Rect.zeroRect
+            else ourChildren.filterNot(_.hidden).map(_.calculateAccumulatedFrame).reduceLeft(_ union _)
         Rect(convertPointTo(rect.origin, parent), rect.size)
     }
 
@@ -242,9 +243,9 @@ trait TNode extends Gui
         def gather(children:Seq[TNode]) {
             val ac = if (activeOnly) children.filter(c => !c.hidden && c.userInteractionEnabled) else children
             s ++= ac
-            for (c <- ac) gather(c.children)
+            for (c <- ac) gather(c.ourChildren)
         }
-        if (!activeOnly || (!hidden && userInteractionEnabled)) gather(children)
+        if (!activeOnly || (!hidden && userInteractionEnabled)) gather(ourChildren)
         s.result()
     }
 
@@ -275,22 +276,22 @@ trait TNode extends Gui
     def addChild(w:TNode) =
     {
         w.parent = this
-        children :+= w
+        ourChildren :+= w
         w.onAddedToParent_Impl()
     }
 
     /** Removes this node and all descendant nodes from the tree. */
     def removeFromParent()
     {
-        parent.children = parent.children.filterNot(_ == this)
+        parent.ourChildren = parent.ourChildren.filterNot(_ == this)
         parent = null
     }
 
     /** Creates a sequence of all descendants of this node, sorted by [[zPosition]]. */
-    def childrenByZ = children.sortBy(_.zPosition)
+    def childrenByZ = ourChildren.sortBy(_.zPosition)
 
     /** Creates a sequence of this node and all descendants, sorted by [[zPosition]]. */
-    def familyByZ = (Seq(this)++children).sortBy(_.zPosition)
+    def familyByZ = (Seq(this)++ourChildren).sortBy(_.zPosition)
 
     protected[gui] final def update()
     {
@@ -409,18 +410,18 @@ trait TNode extends Gui
         }
     }
 
-    protected[gui] def translateTo(){translate(position.x, position.y, 0)}//zPosition-(if (parent == null) 0 else parent.zPosition))}
-    protected[gui] def translateFrom(){translate(-position.x, -position.y, 0)}// -(zPosition-(if (parent == null) 0 else parent.zPosition)))}
+    protected[gui] def translateTo(){RenderSystem.translated(position.x, position.y, 0)}//zPosition-(if (parent == null) 0 else parent.zPosition))}
+    protected[gui] def translateFrom(){RenderSystem.translated(-position.x, -position.y, 0)}// -(zPosition-(if (parent == null) 0 else parent.zPosition)))}
 
     protected[gui] def translateToScreen()
     {
         val Point(sx, sy) = parent.convertPointToScreen(Point.zeroPoint)
-        translate(-sx, -sy, 0)
+        RenderSystem.translated(-sx, -sy, 0)
     }
     protected[gui] def translateFromScreen()
     {
         val Point(sx, sy) = parent.convertPointToScreen(Point.zeroPoint)
-        translate(sx, sy, 0)
+        RenderSystem.translated(sx, sy, 0)
     }
 
     /** IMPLEMENTATION OVERRIDES **/

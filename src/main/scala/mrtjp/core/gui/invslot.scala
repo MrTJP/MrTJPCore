@@ -17,7 +17,7 @@ class InventorySlotNode extends TNode
     override def frameUpdate_Impl(mouse:Point, rframe:Float)
     {
         val root = getRoot
-        val slot = root.inventorySlots.asInstanceOf[NodeContainer].slots(slotIdx)
+        val slot = root.getContainer.asInstanceOf[NodeContainer].slots(slotIdx)
 
         if (hidden || buildParentHierarchy(root).exists(_.hidden))
         {

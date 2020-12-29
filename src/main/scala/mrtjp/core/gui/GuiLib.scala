@@ -5,10 +5,9 @@
  */
 package mrtjp.core.gui
 
-import codechicken.lib.gui.GuiDraw
 import codechicken.lib.render.CCRenderState
 import codechicken.lib.texture.TextureUtils
-import net.minecraft.client.renderer.GlStateManager._
+import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
 import net.minecraft.util.ResourceLocation
 import org.lwjgl.opengl.GL11
@@ -78,7 +77,7 @@ object GuiLib
       */
     def drawSlotBackground(x:Int, y:Int)
     {
-        color(1, 1, 1, 1)
+        RenderSystem.color4f(1, 1, 1, 1)
 
         TextureUtils.changeTexture(guiSlot)
 
@@ -121,7 +120,7 @@ object GuiLib
       */
     def drawGuiBox(x:Int, y:Int, width:Int, height:Int, zLevel:Float, top:Boolean, left:Boolean, bottom:Boolean, right:Boolean)
     {
-        val u = 1
+/*        val u = 1
         val v = 29
 
         TextureUtils.changeTexture(guiExtras)
@@ -169,7 +168,7 @@ object GuiLib
         if (top && left) GuiDraw.drawTexturedModalRect(x, y, u, v, 4, 4)
         if (top && right) GuiDraw.drawTexturedModalRect(x+width-3, y, u+5, v, 3, 3)
         if (bottom && left) GuiDraw.drawTexturedModalRect(x, y+height-3, u+11, v, 3, 3)
-        if (bottom && right) GuiDraw.drawTexturedModalRect(x+width-4, y+height-4, u+15, v, 4, 4)
+        if (bottom && right) GuiDraw.drawTexturedModalRect(x+width-4, y+height-4, u+15, v, 4, 4)*/
     }
 
     /**
@@ -185,6 +184,6 @@ object GuiLib
       */
     def drawVerticalTank(x:Int, y:Int, u:Int, v:Int, w:Int, h:Int, prog:Int)
     {
-        GuiDraw.drawTexturedModalRect(x, y+h-prog, u, v+h-prog, w, prog)
+//        GuiDraw.drawTexturedModalRect(x, y+h-prog, u, v+h-prog, w, prog)
     }
 }

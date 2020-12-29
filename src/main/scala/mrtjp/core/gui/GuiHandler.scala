@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright (c) 2014.
  * Created by MrTJP.
  * All rights reserved.
@@ -208,4 +209,4 @@ trait TGuiFactory
     {
         GuiHandler.openSMPContainer(player, cont, getID, dataWrite)
     }
-}
+}*/

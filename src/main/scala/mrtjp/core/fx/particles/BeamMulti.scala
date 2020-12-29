@@ -11,7 +11,6 @@ import codechicken.lib.vec.Vector3
 import mrtjp.core.fx.{TAlphaParticle, TColourParticle, TTextureParticle}
 import net.minecraft.client.particle.Particle
 import net.minecraft.client.renderer.BufferBuilder
-import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
 import net.minecraft.entity.Entity
 import net.minecraft.world.World
@@ -24,7 +23,7 @@ class BeamMulti(w:World) extends CoreParticle(w) with TAlphaParticle with TColou
 
     var points = Seq.empty[Vector3]
 
-    override def renderParticle(buffer:BufferBuilder, entity:Entity, frame:Float, cosyaw:Float, cospitch:Float, sinyaw:Float, sinsinpitch:Float, cossinpitch:Float)
+/*    override def renderParticle(buffer:BufferBuilder, entity:Entity, frame:Float, cosyaw:Float, cospitch:Float, sinyaw:Float, sinsinpitch:Float, cossinpitch:Float)
     {
         super.renderParticle(buffer, entity, frame, cosyaw, cospitch, sinyaw, sinsinpitch, cossinpitch)
         if (points.size > 1)
@@ -33,11 +32,11 @@ class BeamMulti(w:World) extends CoreParticle(w) with TAlphaParticle with TColou
             for (i <- 1 until points.size)
                 drawBeam(buffer, points(i-1), points(i), frame)
         }
-    }
+    }*/
 
     def drawBeam(buffer:BufferBuilder, p1:Vector3, p2:Vector3, f:Float)
     {
-        val var9 = 1.0F
+/*        val var9 = 1.0F
         val slide = getAge
         val size = 0.7F
         val dp = p1.copy.subtract(p2)
@@ -107,8 +106,8 @@ class BeamMulti(w:World) extends CoreParticle(w) with TAlphaParticle with TColou
         blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
         enableLighting()
         enableCull()
-        popMatrix()
+        popMatrix()*/
     }
 
-    override def getFXLayer = 3
+//    override def getFXLayer = 3
 }

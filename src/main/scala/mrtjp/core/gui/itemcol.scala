@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright (c) 2015.
  * Created by MrTJP.
  * All rights reserved.
@@ -7,13 +8,11 @@ package mrtjp.core.gui
 
 import java.util.{List => JList}
 
-import codechicken.lib.gui.GuiDraw
 import codechicken.lib.vec.{Scale, Vector3}
 import mrtjp.core.item.ItemKeyStack
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.GlStateManager._
-import net.minecraft.client.renderer.{OpenGlHelper, RenderHelper}
+import net.minecraft.client.renderer.{RenderHelper}
 import net.minecraft.client.util.ITooltipFlag.TooltipFlags._
 import net.minecraft.item.ItemStack
 import net.minecraft.util.text.TextFormatting
@@ -179,3 +178,4 @@ object ItemDisplayNode
     }
 
 }
+*/

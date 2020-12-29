@@ -10,7 +10,7 @@ import codechicken.lib.render.{CCModel, OBJParser}
 import codechicken.lib.vec._
 import net.minecraft.util.ResourceLocation
 
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 object VecLib
 {
@@ -38,12 +38,12 @@ object VecLib
     {
         var t = Rotation.sideOrientation(orient%24>>2, orient&3)
         if (orient >= 24) t = new Scale(-1, 1, 1).`with`(t)
-        t.at(Vector3.center)
+        t.at(Vector3.CENTER)
     }
 
     def parseCorrectedModel(loc:String) =
     {
-        val models = mapAsScalaMap(OBJParser.parseModels(new ResourceLocation(loc)))
+        val models = OBJParser.parseModels(new ResourceLocation(loc)).asScala
         models.map(m => m._1 -> m._2.backfacedCopy())
     }
 
@@ -53,7 +53,7 @@ object VecLib
         m.shrinkUVs(0.0005)
     }
 
-    def loadModel(loc:String) = finishModel(CCModel.combine(parseCorrectedModel(loc).values))
+    def loadModel(loc:String) = finishModel(CCModel.combine(parseCorrectedModel(loc).asJava.values))
 
     def loadModels(loc:String) =
     {

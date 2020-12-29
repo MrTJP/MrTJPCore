@@ -10,7 +10,7 @@ import mrtjp.core.fx.particles.CoreParticle
 
 trait TScalableParticle extends CoreParticle
 {
-    var scale = Vector3.one.copy
+    var scale = Vector3.ONE.copy
 
     def scaleX = scale.x
     def scaleY = scale.y
@@ -23,7 +23,7 @@ trait TScalableParticle extends CoreParticle
 
 class ScaleToAction extends ParticleAction
 {
-    var target = Vector3.zero
+    var target = Vector3.ZERO
     var duration = 0.0
 
     override def canOperate(p:CoreParticle) = p.isInstanceOf[TScalableParticle]
@@ -58,7 +58,7 @@ class ScaleToAction extends ParticleAction
 
 class ScaleForAction extends ParticleAction
 {
-    var delta = Vector3.zero
+    var delta = Vector3.ZERO
     var duration = 0.0
 
     override def canOperate(p:CoreParticle) = p.isInstanceOf[TScalableParticle]

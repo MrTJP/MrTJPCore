@@ -6,14 +6,15 @@
 package mrtjp.core.inventory
 
 import mrtjp.core.item.{ItemEquality, ItemKey, ItemKeyStack}
-import net.minecraft.inventory.{IInventory, ISidedInventory, InventoryLargeChest}
+import net.minecraft.inventory.{IInventory, ISidedInventory}
 import net.minecraft.item.ItemStack
-import net.minecraft.tileentity.TileEntityChest
-import net.minecraft.util.EnumFacing
+import net.minecraft.util.Direction
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
+import net.minecraftforge.common.util.LazyOptional
 import net.minecraftforge.items.CapabilityItemHandler._
 import net.minecraftforge.items.IItemHandler
+import net.minecraftforge.items.wrapper.EmptyHandler
 
 object InvWrapper
 {
@@ -33,23 +34,26 @@ object InvWrapper
     }
 
     //Used for wrapping inventory tiles
-    def wrap(world:World, pos:BlockPos, side:EnumFacing):InvWrapper =
+    def wrap(world:World, pos:BlockPos, side:Direction):InvWrapper =
     {
         val tile = world.getTileEntity(pos)
         if (tile == null) return null
 
-        if (tile.hasCapability(ITEM_HANDLER_CAPABILITY, side)) {
-            val cap = tile.getCapability(ITEM_HANDLER_CAPABILITY, side)
-            if (cap.getSlots > 0)
-                return new CapWrapper(cap)
-        }
-        if (tile.hasCapability(ITEM_HANDLER_CAPABILITY, null)) {
-            val cap = tile.getCapability(ITEM_HANDLER_CAPABILITY, null)
-            if (cap.getSlots > 0)
-                return new CapWrapper(cap)
+        def wrap(opt:LazyOptional[IItemHandler]):InvWrapper = {
+            if (opt.isPresent) {
+                val handler = opt.orElse(EmptyHandler.INSTANCE)
+                if (handler.getSlots > 0)
+                    return new CapWrapper(handler)
+            }
+            null
         }
 
-        null
+        var ret = wrap(tile.getCapability(ITEM_HANDLER_CAPABILITY, side))
+        if (ret == null) {
+            ret = wrap(tile.getCapability(ITEM_HANDLER_CAPABILITY, null))
+        }
+
+        ret
 //        tile match {
 //            case inv:IInventory =>
 //                val wr = new VanillaWrapper(inv, false)
@@ -80,47 +84,47 @@ object InvWrapper
     def areItemsSame(stack1:ItemStack, stack2:ItemStack):Boolean =
     {
         if (stack1.isEmpty || stack2.isEmpty) return stack1 == stack2
-        stack1.getItem == stack2.getItem && stack2.getItemDamage == stack1.getItemDamage && ItemStack.areItemStackTagsEqual(stack2, stack1)
+        stack1.getItem == stack2.getItem && ItemStack.areItemStackTagsEqual(stack2, stack1)
     }
 
-    def getInventory(world:World, pos:BlockPos):IInventory =
-        world.getTileEntity(pos) match {
-            case chest:TileEntityChest =>
-                var lower:TileEntityChest = null
-                var upper:TileEntityChest = null
-                if (chest.adjacentChestXNeg != null) {
-                    upper = chest.adjacentChestXNeg
-                    lower = chest
-                }
-                else if (chest.adjacentChestXPos != null) {
-                    upper = chest
-                    lower = chest.adjacentChestXPos
-                }
-                else if (chest.adjacentChestZNeg != null) {
-                    upper = chest.adjacentChestZNeg
-                    lower = chest
-                }
-                else if (chest.adjacentChestZPos != null) {
-                    upper = chest
-                    lower = chest.adjacentChestZPos
-                }
-                if (lower != null && upper != null) new HashableLargeChest("Large Chest", upper, lower)
-                else chest
-            case inv:IInventory => inv
-            case _ => null
-        }
+//    def getInventory(world:World, pos:BlockPos):IInventory =
+//        world.getTileEntity(pos) match {
+//            case chest:TileEntityChest =>
+//                var lower:TileEntityChest = null
+//                var upper:TileEntityChest = null
+//                if (chest.adjacentChestXNeg != null) {
+//                    upper = chest.adjacentChestXNeg
+//                    lower = chest
+//                }
+//                else if (chest.adjacentChestXPos != null) {
+//                    upper = chest
+//                    lower = chest.adjacentChestXPos
+//                }
+//                else if (chest.adjacentChestZNeg != null) {
+//                    upper = chest.adjacentChestZNeg
+//                    lower = chest
+//                }
+//                else if (chest.adjacentChestZPos != null) {
+//                    upper = chest
+//                    lower = chest.adjacentChestZPos
+//                }
+//                if (lower != null && upper != null) new HashableLargeChest("Large Chest", upper, lower)
+//                else chest
+//            case inv:IInventory => inv
+//            case _ => null
+//        }
 }
 
-class HashableLargeChest(name:String, val inv1:TileEntityChest, val inv2:TileEntityChest) extends InventoryLargeChest(name, inv1, inv2)
-{
-    override def hashCode = inv1.hashCode^inv2.hashCode
-
-    override def equals(other:Any) = other match
-    {
-        case that:HashableLargeChest => inv1 == that.inv1 && inv2 == that.inv2
-        case _ => false
-    }
-}
+//class HashableLargeChest(name:String, val inv1:TileEntityChest, val inv2:TileEntityChest) extends InventoryLargeChest(name, inv1, inv2)
+//{
+//    override def hashCode = inv1.hashCode^inv2.hashCode
+//
+//    override def equals(other:Any) = other match
+//    {
+//        case that:HashableLargeChest => inv1 == that.inv1 && inv2 == that.inv2
+//        case _ => false
+//    }
+//}
 
 trait IInvWrapperRegister
 {
@@ -146,24 +150,16 @@ abstract class InvWrapper
     protected var hidePerType = false
     protected var eq = new ItemEquality
 
-    def setMatchOptions(meta:Boolean, nbt:Boolean, ore:Boolean) =
+    def setMatchOptions(nbt:Boolean, tags:Boolean) =
     {
-        eq.matchMeta = meta
         eq.matchNBT = nbt
-        eq.matchOre = ore
+        eq.matchTags = tags
         this
     }
 
     def setMatchOptions(other:ItemEquality)
     {
-        setMatchOptions(other.matchMeta, other.matchNBT, other.matchOre)
-        setDamageGroup(other.damageGroup)
-    }
-
-    def setDamageGroup(percent:Int) =
-    {
-        eq.damageGroup = percent
-        this
+        setMatchOptions(other.matchNBT, other.matchTags)
     }
 
     def setHidePerSlot(flag:Boolean) =
@@ -365,7 +361,7 @@ class VanillaWrapper(inv:IInventory, internalMode:Boolean) extends InvWrapper
         case inv2:ISidedInventory => inv2
         case _ => null
     }
-    protected var side:EnumFacing = null
+    protected var side:Direction = null
 
     var slots:Seq[Int] = 0 until inv.getSizeInventory
 
@@ -373,7 +369,7 @@ class VanillaWrapper(inv:IInventory, internalMode:Boolean) extends InvWrapper
     {
         if (sidedInv != null)
         {
-            side = EnumFacing.values()(s)
+            side = Direction.byIndex(s)
             slots = sidedInv.getSlotsForFace(side)
         }
         else setSlotsAll()

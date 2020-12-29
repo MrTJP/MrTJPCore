@@ -6,7 +6,6 @@
 package mrtjp.core.gui
 
 import mrtjp.core.vec.{Point, Rect, Size}
-import net.minecraft.client.gui.ScaledResolution
 import org.lwjgl.opengl.GL11
 
 class ClipNode extends TNode
@@ -56,12 +55,12 @@ class ClipNode extends TNode
 
     private def onChildPredraw()
     {
-        val scaleRes = new ScaledResolution(mcInst)
-        val scale = scaleRes.getScaleFactor
+        val wScale = mcInst.getMainWindow.getScaledWidth
+        val hScale = mcInst.getMainWindow.getScaledHeight
 
         val absPos = parent.convertPointToScreen(position)
-        val sFrame = new Rect(absPos.x*scale, mcInst.displayHeight-(absPos.y*scale)-size.height*scale,
-            size.width*scale, size.height*scale)
+        val sFrame = new Rect(absPos.x*wScale, mcInst.getMainWindow.getHeight-(absPos.y*hScale)-size.height*hScale,
+            size.width*wScale, size.height*hScale)
 
         GL11.glEnable(GL11.GL_SCISSOR_TEST)
         GL11.glScissor(sFrame.x, sFrame.y, sFrame.width, sFrame.height)

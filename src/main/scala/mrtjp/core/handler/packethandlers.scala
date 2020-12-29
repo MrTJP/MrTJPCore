@@ -6,29 +6,45 @@
 package mrtjp.core.handler
 
 import codechicken.lib.packet.ICustomPacketHandler.{IClientPacketHandler, IServerPacketHandler}
-import codechicken.lib.packet.{ICustomPacketTile, PacketCustom}
+import codechicken.lib.packet.{PacketCustom, PacketCustomChannelBuilder}
+import codechicken.lib.util.CrashLock
+import mrtjp.core.block.TPacketTile
 import mrtjp.core.data.KeyTracking
-import mrtjp.core.gui.GuiHandler
+import mrtjp.core.handler.MrTJPCoreMod.MOD_ID
+import mrtjp.core.handler.MrTJPCoreNetwork._
 import mrtjp.core.world.Messenger
 import net.minecraft.client.Minecraft
-import net.minecraft.entity.player.EntityPlayerMP
-import net.minecraft.network.play.{INetHandlerPlayClient, INetHandlerPlayServer}
+import net.minecraft.client.network.play.IClientPlayNetHandler
+import net.minecraft.entity.player.ServerPlayerEntity
+import net.minecraft.network.play.IServerPlayNetHandler
+import net.minecraft.util.ResourceLocation
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
 
-class MrTJPCorePH
+object MrTJPCoreNetwork
 {
-    val channel = MrTJPCoreMod
+    private val LOCK = new CrashLock("Already initialized.")
+    val NET_CHANNEL = new ResourceLocation(MOD_ID, "network")
 
-    val tilePacket = 1
-    val messagePacket = 2
-    val guiPacket = 3
-    val keyBindPacket = 4
+    val C_TILE_UPDATE = 1
+    val C_ADD_MESSAGE = 2
+//    val guiPacket = 3
 
-    def handleTilePacket(world:World, packet:PacketCustom, pos:BlockPos)
+    val S_TILE_UPDATE = 1
+    val S_KEY_UPDATE = 2
+
+    def init() {
+        LOCK.lock()
+        PacketCustomChannelBuilder.named(NET_CHANNEL)
+            .assignClientHandler(() => () => ClientHandler)
+            .assignServerHandler(() => () => ServerHandler)
+            .build()
+    }
+
+    private[handler] def handleTilePacket(world:World, packet:PacketCustom, pos:BlockPos)
     {
         world.getTileEntity(pos) match {
-            case cpt:ICustomPacketTile => cpt.readFromPacket(packet)
+            case cpt:TPacketTile => cpt.readFromPacket(packet)
             case _ =>
         }
     }
@@ -39,29 +55,27 @@ class MrTJPCorePH
     }
 }
 
-object MrTJPCoreCPH extends MrTJPCorePH with IClientPacketHandler
+private object ClientHandler extends IClientPacketHandler
 {
-    def handlePacket(packet:PacketCustom, mc:Minecraft, nethandler:INetHandlerPlayClient)
+    override def handlePacket(packet: PacketCustom, mc: Minecraft, handler: IClientPlayNetHandler)
     {
         val world = mc.world
         packet.getType match {
-            case this.tilePacket => handleTilePacket(world, packet, packet.readPos())
-            case this.messagePacket => Messenger.addMessage(packet.readDouble, packet.readDouble, packet.readDouble, packet.readString)
-            case this.guiPacket => GuiHandler.receiveGuiPacket(packet)
+            case C_TILE_UPDATE => handleTilePacket(world, packet, packet.readPos())
+            case C_ADD_MESSAGE => Messenger.addMessage(packet.readDouble, packet.readDouble, packet.readDouble, packet.readString)
+//            case this.guiPacket => GuiHandler.receiveGuiPacket(packet)
         }
     }
 }
 
-object MrTJPCoreSPH extends MrTJPCorePH with IServerPacketHandler
+private object ServerHandler extends IServerPacketHandler
 {
-    override def handlePacket(packet:PacketCustom, sender:EntityPlayerMP, nethandler:INetHandlerPlayServer)
+    override def handlePacket(packet: PacketCustom, sender: ServerPlayerEntity, handler: IServerPlayNetHandler)
     {
         packet.getType match
         {
-            case this.tilePacket =>
-                handleTilePacket(sender.getEntityWorld, packet, packet.readPos())
-            case this.keyBindPacket =>
-                KeyTracking.updatePlayerKey(packet.readUByte(), sender, packet.readBoolean())
+            case S_TILE_UPDATE => handleTilePacket(sender.getEntityWorld, packet, packet.readPos())
+            case S_KEY_UPDATE => KeyTracking.updatePlayerKey(packet.readUByte(), sender, packet.readBoolean())
         }
     }
 }

@@ -6,13 +6,13 @@
 package mrtjp.core.item
 
 import net.minecraft.item.{Item, ItemStack}
-import net.minecraft.nbt.NBTTagCompound
+import net.minecraft.nbt.CompoundNBT
 
 import scala.collection.immutable.HashMap
 
 object ItemKey
 {
-    def get(stack:ItemStack):ItemKey = new ItemKey(stack.getItem, stack.getItemDamage, stack.getTagCompound)
+    def get(stack:ItemStack):ItemKey = new ItemKey(stack.getItem, stack.getTag)
 
     @deprecated("Use nonnull standard")
     def getOrNull(stack:ItemStack):ItemKey =
@@ -22,39 +22,37 @@ object ItemKey
     }
 }
 
-class ItemKey(val item:Item, val itemDamage:Int, val tag:NBTTagCompound) extends Ordered[ItemKey]
+class ItemKey(val item:Item, val tag:CompoundNBT) extends Ordered[ItemKey]
 {
     lazy val testStack = makeStack(1)
     lazy val itemID = Item.getIdFromItem(item)
 
-    private val hash = itemID*1000001*itemDamage+(if (tag != null) tag.hashCode else 0)
+    private val hash = itemID*1000001+(if (tag != null) tag.hashCode else 0)
     override def hashCode = hash
 
     override def equals(other:Any) = other match
     {
         case that:ItemKey =>
-            item == that.item && itemDamage == that.itemDamage &&
+            item == that.item &&
                 tag == that.tag
         case _ => false
     }
 
-    override def toString = getName
+    override def toString = getName.toString
 
     def compare(that:ItemKey) =
     {
-        val c = itemID-that.itemID
-        if (c == 0) itemDamage-that.itemDamage
-        else c
+        itemID-that.itemID
     }
 
     def makeStack(size:Int):ItemStack =
     {
-        val stack = new ItemStack(item, size, itemDamage)
-        if (tag != null) stack.setTagCompound(tag.copy())
+        val stack = new ItemStack(item, size)
+        if (tag != null) stack.setTag(tag.copy())
         stack
     }
 
-    def copy = new ItemKey(item, itemDamage, tag)
+    def copy = new ItemKey(item, tag)
 
     def isEmpty = testStack.isEmpty
 
@@ -116,7 +114,7 @@ class ItemQueue
         this
     }
 
-    def ++=(xs:TraversableOnce[(ItemKey, Int)]) = {xs foreach +=; this}
+    def ++=(xs:IterableOnce[(ItemKey, Int)]) = {xs foreach +=; this}
 
     def ++=(that:ItemQueue) = {that.result.foreach(+=); this}
 
@@ -132,7 +130,7 @@ class ItemQueue
         else collection -= elem._1
     }
 
-    def --=(xs:TraversableOnce[(ItemKey, Int)]) = {xs foreach -=; this}
+    def --=(xs:IterableOnce[(ItemKey, Int)]) = {xs foreach -=; this}
 
     def --=(that:ItemQueue) = {that.result.foreach(-=); this}
 

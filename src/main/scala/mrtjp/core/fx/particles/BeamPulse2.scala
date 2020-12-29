@@ -10,7 +10,7 @@ import codechicken.lib.texture.TextureUtils
 import mrtjp.core.fx._
 import net.minecraft.client.particle.Particle
 import net.minecraft.client.renderer.BufferBuilder
-import net.minecraft.client.renderer.GlStateManager._
+//import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
 import net.minecraft.entity.Entity
 import net.minecraft.world.World
@@ -47,7 +47,7 @@ class BeamPulse2(w:World) extends CoreParticle(w) with TAlphaParticle with TColo
         runAction(s)
     }
 
-    override def renderParticle(buffer:BufferBuilder, entity:Entity, frame:Float, cosyaw:Float, cospitch:Float, sinyaw:Float, sinsinpitch:Float, cossinpitch:Float)
+    /*override def renderParticle(buffer:BufferBuilder, entity:Entity, frame:Float, cosyaw:Float, cospitch:Float, sinyaw:Float, sinsinpitch:Float, cossinpitch:Float)
     {
         super.renderParticle(buffer, entity, frame, cosyaw, cospitch, sinyaw, sinsinpitch, cossinpitch)
 
@@ -171,5 +171,5 @@ class BeamPulse2(w:World) extends CoreParticle(w) with TAlphaParticle with TColo
         popMatrix()
     }
 
-    override def getFXLayer = 3
+    override def getFXLayer = 3*/
 }

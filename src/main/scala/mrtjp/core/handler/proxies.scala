@@ -5,44 +5,26 @@
  */
 package mrtjp.core.handler
 
-import codechicken.lib.packet.PacketCustom
 import mrtjp.core.world.Messenger
 import net.minecraftforge.common.MinecraftForge
-import net.minecraftforge.fml.relauncher.{Side, SideOnly}
+import net.minecraftforge.fml.event.lifecycle.{FMLClientSetupEvent, FMLCommonSetupEvent, FMLDedicatedServerSetupEvent, FMLLoadCompleteEvent}
 
-class MrTJPCoreProxy_server
-{
-    def preInit(){}
+class MrTJPCoreProxy_server {
+    def commonSetup(event: FMLCommonSetupEvent) {}
 
-    def init()
-    {
-        PacketCustom.assignHandler(MrTJPCoreSPH.channel, MrTJPCoreSPH)
-        //SimpleGenHandler.init()
-    }
+    def clientSetup(event: FMLClientSetupEvent) {}
 
-    def postInit(){}
+    def serverSetup(event: FMLDedicatedServerSetupEvent) {}
+
+    def loadComplete(event: FMLLoadCompleteEvent) {}
 }
 
-class MrTJPCoreProxy_client extends MrTJPCoreProxy_server
-{
-    @SideOnly(Side.CLIENT)
-    override def preInit()
-    {
-        super.preInit()
-    }
+class MrTJPCoreProxy_client extends MrTJPCoreProxy_server {
 
-    @SideOnly(Side.CLIENT)
-    override def init()
-    {
-        super.init()
-        PacketCustom.assignHandler(MrTJPCoreCPH.channel, MrTJPCoreCPH)
-    }
 
-    @SideOnly(Side.CLIENT)
-    override def postInit()
-    {
+    override def clientSetup(event: FMLClientSetupEvent): Unit = {
+        super.clientSetup(event)
         MinecraftForge.EVENT_BUS.register(Messenger)
-//        MinecraftForge.EVENT_BUS.register(RenderTicker)
     }
 }
 

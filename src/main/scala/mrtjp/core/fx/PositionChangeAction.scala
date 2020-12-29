@@ -49,9 +49,9 @@ trait TPositionedParticle extends CoreParticle
 
     def blockPosition = new BlockPos(math.floor(x).toInt, math.floor(y).toInt, math.floor(z).toInt)
 
-    abstract override def onUpdate()
+    abstract override def tick()
     {
-        super.onUpdate()
+        super.tick()
         px = x
         py = y
         pz = z
@@ -60,7 +60,7 @@ trait TPositionedParticle extends CoreParticle
 
 class PositionChangeToAction extends ParticleAction
 {
-    var target = Vector3.zero
+    var target = Vector3.ZERO
     var duration = 0.0
 
     override def canOperate(p:CoreParticle) = p.isInstanceOf[TPositionedParticle]
@@ -86,7 +86,7 @@ class PositionChangeToAction extends ParticleAction
 
 class PositionChangeForAction extends ParticleAction
 {
-    var delta = Vector3.zero
+    var delta = Vector3.ZERO
     var duration = 0.0
 
     override def canOperate(p:CoreParticle) = p.isInstanceOf[TPositionedParticle]

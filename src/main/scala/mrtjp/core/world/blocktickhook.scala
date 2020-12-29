@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright (c) 2015.
  * Created by MrTJP.
  * All rights reserved.
@@ -116,3 +117,4 @@ trait IBlockEventHandler
 {
     def onBlockUpdate(w:World, p:BlockPos, b:IBlockState)
 }
+*/

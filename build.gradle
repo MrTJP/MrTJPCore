@@ -44,6 +44,11 @@ repositories {
 dependencies {
     deployerJars "org.apache.maven.wagon:wagon-ftp:2.2"
     compile "codechicken:CodeChickenLib:${config.mc_version}-${config.ccl_version}:deobf"
+
+    compile "org.scala-lang:scala-compiler:${config.scala_version}"
+    compile "org.scala-lang:scala-library:${config.scala_version}"
+    compile "org.scala-lang.modules:scala-java8-compat_${config.scala_compat_version}"
+    compile "net.minecraftforge:Scorge:${config.scorge_version}"
 }
 
 def build_number = project.hasProperty("manualbuildnum") ? project.manualbuildnum : (System.getenv("BUILD_NUMBER") ?: "1")
@@ -57,17 +62,17 @@ minecraft {
     makeObfSourceJar = false
 }
 
-sourceSets {
-    main {
-        def root = project.projectDir
-        scala {
-            srcDir new File(root, "src")
-        }
-        resources {
-            srcDir new File(root, "resources")
-        }
-    }
-}
+//sourceSets {
+//    main {
+//        def root = project.projectDir
+//        scala {
+//            srcDir new File(root, "src")
+//        }
+//        resources {
+//            srcDir new File(root, "resources")
+//        }
+//    }
+//}
 
 processResources {
     //redo task if any of these properties change

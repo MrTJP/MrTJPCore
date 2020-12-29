@@ -7,8 +7,8 @@ package mrtjp.core.vec
 
 import codechicken.lib.render.CCModel
 import codechicken.lib.vec.Vector3
-import net.minecraft.util.EnumFacing
-import net.minecraft.util.math.{BlockPos, RayTraceResult, Vec3d}
+import net.minecraft.util.Direction
+import net.minecraft.util.math.{BlockPos, BlockRayTraceResult, RayTraceResult, Vec3d}
 
 object ModelRayTracer
 {
@@ -31,9 +31,8 @@ object ModelRayTracer
         {
             case Some((dist, tri)) =>
                 val side = getSide(tri.normal.copy.add(start.copy.add(dir).multiply(dist).multiply(0.001)))
-                val mop = new RayTraceResult(RayTraceResult.Type.BLOCK,
-                    calcPlayerHit(new Vector3(x, y, z), from.copy.add(dir.copy.multiply(dist))).vec3(),
-                    EnumFacing.values()(side), new BlockPos(x.toInt, y.toInt, z.toInt))
+                val mop = new BlockRayTraceResult(calcPlayerHit(new Vector3(x, y, z), from.copy.add(dir.copy.multiply(dist))).vec3(),
+                    Direction.byIndex(side), new BlockPos(x.toInt, y.toInt, z.toInt), false)
                 mop.subHit = 0
                 mop
             case None => null
@@ -58,7 +57,7 @@ object ModelRayTracer
 
     private def raytraceModel(from:Vector3, dir:Vector3, model:CCModel) =
     {
-        val faces = for (i <- 0 until model.getVertices.length by 4) yield
+        val faces = for (i <- model.getVertices.indices by 4) yield
             Quad(model.verts(i).vec, model.verts(i+1).vec, model.verts(i+2).vec, model.verts(i+3).vec)
 
         val tfaces = faces.flatMap(_.toTri)
@@ -68,7 +67,7 @@ object ModelRayTracer
         tfaces.foreach(t => mt(from, dir, t.v0, t.v1, t.v2) match
         {
             case Some(dist) =>
-                if (currentHit == None || dist < currentHit.get._1)
+                if (currentHit.isEmpty || dist < currentHit.get._1)
                     currentHit = Option((dist, t))
             case None =>
         })
