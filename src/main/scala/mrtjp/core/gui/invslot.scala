@@ -21,14 +21,14 @@ class InventorySlotNode extends TNode
 
         if (hidden || buildParentHierarchy(root).exists(_.hidden))
         {
-            slot.xPos = 9999
-            slot.yPos = 9999
+//            slot.xPos = 9999
+//            slot.yPos = 9999
         }
         else
         {
             val absPos = parent.convertPointTo(position, root)
-            slot.xPos = absPos.x
-            slot.yPos = absPos.y
+//            slot.xPos = absPos.x
+//            slot.yPos = absPos.y
         }
     }
 }

@@ -123,7 +123,8 @@ class NodeGui[T <: NodeContainer](c:T = new NodeContainer(null, -1), w:Int, h:In
 
     final override def mouseClicked(x:Double, y:Double, button:Int):Boolean = {
         lastClick = System.currentTimeMillis
-        mouseClicked(new Point(x.toInt, y.toInt), button, super.mouseClicked(x, y, button))
+        super.mouseClicked(x, y, button)
+        mouseClicked(new Point(x.toInt, y.toInt), button, false)
     }
 
 
