@@ -17,7 +17,7 @@ class SimpleInventory(size:Int, name:String, stackLimit:Int) extends TInventory
 
     override def getInventoryStackLimit = stackLimit
 
-    override def getName = name
+    override def nbtSaveName = name
 
     override def markDirty(){}
 }
@@ -28,5 +28,5 @@ class ArrayWrapInventory(override protected val storage:Array[ItemStack], name:S
 
     override def markDirty(){}
 
-    override def getName = name
+    override def nbtSaveName = name
 }

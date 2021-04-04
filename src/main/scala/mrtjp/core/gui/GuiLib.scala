@@ -8,6 +8,7 @@ package mrtjp.core.gui
 import codechicken.lib.render.CCRenderState
 import codechicken.lib.texture.TextureUtils
 import com.mojang.blaze3d.systems.RenderSystem
+import net.minecraft.client.gui.AbstractGui
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
 import net.minecraft.util.ResourceLocation
 import org.lwjgl.opengl.GL11
@@ -182,8 +183,7 @@ object GuiLib
       * @param h The height of the bar to be rendered.
       * @param prog The percentage progress of the bar, 100 being full at the top and 0 being empty at the bottom.
       */
-    def drawVerticalTank(x:Int, y:Int, u:Int, v:Int, w:Int, h:Int, prog:Int)
-    {
-//        GuiDraw.drawTexturedModalRect(x, y+h-prog, u, v+h-prog, w, prog)
+    def drawVerticalTank(gui:AbstractGui, x:Int, y:Int, u:Int, v:Int, w:Int, h:Int, prog:Int):Unit = {
+        gui.blit(x, y+h-prog, u, v+h-prog, w, prog)
     }
 }

@@ -1,18 +1,15 @@
 /*
-/*
  * Copyright (c) 2015.
  * Created by MrTJP.
  * All rights reserved.
  */
 package mrtjp.core.gui
 
-import java.util.{List => JList}
-
-import codechicken.lib.vec.{Scale, Vector3}
+import com.mojang.blaze3d.systems.RenderSystem._
 import mrtjp.core.item.ItemKeyStack
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.{RenderHelper}
+import net.minecraft.client.gui.AbstractGui
 import net.minecraft.client.util.ITooltipFlag.TooltipFlags._
 import net.minecraft.item.ItemStack
 import net.minecraft.util.text.TextFormatting
@@ -78,8 +75,8 @@ class ItemDisplayNode extends TNode
 
     override def drawBack_Impl(mouse:Point, rframe:Float)
     {
-        GuiDraw.drawRect(position.x, position.y, size.width, size.height, backgroundColour)
-        ItemDisplayNode.renderItem(position, size, zPosition, drawNumber, stack.makeStack)
+        fillGradient(position.x, position.y, position.x+size.width, position.y+size.height, backgroundColour, backgroundColour)
+        ItemDisplayNode.renderItem(this, position, size, zPosition, drawNumber, stack.makeStack)
     }
 
     override def mouseClicked_Impl(p:Point, button:Int, consumed:Boolean) =
@@ -105,11 +102,12 @@ class ItemDisplayNode extends TNode
         translateToScreen()
         val Point(mx, my) = parent.convertPointToScreen(mouse)
 
-        import scala.collection.JavaConversions._
+        import scala.jdk.CollectionConverters._
         val lines = stack.makeStack.getTooltip(mcInst.player,
             if(mcInst.gameSettings.advancedItemTooltips) ADVANCED else NORMAL)
-        val l2 = Seq(lines.head)++lines.tail.map(TextFormatting.GRAY + _)
-        GuiDraw.drawMultiLineTip(mx+12, my-12, l2)
+        val l2 = Seq(lines.asScala.head)++lines.asScala.tail.map(TextFormatting.GRAY + _.getFormattedText)
+        //TODO tooltips
+        //GuiDraw.drawMultiLineTip(mx+12, my-12, l2)
 
         translateFromScreen()
         ClipNode.tempEnableScissoring()
@@ -118,34 +116,37 @@ class ItemDisplayNode extends TNode
 
 object ItemDisplayNode
 {
-    val renderItem = Minecraft.getMinecraft.getRenderItem
+    val renderItem = Minecraft.getInstance().getItemRenderer
 
-    def renderItem(position:Point, size:Size, zPosition:Double, drawNumber:Boolean, stack:ItemStack)
+    def renderItem(gui:AbstractGui, position:Point, size:Size, zPosition:Double, drawNumber:Boolean, stack:ItemStack)
     {
         val font = stack.getItem.getFontRenderer(stack) match {
-            case null => Minecraft.getMinecraft.fontRenderer
+            case null => Minecraft.getInstance().fontRenderer
             case r => r
         }
 
-        val f = font.getUnicodeFlag
-        font.setUnicodeFlag(true)
+//        val f = font.getUnicodeFlag
+//        font.setUnicodeFlag(true)
 
         glItemPre()
         pushMatrix()
-        new Scale(size.width/16.0, size.height/16.0, 1)
-                .at(new Vector3(position.x, position.y, 0)).glApply()
+//        new Scale(size.width/16.0, size.height/16.0, 1)
+//                .at(new Vector3(position.x, position.y, 0)).glApply
+        translated(position.x, position.y, 0)
+        scaled(size.width/16.0, size.height/16.0, 1)
+        translated(-position.x, -position.y, 0)
 
+        gui.setBlitOffset((zPosition+10).toInt)
         renderItem.zLevel = (zPosition+10.0).toFloat
-        enableDepth()
-        enableLighting()
+//        enableDepthTest()
+//        enableLighting()
         renderItem.renderItemAndEffectIntoGUI(stack, position.x, position.y)
         renderItem.renderItemOverlayIntoGUI(font, stack, position.x, position.y, "")
-        disableLighting()
-        disableDepth()
+//        disableLighting()
+//        disableDepthTest()
         renderItem.zLevel = zPosition.toFloat
 
-        if (drawNumber)
-        {
+        if (drawNumber && stack.getCount > 1) {
             val s =
                 if (stack.getCount == 1) ""
                 else if (stack.getCount < 1000) stack.getCount+""
@@ -157,25 +158,30 @@ object ItemDisplayNode
         popMatrix()
         glItemPost()
 
-        font.setUnicodeFlag(f)
+//        font.setUnicodeFlag(f)
     }
 
     def glItemPre()
     {
+//        disableRescaleNormal()
+//        disableDepthTest()
+
         pushMatrix()
-        color(1.0F, 1.0F, 1.0F, 1.0F)
-        RenderHelper.enableGUIStandardItemLighting()
+        color4f(1.0F, 1.0F, 1.0F, 1.0F)
+//        RenderHelper.enableGUIStandardItemLighting()
         enableRescaleNormal()
-        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240/1.0F, 240/1.0F)
-        disableDepth()
-        disableLighting()
+        glMultiTexCoord2f(33986, 240.0F, 240.0F)
+        color4f(1.0F, 1.0F, 1.0F, 1.0F)
+        enableDepthTest()
+//        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240/1.0F, 240/1.0F)
+//        disableDepth()
+//        disableLighting()
     }
 
     def glItemPost()
     {
-        enableDepth()
         popMatrix()
+//        enableDepthTest()
     }
 
 }
-*/

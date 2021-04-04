@@ -1,23 +1,16 @@
 /*
-/*
  * Copyright (c) 2014.
  * Created by MrTJP.
  * All rights reserved.
  */
 package mrtjp.core.gui
 
-import java.util.{List => JList}
-
 import codechicken.lib.colour.EnumColour
-import codechicken.lib.gui.GuiDraw
 import codechicken.lib.util.FontUtils
+import com.mojang.blaze3d.systems.RenderSystem._
 import mrtjp.core.item.ItemKeyStack
 import mrtjp.core.vec.{Point, Rect, Size}
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.Gui
-import net.minecraft.client.renderer.GlStateManager._
-import net.minecraft.client.util.ITooltipFlag.TooltipFlags._
-import net.minecraft.client.renderer.{OpenGlHelper, RenderHelper}
 import net.minecraft.item.ItemStack
 
 class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
@@ -91,7 +84,7 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
             true
         }
 
-        if (stringMatch(stack.key.getName.toLowerCase, filter)) true
+        if (stringMatch(stack.key.getName.getString.toLowerCase, filter)) true
         else false
     }
 
@@ -104,7 +97,7 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
 
     override def drawBack_Impl(mouse:Point, frame:Float)
     {
-        drawGradientRect(x, y, x+size.width, y+size.height, 0xff808080, 0xff808080)
+        fillGradient(x, y, x+size.width, y+size.height, 0xff808080, 0xff808080)
         pagesNeeded = (getSeachedCount-1)/(rows*columns)
         if (pagesNeeded < 0) pagesNeeded = 0
         if (currentPage > pagesNeeded) currentPage = pagesNeeded
@@ -115,10 +108,11 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
 
     override def drawFront_Impl(mouse:Point, rframe:Float)
     {
-        if (hover != null) GuiDraw.drawMultiLineTip(
-            mouse.x+12, mouse.y-12,
-            hover.makeStack.getTooltip(mcInst.player,
-                if(mcInst.gameSettings.advancedItemTooltips) ADVANCED else NORMAL))
+        //TODO tooltips
+//        if (hover != null) GuiDraw.drawMultiLineTip(
+//            mouse.x+12, mouse.y-12,
+//            hover.makeStack.getTooltip(mcInst.player,
+//                if(mcInst.gameSettings.advancedItemTooltips) ADVANCED else NORMAL))
         FontUtils.drawCenteredString(
             "Page: "+(currentPage+1)+"/"+(pagesNeeded+1), x+(size.width/2), y+frame.height+6, EnumColour.BLACK.rgb)
     }
@@ -148,7 +142,7 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
         val xSize = percent
         val ySize = 9
 
-        Gui.drawRect(xStart, yStart, xStart+xSize, yStart+ySize, 0xff165571)
+        fillGradient(xStart, yStart, xStart+xSize, yStart+ySize, 0xff165571, 0xff165571)
     }
 
     private def drawAllItems(mx:Int, my:Int)
@@ -180,9 +174,9 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
 
                 if (selection != null && (selection == keystack))
                 {
-                    Gui.drawRect(localX-2, localY-2, localX+squareSize-2, localY+squareSize-2, 0xff000000)
-                    Gui.drawRect(localX-1, localY-1, localX+squareSize-3, localY+squareSize-3, 0xffd2d2d2)
-                    Gui.drawRect(localX, localY, localX+squareSize-4, localY+squareSize-4, 0xff595959)
+                    fillGradient(localX-2, localY-2, localX+squareSize-2, localY+squareSize-2, 0xff000000, 0xff000000)
+                    fillGradient(localX-1, localY-1, localX+squareSize-3, localY+squareSize-3, 0xffd2d2d2, 0xffd2d2d2)
+                    fillGradient(localX, localY, localX+squareSize-4, localY+squareSize-4, 0xff595959, 0xff595959)
                 }
 
                 inscribeItemStack(localX, localY, keystack.makeStack)
@@ -199,24 +193,26 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
         glItemPost()
     }
 
-    private def glItemPre()
-    {
+    private def glItemPre():Unit = {
+//        disableRescaleNormal()
+//        disableDepthTest()
+
         pushMatrix()
-        color(1.0F, 1.0F, 1.0F, 1.0F)
-        RenderHelper.enableGUIStandardItemLighting()
+        //translate guiLeft,guiTip
+        color4f(1.0F, 1.0F, 1.0F, 1.0F)
         enableRescaleNormal()
-        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240/1.0F, 240/1.0F)
-        disableDepth()
-        disableLighting()
+        glMultiTexCoord2f(33986, 240.0F, 240.0F)
+        color4f(1.0F, 1.0F, 1.0F, 1.0F)
+
+        //Draw slots
     }
 
-    private def glItemPost()
-    {
-        enableDepth()
+    private def glItemPost():Unit = {
         popMatrix()
+//        enableDepthTest()
     }
 
-    protected var renderItem = Minecraft.getMinecraft.getRenderItem
+    protected var renderItem = Minecraft.getInstance().getItemRenderer
     private def inscribeItemStack(xPos:Int, yPos:Int, stack:ItemStack)
     {
         val font = stack.getItem.getFontRenderer(stack) match {
@@ -224,22 +220,25 @@ class NodeItemList(x:Int, y:Int, w:Int, h:Int) extends TNode
             case r => r
         }
 
+        setBlitOffset(100)
         renderItem.zLevel = 100.0F
-        enableDepth()
-        enableLighting()
+//        enableDepthTest()
+//        enableLighting()
         renderItem.renderItemAndEffectIntoGUI(stack, xPos, yPos)
         renderItem.renderItemOverlayIntoGUI(font, stack, xPos, yPos, "")
-        disableLighting()
-        disableDepth()
+//        disableLighting()
+//        disableDepth()
         renderItem.zLevel = 0.0F
+        setBlitOffset(0)
 
-        var s:String = null
-        if (stack.getCount == 1) s = ""
-        else if (stack.getCount < 1000) s = stack.getCount+""
-        else if (stack.getCount < 100000) s = stack.getCount/1000+"K"
-        else if (stack.getCount < 1000000) s = "0M"+stack.getCount/100000
-        else s = stack.getCount/1000000+"M"
-        font.drawStringWithShadow(s, xPos+19-2-font.getStringWidth(s), yPos+6+3, 16777215)
+        if (stack.getCount > 1) {
+            var s:String = null
+            if (stack.getCount == 1) s = ""
+            else if (stack.getCount < 1000) s = stack.getCount+""
+            else if (stack.getCount < 100000) s = stack.getCount/1000+"K"
+            else if (stack.getCount < 1000000) s = "0M"+stack.getCount/100000
+            else s = stack.getCount/1000000+"M"
+            font.drawStringWithShadow(s, xPos+19-2-font.getStringWidth(s), yPos+6+3, 16777215)
+        }
     }
 }
-*/

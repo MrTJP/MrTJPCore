@@ -5,17 +5,13 @@
  */
 package mrtjp.core.gui
 
-import java.util.{List => JList}
 import mrtjp.core.inventory.InvWrapper
 import net.minecraft.client.Minecraft
 import net.minecraft.entity.player.{PlayerEntity, PlayerInventory}
 import net.minecraft.inventory._
-import net.minecraft.inventory.container.{ClickType, Container, ContainerType, IContainerListener, Slot}
+import net.minecraft.inventory.container._
 import net.minecraft.item.ItemStack
 import net.minecraftforge.api.distmarker.{Dist, OnlyIn}
-
-import scala.jdk.CollectionConverters._
-import scala.collection.mutable.{Buffer => MBuffer}
 
 class NodeContainer(containerType:ContainerType[_], windowId:Int) extends Container(containerType, windowId)
 {
@@ -23,7 +19,7 @@ class NodeContainer(containerType:ContainerType[_], windowId:Int) extends Contai
     var stopWatchDelegate = {(p:PlayerEntity) => }
     var slotChangeDelegate = {(slot:Int) => }
 
-    def slots:MBuffer[TSlot3] = inventorySlots.asInstanceOf[JList[TSlot3]].asScala
+//    def slots:MBuffer[TSlot3] = inventorySlots.asInstanceOf[JList[TSlot3]].asScala
 
     override def canInteractWith(player:PlayerEntity) = true
 
@@ -35,13 +31,13 @@ class NodeContainer(containerType:ContainerType[_], windowId:Int) extends Contai
 
     override def addSlot(slot:Slot) =
     {
-        if (!slot.isInstanceOf[TSlot3])
-            throw new IllegalArgumentException("NodeContainers can only except slots of type Slot3")
+//        if (!slot.isInstanceOf[TSlot3])
+//            throw new IllegalArgumentException("NodeContainers can only except slots of type Slot3")
         super.addSlot(slot)
 
-        slot.asInstanceOf[TSlot3].slotChangeDelegate2 =
-                {() => slotChangeDelegate(slot.slotNumber)}
-        slot
+//        slot.asInstanceOf[TSlot3].slotChangeDelegate2 =
+//                {() => slotChangeDelegate(slot.slotNumber)}
+//        slot
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -119,9 +115,9 @@ class NodeContainer(containerType:ContainerType[_], windowId:Int) extends Contai
     override def slotClick(id:Int, dragType:Int, clickType:ClickType, player:PlayerEntity):ItemStack =
     {
         try { //Ignore exceptions raised from client-side only slots that wont be found here. To be removed.
-            if (slots.isDefinedAt(id) && (clickType == ClickType.PICKUP || clickType == ClickType.QUICK_MOVE)) {
-                val slot = slots(id)
-                if (slot.phantomSlot)
+            if (inventorySlots.size() > id && (clickType == ClickType.PICKUP || clickType == ClickType.QUICK_MOVE)) {
+                val slot = inventorySlots.get(id)
+                if (!slot.isEnabled)
                     return handleGhostClick(slot, dragType, clickType, player)
             }
             super.slotClick(id, dragType, clickType, player)
@@ -130,7 +126,7 @@ class NodeContainer(containerType:ContainerType[_], windowId:Int) extends Contai
         }
     }
 
-    private def handleGhostClick(slot:TSlot3, mouse:Int, clickType:ClickType, player:PlayerEntity):ItemStack =
+    private def handleGhostClick(slot:Slot, mouse:Int, clickType:ClickType, player:PlayerEntity):ItemStack =
     {
         val inSlot = slot.getStack
         val inCursor = player.inventory.getItemStack
@@ -168,9 +164,9 @@ class NodeContainer(containerType:ContainerType[_], windowId:Int) extends Contai
     override def transferStackInSlot(player:PlayerEntity, i:Int):ItemStack =
     {
         var stack:ItemStack = ItemStack.EMPTY
-        if (slots.isDefinedAt(i))
+        if (inventorySlots.size > i)
         {
-            val slot = slots(i)
+            val slot = inventorySlots.get(i)
             if (slot != null && slot.getHasStack)
             {
                 stack = slot.getStack
@@ -192,13 +188,13 @@ class NodeContainer(containerType:ContainerType[_], windowId:Int) extends Contai
     @deprecated("use doMerge(_:EntityPlayer, _:ItemStack, _:Int)")
     def doMerge(stack:ItemStack, from:Int):Boolean =
     {
-        if (slots.size > 36) { //run standard impl on containers w/ player inventory
-            if (slots.size-36 until slots.size contains from) { //if item is from player inventory...
-                return tryMergeItemStack(stack, 0, slots.size-36, false) //merge to rest of container
+        if (inventorySlots.size > 36) { //run standard impl on containers w/ player inventory
+            if (inventorySlots.size-36 until inventorySlots.size contains from) { //if item is from player inventory...
+                return tryMergeItemStack(stack, 0, inventorySlots.size-36, false) //merge to rest of container
             }
             else { //else if item from outside player inventory...
-                if (tryMergeItemStack(stack, slots.size-36, slots.size-27, true)) return true //try merge to hotbar from back
-                if (tryMergeItemStack(stack, slots.size-27, slots.size, true)) return true //then try player inventory from back
+                if (tryMergeItemStack(stack, inventorySlots.size-36, inventorySlots.size-27, true)) return true //try merge to hotbar from back
+                if (tryMergeItemStack(stack, inventorySlots.size-27, inventorySlots.size, true)) return true //then try player inventory from back
             }
         }
 
@@ -210,15 +206,15 @@ class NodeContainer(containerType:ContainerType[_], windowId:Int) extends Contai
         var flag1 = false
         var k = if(reverse) end-1 else start
 
-        var slot:TSlot3 = null
+        var slot:Slot = null
         var inslot:ItemStack = ItemStack.EMPTY
         if(stack.isStackable)
         {
             while(stack.getCount > 0 && (!reverse && k < end || reverse && k >= start))
             {
-                slot = slots(k)
+                slot = inventorySlots.get(k)
                 inslot = slot.getStack
-                if (!slot.phantomSlot && !inslot.isEmpty && inslot.getItem == stack.getItem &&
+                if (slot.isEnabled && !inslot.isEmpty && inslot.getItem == stack.getItem &&
                         ItemStack.areItemStackTagsEqual(stack, inslot))
                 {
                     val space = math.min(slot.getSlotStackLimit, stack.getMaxStackSize)-inslot.getCount
@@ -250,9 +246,9 @@ class NodeContainer(containerType:ContainerType[_], windowId:Int) extends Contai
             {
                 while(!reverse && k < end || reverse && k >= start)
                 {
-                    slot = slots(k)
+                    slot = inventorySlots.get(k)
                     inslot = slot.getStack
-                    if(!slot.phantomSlot && inslot.isEmpty && slot.isItemValid(stack))
+                    if(!slot.isEnabled && inslot.isEmpty && slot.isItemValid(stack))
                     {
                         val space = math.min(slot.getSlotStackLimit, stack.getMaxStackSize)
                         if (space >= stack.getCount)
